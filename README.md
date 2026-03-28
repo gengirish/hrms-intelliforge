@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IntelliForge HRMS — Intern Portal
 
-## Getting Started
+Human Resource Management System for the IntelliForge AI internship program.  
+Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 
-First, run the development server:
+## Tech Stack
+
+- **Next.js 14** (App Router)
+- **Supabase** (Postgres + Auth + Storage)
+- **Prisma ORM**
+- **Tailwind CSS**
+- **AgentMail** TypeScript SDK (email automation)
+- **@react-pdf/renderer** (offer letter & certificate PDF)
+- **Vercel** deployment
+
+## Features
+
+| Page | Description |
+|------|-------------|
+| `/` | Home — hero + action cards |
+| `/onboard` | Intern self-onboarding form with doc uploads |
+| `/offer` | Offer letter view — lookup by email, accept |
+| `/attendance` | Daily punch in/out with WFH/Office toggle |
+| `/tasks` | Weekly task log with hours tracking |
+| `/dashboard` | Admin panel — manage interns, send offers, view emails |
+
+## AgentMail Email Flows
+
+1. **Onboarding** → `createInternInbox()` creates dedicated inbox
+2. **Send Offer** → PDF generated → `sendOfferLetter()` with attachment
+3. **Accept Offer** → Intern replies "I Accept" → webhook auto-activates
+4. **Task Reminder** → Cron (Monday 9AM IST) → `sendTaskReminder()`
+5. **Attendance Nudge** → Cron (Daily 10:30AM IST) → `sendAttendanceNudge()`
+6. **Completion** → Certificate PDF → `sendCompletionEmail()`
+
+## Setup
+
+### 1. Clone & Install
+
+```bash
+git clone <repo-url>
+cd hrms-intelliforge
+npm install
+```
+
+### 2. Environment Variables
+
+Copy `.env.example` to `.env` and fill in:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+AGENTMAIL_API_KEY=am_your_api_key
+CRON_SECRET=your-cron-secret
+```
+
+### 3. Database Setup
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 4. Supabase Storage
+
+Create a public bucket named `hrms-docs` in your Supabase project.
+
+### 5. Admin Setup
+
+Insert your admin email into the `admins` table:
+
+```sql
+INSERT INTO admins (id, email, role) VALUES (gen_random_uuid(), 'admin@intelliforge.tech', 'ADMIN');
+```
+
+### 6. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 7. AgentMail Webhook
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Register this URL in [AgentMail Console](https://console.agentmail.to):
+```
+https://hrms.intelliforge.tech/api/webhooks/agentmail
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Vercel Cron Jobs
 
-## Learn More
+Configured in `vercel.json`:
 
-To learn more about Next.js, take a look at the following resources:
+| Cron | Schedule | Description |
+|------|----------|-------------|
+| `/api/cron/task-reminder` | Monday 9:00 AM IST | Weekly task log reminder |
+| `/api/cron/attendance-nudge` | Weekdays 10:30 AM IST | Daily attendance nudge |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Indian Conventions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Dates: DD/MM/YYYY display, ISO in DB
+- Timezone: Asia/Kolkata (IST)
+- Stipend: stored in paise (Int), displayed as ₹ with `en-IN` locale
+- File uploads: Supabase Storage bucket `hrms-docs`
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+© 2026 IntelliForge AI. All rights reserved.

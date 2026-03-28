@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/task-reminder",
+      "schedule": "30 3 * * 1"
+    },
+    {
+      "path": "/api/cron/attendance-nudge",
+      "schedule": "0 5 * * 1-5"
+    }
+  ]
+}

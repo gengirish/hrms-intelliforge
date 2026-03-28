@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Intern {
+  id               String       @id @default(cuid())
+  name             String
+  email            String       @unique
+  phone            String
+  college          String
+  branch           String
+  year             String
+  role             String
+  startDate        DateTime
+  durationWeeks    Int
+  stipendPaise     Int          @default(0)
+  mentorId         String?
+  aadharUrl        String?
+  panUrl           String?
+  photoUrl         String?
+  agentmailInboxId String?
+  agentmailAddress String?
+  status           String       @default("PENDING")
+  acceptedAt       DateTime?
+  createdAt        DateTime     @default(now())
+
+  attendance Attendance[]
+  tasks      Task[]
+
+  @@map("interns")
+}
+
+model Attendance {
+  id       String    @id @default(cuid())
+  internId String
+  date     DateTime
+  punchIn  DateTime?
+  punchOut DateTime?
+  mode     String
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@map("attendance")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  internId    String
+  title       String
+  description String
+  status      String
+  hours       Float
+  week        String
+  createdAt   DateTime @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+model Admin {
+  id    String @id @default(cuid())
+  email String @unique
+  role  String @default("ADMIN")
+
+  @@map("admins")
+}
