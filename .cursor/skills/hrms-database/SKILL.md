@@ -1,5 +1,5 @@
 ---
-name: interviewbot-database
+name: hrms-database
 description: Set up and maintain PostgreSQL database, SQLAlchemy async models, Alembic migrations, multi-tenant queries, and Redis caching for the Interview Bot. Use when working with database schemas, migrations, ORM models, queries, or caching.
 ---
 

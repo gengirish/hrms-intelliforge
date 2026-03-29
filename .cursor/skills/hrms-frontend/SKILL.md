@@ -1,5 +1,5 @@
 ---
-name: interviewbot-frontend
+name: hrms-frontend
 description: Build and maintain the Interview Bot Next.js frontend with dashboard UI, candidate interview pages, and responsive design. Use when creating pages, components, layouts, forms, or frontend configuration.
 ---
 

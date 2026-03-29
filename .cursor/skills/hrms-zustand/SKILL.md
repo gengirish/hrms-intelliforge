@@ -1,5 +1,5 @@
 ---
-name: interviewbot-zustand
+name: hrms-zustand
 description: Zustand v4/v5 state management patterns for client-side stores. Use when creating stores, managing UI state, persisting data, or working with Zustand selectors in the Interview Bot frontend.
 ---
 

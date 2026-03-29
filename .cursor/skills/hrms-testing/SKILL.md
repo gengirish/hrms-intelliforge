@@ -1,5 +1,5 @@
 ---
-name: interviewbot-testing
+name: hrms-testing
 description: Write and run pytest backend tests and Playwright E2E tests for the Interview Bot. Use when creating tests, debugging test failures, adding test coverage, mocking external services, or configuring test infrastructure.
 ---
 

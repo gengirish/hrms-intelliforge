@@ -1,5 +1,5 @@
 ---
-name: interviewbot-deploy
+name: hrms-deploy
 description: Configure Docker, Docker Compose, CI/CD pipelines, environment variables, and production deployments for the Interview Bot. Use when working with Dockerfiles, docker-compose, GitHub Actions, monitoring, or deployment configuration.
 ---
 

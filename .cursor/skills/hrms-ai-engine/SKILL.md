@@ -1,5 +1,5 @@
 ---
-name: interviewbot-ai-engine
+name: hrms-ai-engine
 description: Orchestrate LLM-powered interviews including prompt engineering, dynamic question generation, multi-model fallback, scoring rubrics, and code evaluation. Use when working with AI interview logic, OpenAI/Claude integration, scoring, or prompt templates.
 ---
 

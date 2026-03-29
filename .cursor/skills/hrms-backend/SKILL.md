@@ -1,5 +1,5 @@
 ---
-name: interviewbot-backend
+name: hrms-backend
 description: Build and maintain the AI Interview Bot FastAPI backend with production best practices. Use when creating API endpoints, services, middleware, Pydantic schemas, or backend configuration.
 ---
 

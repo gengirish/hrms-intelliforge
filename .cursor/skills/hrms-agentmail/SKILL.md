@@ -1,5 +1,5 @@
 ---
-name: interviewbot-agentmail
+name: hrms-agentmail
 description: Integrate AgentMail (agentmail.to) for AI-powered email in the Interview Bot. Use when sending interview invitations, completion notifications, candidate follow-ups, managing per-org inboxes, handling email replies via webhooks/websockets, or attaching reports. Based on the official AgentMail skill (skills.sh/agentmail-to/agentmail-skills/agentmail).
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: interviewbot-project
+name: hrms-project
 description: Provides architecture knowledge for the AI Interview Bot SaaS platform. Use when exploring the codebase, adding features, debugging, or asking about project structure, tech stack, conventions, database schema, or design system.
 ---
 

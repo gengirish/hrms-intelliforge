@@ -1,5 +1,5 @@
 ---
-name: interviewbot-forms
+name: hrms-forms
 description: Type-safe form validation using React Hook Form v7 and Zod. Use when building forms with zodResolver, field arrays, multi-step wizards, or server-side validation in the Interview Bot frontend.
 ---
 

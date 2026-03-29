@@ -1,5 +1,5 @@
 ---
-name: interviewbot-realtime
+name: hrms-realtime
 description: Handle real-time communication for text chat (WebSocket), voice interviews (LiveKit audio), and video interviews (LiveKit video). Use when working with WebSocket handlers, LiveKit integration, audio/video pipelines, or real-time interview features.
 ---
 

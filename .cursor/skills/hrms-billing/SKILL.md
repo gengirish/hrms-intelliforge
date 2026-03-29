@@ -1,5 +1,5 @@
 ---
-name: interviewbot-billing
+name: hrms-billing
 description: Integrate Stripe subscription billing including checkout, webhooks, usage metering, plan enforcement, and customer portal. Use when working with payments, Stripe API, subscriptions, pricing tiers, or usage limits.
 ---
 
