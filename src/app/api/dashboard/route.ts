@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthAdmin } from "@/lib/auth";
+import { serverError } from "@/lib/api-utils";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const email = req.nextUrl.searchParams.get("email");
-    if (!email) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const admin = await prisma.admin.findUnique({ where: { email } });
+    const admin = await getAuthAdmin();
     if (!admin) {
       return NextResponse.json(
         { error: "Not authorized. Admin access required." },
@@ -22,8 +25,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ interns });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("Dashboard API error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return serverError(err, "Dashboard API error");
   }
 }

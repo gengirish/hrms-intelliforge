@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthAdmin } from "@/lib/auth";
+import { serverError } from "@/lib/api-utils";
+import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
 import {
@@ -12,12 +15,28 @@ import React, { type ReactElement } from "react";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { action, internId } = body;
+    const admin = await getAuthAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!action || !internId) {
+    const body = await req.json();
+    const parsed = actionSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "action and internId required" },
+        {
+          error: "Validation failed",
+          issues: parsed.error.issues.map((i) => i.message),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { action, internId, stipendPaise } = parsed.data;
+
+    if (action === "update_stipend" && stipendPaise === undefined) {
+      return NextResponse.json(
+        { error: "stipendPaise required for update_stipend" },
         { status: 400 }
       );
     }
@@ -28,10 +47,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "update_stipend") {
-      const { stipendPaise } = body;
       await prisma.intern.update({
         where: { id: internId },
-        data: { stipendPaise },
+        data: { stipendPaise: stipendPaise! },
       });
       return NextResponse.json({ ok: true });
     }
@@ -104,11 +122,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch (err) {
-    console.error("Dashboard action error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    return serverError(err, "Dashboard action error");
   }
 }

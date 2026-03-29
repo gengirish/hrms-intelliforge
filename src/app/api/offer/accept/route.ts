@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthIntern } from "@/lib/auth";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const { internId } = await req.json();
-    if (!internId) {
-      return NextResponse.json({ error: "internId required" }, { status: 400 });
+    if (!rateLimit(getClientIp(req), 20)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const intern = await prisma.intern.findUnique({ where: { id: internId } });
+    const intern = await getAuthIntern();
     if (!intern) {
-      return NextResponse.json({ error: "Intern not found" }, { status: 404 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (intern.status !== "OFFERED") {
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     await prisma.intern.update({
-      where: { id: internId },
+      where: { id: intern.id },
       data: { status: "ACTIVE", acceptedAt: new Date() },
     });
 

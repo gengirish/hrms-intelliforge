@@ -7,8 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum InternStatus {
+  PENDING
+  OFFERED
+  ACTIVE
+  COMPLETED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum AttendanceMode {
+  WFH
+  Office
+}
+
 model Intern {
   id               String       @id @default(cuid())
+  clerkId          String?      @unique
   name             String
   email            String       @unique
   phone            String
@@ -25,7 +44,7 @@ model Intern {
   photoUrl         String?
   agentmailInboxId String?
   agentmailAddress String?
-  status           String       @default("PENDING")
+  status           InternStatus @default(PENDING)
   acceptedAt       DateTime?
   createdAt        DateTime     @default(now())
 
@@ -41,10 +60,11 @@ model Attendance {
   date     DateTime
   punchIn  DateTime?
   punchOut DateTime?
-  mode     String
+  mode     AttendanceMode
 
   intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
 
+  @@unique([internId, date])
   @@map("attendance")
 }
 
@@ -53,7 +73,7 @@ model Task {
   internId    String
   title       String
   description String
-  status      String
+  status      TaskStatus
   hours       Float
   week        String
   createdAt   DateTime @default(now())
@@ -64,9 +84,10 @@ model Task {
 }
 
 model Admin {
-  id    String @id @default(cuid())
-  email String @unique
-  role  String @default("ADMIN")
+  id      String  @id @default(cuid())
+  clerkId String? @unique
+  email   String  @unique
+  role    String  @default("ADMIN")
 
   @@map("admins")
 }

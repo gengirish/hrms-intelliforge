@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegistrar } from "@/components/sw-register";
 import "./globals.css";
@@ -28,8 +29,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  userScalable: true,
   themeColor: "#6366f1",
   viewportFit: "cover",
 };
@@ -40,19 +40,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased bg-slate-950 text-slate-100`}>
-        {children}
-        <Toaster
-          position="top-right"
-          richColors
-          theme="dark"
-          toastOptions={{
-            style: { background: "#1e293b", border: "1px solid #334155" },
-          }}
-        />
-        <ServiceWorkerRegistrar />
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#6366f1",
+          colorBackground: "#0f172a",
+          colorText: "#f1f5f9",
+          colorInputBackground: "#1e293b",
+          colorInputText: "#f1f5f9",
+        },
+      }}
+    >
+      <html lang="en" className="dark">
+        <body className={`${inter.className} antialiased bg-slate-950 text-slate-100`}>
+          {children}
+          <Toaster
+            position="top-right"
+            richColors
+            theme="dark"
+            toastOptions={{
+              style: { background: "#1e293b", border: "1px solid #334155" },
+            }}
+          />
+          <ServiceWorkerRegistrar />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

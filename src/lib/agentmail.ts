@@ -1,4 +1,11 @@
 import { AgentMailClient } from "agentmail";
+import { escapeHtml } from "@/lib/html-escape";
+
+if (!process.env.AGENTMAIL_API_KEY) {
+  console.warn("AGENTMAIL_API_KEY is not set — email features will fail");
+}
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
 
 export const agentmail = new AgentMailClient({
   apiKey: process.env.AGENTMAIL_API_KEY!,
@@ -40,9 +47,9 @@ export async function sendWelcomeEmail(
     to: internEmail,
     subject: `Welcome to IntelliForge AI, ${internName}!`,
     html: `
-      <h2>Hi ${internName},</h2>
+      <h2>Hi ${escapeHtml(internName)},</h2>
       <p>Thank you for registering on the IntelliForge HRMS portal!</p>
-      <p>Your onboarding application for <strong>${role}</strong> has been received and is under review.</p>
+      <p>Your onboarding application for <strong>${escapeHtml(role)}</strong> has been received and is under review.</p>
       <p>Here's what happens next:</p>
       <ol>
         <li>Our team will review your application</li>
@@ -51,8 +58,8 @@ export async function sendWelcomeEmail(
       </ol>
       <p>In the meantime, you can explore the portal:</p>
       <ul>
-        <li><a href="https://hrms.intelliforge.tech/attendance">Attendance Tracker</a></li>
-        <li><a href="https://hrms.intelliforge.tech/tasks">Task Logger</a></li>
+        <li><a href="${APP_URL}/attendance">Attendance Tracker</a></li>
+        <li><a href="${APP_URL}/tasks">Task Logger</a></li>
       </ul>
       <br/>
       <p>— IntelliForge AI HR Team</p>
@@ -81,9 +88,9 @@ export async function sendOfferLetter({
     to: internEmail,
     subject: `Your Internship Offer — IntelliForge AI`,
     html: `
-      <h2>Welcome to IntelliForge AI, ${internName}!</h2>
-      <p>Role: <strong>${role}</strong></p>
-      <p>Stipend: <strong>₹${stipendINR}/month</strong></p>
+      <h2>Welcome to IntelliForge AI, ${escapeHtml(internName)}!</h2>
+      <p>Role: <strong>${escapeHtml(role)}</strong></p>
+      <p>Stipend: <strong>₹${escapeHtml(stipendINR)}/month</strong></p>
       <p>Start Date: <strong>${startDate}</strong></p>
       <p>Please <strong>reply to this email with "I Accept"</strong>
          to confirm your internship.</p>
@@ -111,9 +118,9 @@ export async function sendTaskReminder(
     to: internEmail,
     subject: `📋 Weekly Task Log Reminder — ${today}`,
     html: `
-      <p>Hi ${internName},</p>
+      <p>Hi ${escapeHtml(internName)},</p>
       <p>Friendly reminder to log this week's tasks:</p>
-      <p><a href="https://hrms.intelliforge.tech/tasks">
+      <p><a href="${APP_URL}/tasks">
         → Submit Weekly Tasks
       </a></p>
       <p>— IntelliForge AI</p>
@@ -130,9 +137,9 @@ export async function sendAttendanceNudge(
     to: internEmail,
     subject: `⏰ Attendance Not Logged Yet — ${new Date().toLocaleDateString("en-IN")}`,
     html: `
-      <p>Hi ${internName},</p>
+      <p>Hi ${escapeHtml(internName)},</p>
       <p>You haven't punched in today. Please log your attendance:</p>
-      <p><a href="https://hrms.intelliforge.tech/attendance">
+      <p><a href="${APP_URL}/attendance">
         → Log Attendance
       </a></p>
       <p>— IntelliForge AI</p>
@@ -150,7 +157,7 @@ export async function sendCompletionEmail(
     to: internEmail,
     subject: `🎓 Internship Completion Certificate — IntelliForge AI`,
     html: `
-      <h2>Congratulations, ${internName}!</h2>
+      <h2>Congratulations, ${escapeHtml(internName)}!</h2>
       <p>Your internship at IntelliForge AI is now complete.</p>
       <p>Please find your certificate attached.</p>
       <p>We wish you all the best ahead!</p>

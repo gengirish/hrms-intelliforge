@@ -117,10 +117,11 @@ export default function OnboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-name" className="block text-sm font-medium text-slate-300 mb-1">
                   Full Name
                 </label>
                 <input
+                  id="onboard-name"
                   {...register("name")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="Priya Sharma"
@@ -131,10 +132,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-email" className="block text-sm font-medium text-slate-300 mb-1">
                   Email
                 </label>
                 <input
+                  id="onboard-email"
                   {...register("email")}
                   type="email"
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
@@ -146,10 +148,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-phone" className="block text-sm font-medium text-slate-300 mb-1">
                   Phone
                 </label>
                 <input
+                  id="onboard-phone"
                   {...register("phone")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="+91 98765 43210"
@@ -160,10 +163,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-role" className="block text-sm font-medium text-slate-300 mb-1">
                   Role
                 </label>
                 <select
+                  id="onboard-role"
                   {...register("role")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 >
@@ -184,10 +188,11 @@ export default function OnboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-college" className="block text-sm font-medium text-slate-300 mb-1">
                   College
                 </label>
                 <input
+                  id="onboard-college"
                   {...register("college")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="IIT Delhi"
@@ -198,10 +203,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-branch" className="block text-sm font-medium text-slate-300 mb-1">
                   Branch
                 </label>
                 <input
+                  id="onboard-branch"
                   {...register("branch")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="Computer Science"
@@ -212,10 +218,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-year" className="block text-sm font-medium text-slate-300 mb-1">
                   Year of Study
                 </label>
                 <select
+                  id="onboard-year"
                   {...register("year")}
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 >
@@ -238,10 +245,11 @@ export default function OnboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-startDate" className="block text-sm font-medium text-slate-300 mb-1">
                   Start Date
                 </label>
                 <input
+                  id="onboard-startDate"
                   {...register("startDate")}
                   type="date"
                   className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
@@ -252,10 +260,11 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label htmlFor="onboard-durationWeeks" className="block text-sm font-medium text-slate-300 mb-1">
                   Duration (weeks)
                 </label>
                 <input
+                  id="onboard-durationWeeks"
                   {...register("durationWeeks")}
                   type="number"
                   min={4}

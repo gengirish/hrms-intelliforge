@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -18,6 +19,7 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl navbar-standalone">
@@ -47,19 +49,42 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="ml-3 flex items-center">
+              {isSignedIn ? (
+                <UserButton afterSignOutUrl="/" />
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+              )}
+            </div>
           </div>
 
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            {isSignedIn && <UserButton afterSignOutUrl="/" />}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav-menu"
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              className="p-2 text-slate-400 hover:text-white"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-950">
+        <div
+          id="mobile-nav-menu"
+          role="navigation"
+          aria-label="Mobile navigation"
+          className="md:hidden border-t border-slate-800 bg-slate-950"
+        >
           <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -76,6 +101,13 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {!isSignedIn && (
+              <SignInButton mode="modal">
+                <button className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                  Sign In
+                </button>
+              </SignInButton>
+            )}
           </div>
         </div>
       )}

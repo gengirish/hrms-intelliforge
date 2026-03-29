@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthIntern } from "@/lib/auth";
+import { attendanceSchema } from "@/lib/validations";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { serverError } from "@/lib/api-utils";
 
 function getISTStartOfDay() {
   const now = new Date();
@@ -21,61 +25,85 @@ function getISTStartOfWeek() {
 }
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-  if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 });
-  }
-
-  const intern = await prisma.intern.findUnique({ where: { email } });
-  if (!intern) {
-    return NextResponse.json({ error: "Intern not found" }, { status: 404 });
-  }
-
-  if (intern.status !== "ACTIVE" && intern.status !== "OFFERED") {
-    return NextResponse.json(
-      { error: "Attendance is available for active interns only" },
-      { status: 403 }
-    );
-  }
-
-  const todayStart = getISTStartOfDay();
-  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-  const weekStart = getISTStartOfWeek();
-
-  const today = await prisma.attendance.findFirst({
-    where: {
-      internId: intern.id,
-      date: { gte: todayStart, lt: todayEnd },
-    },
-  });
-
-  const week = await prisma.attendance.findMany({
-    where: {
-      internId: intern.id,
-      date: { gte: weekStart },
-    },
-    orderBy: { date: "desc" },
-  });
-
-  return NextResponse.json({
-    internId: intern.id,
-    internName: intern.name,
-    today,
-    week,
-  });
-}
-
-export async function POST(req: NextRequest) {
   try {
-    const { internId, type, mode } = await req.json();
+    if (!rateLimit(getClientIp(req), 20)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
 
-    if (!internId || !type) {
-      return NextResponse.json({ error: "internId and type required" }, { status: 400 });
+    const intern = await getAuthIntern();
+    if (!intern) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (intern.status !== "ACTIVE" && intern.status !== "OFFERED") {
+      return NextResponse.json(
+        { error: "Attendance is available for active interns only" },
+        { status: 403 }
+      );
     }
 
     const todayStart = getISTStartOfDay();
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const weekStart = getISTStartOfWeek();
+
+    const today = await prisma.attendance.findFirst({
+      where: {
+        internId: intern.id,
+        date: { gte: todayStart, lt: todayEnd },
+      },
+    });
+
+    const week = await prisma.attendance.findMany({
+      where: {
+        internId: intern.id,
+        date: { gte: weekStart },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    return NextResponse.json({
+      internId: intern.id,
+      internName: intern.name,
+      today,
+      week,
+    });
+  } catch (err: unknown) {
+    return serverError(err, "Attendance GET error");
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    if (!rateLimit(getClientIp(req), 20)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const intern = await getAuthIntern();
+    if (!intern) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const parsed = attendanceSchema.safeParse(body);
+    if (!parsed.success) {
+      const first = parsed.error.flatten().fieldErrors;
+      const msg = Object.values(first).flat()[0] || "Invalid input";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+
+    const { type, mode } = parsed.data;
+    const internId = intern.id;
+
+    const todayStart = getISTStartOfDay();
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
     const now = new Date();
+
+    if (intern.status !== "ACTIVE" && intern.status !== "OFFERED") {
+      return NextResponse.json(
+        { error: "Attendance is available for active interns only" },
+        { status: 403 }
+      );
+    }
 
     if (type === "in") {
       const existing = await prisma.attendance.findFirst({
@@ -94,7 +122,7 @@ export async function POST(req: NextRequest) {
           internId,
           date: todayStart,
           punchIn: now,
-          mode: mode || "WFH",
+          mode,
         },
       });
 
@@ -126,8 +154,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
-  } catch (err) {
-    console.error("Attendance error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return serverError(err, "Attendance POST error");
   }
 }

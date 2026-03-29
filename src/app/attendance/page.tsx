@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Clock,
@@ -26,14 +27,13 @@ interface AttendanceRecord {
 }
 
 export default function AttendancePage() {
-  const [email, setEmail] = useState("");
-  const [authed, setAuthed] = useState(false);
-  const [internId, setInternId] = useState("");
   const [internName, setInternName] = useState("");
   const [mode, setMode] = useState<"WFH" | "OFFICE">("WFH");
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
   const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   const [punching, setPunching] = useState(false);
 
   const now = new Date();
@@ -51,38 +51,63 @@ export default function AttendancePage() {
     second: "2-digit",
   });
 
-  async function handleLogin() {
-    if (!email) return;
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/attendance?email=${encodeURIComponent(email)}`
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Login failed");
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setNeedsOnboarding(false);
+      setBlockedMessage(null);
+      try {
+        const res = await fetch("/api/attendance");
+        if (res.status === 401) {
+          if (!cancelled) setNeedsOnboarding(true);
+          return;
+        }
+        if (res.status === 403) {
+          const err = await res.json();
+          if (!cancelled) setBlockedMessage(err.error || "Access denied");
+          return;
+        }
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to load attendance");
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setInternName(data.internName);
+          setTodayRecord(data.today);
+          setWeekRecords(data.week);
+        }
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load attendance";
+        toast.error(message);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      const data = await res.json();
-      setInternId(data.internId);
-      setInternName(data.internName);
-      setTodayRecord(data.today);
-      setWeekRecords(data.week);
-      setAuthed(true);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Login failed";
-      toast.error(message);
-    } finally {
-      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function refreshWeek() {
+    const weekRes = await fetch("/api/attendance");
+    if (weekRes.ok) {
+      const weekData = await weekRes.json();
+      setWeekRecords(weekData.week);
+      setTodayRecord(weekData.today);
     }
   }
 
   async function handlePunch(type: "in" | "out") {
     setPunching(true);
     try {
+      const apiMode = mode === "OFFICE" ? "Office" : "WFH";
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ internId, type, mode }),
+        body: JSON.stringify({ type, mode: apiMode }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -93,14 +118,7 @@ export default function AttendancePage() {
       toast.success(
         type === "in" ? "Punched in successfully!" : "Punched out successfully!"
       );
-      // Refresh week data
-      const weekRes = await fetch(
-        `/api/attendance?email=${encodeURIComponent(email)}`
-      );
-      if (weekRes.ok) {
-        const weekData = await weekRes.json();
-        setWeekRecords(weekData.week);
-      }
+      await refreshWeek();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Punch failed";
       toast.error(message);
@@ -109,55 +127,58 @@ export default function AttendancePage() {
     }
   }
 
-  if (!authed) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full">
-            <div className="text-center mb-6">
-              <Clock className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
-              <h1 className="text-2xl font-bold text-white">Attendance</h1>
-              <p className="text-sm text-slate-400 mt-1">
-                Log in with your registered email
-              </p>
-            </div>
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                placeholder="your.email@example.com"
-              />
-              <button
-                onClick={handleLogin}
-                disabled={loading || !email}
-                className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Continue"
-                )}
-              </button>
-            </div>
-            <div className="mt-6 pt-5 border-t border-slate-700/50 space-y-2">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">What you can do</p>
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                <LogIn className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                <span>Punch In / Punch Out with one tap</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                <Home className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                <span>Toggle WFH or Office mode daily</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                <CheckCircle2 className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                <span>View this week&#39;s full attendance summary</span>
-              </div>
-            </div>
+          <div className="glass-card p-8 max-w-md w-full flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 text-indigo-400 animate-spin" />
+            <p className="text-sm text-slate-400">Loading attendance…</p>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
+      </div>
+    );
+  }
+
+  if (needsOnboarding) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="glass-card p-8 max-w-md w-full text-center">
+            <Clock className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+            <h1 className="text-2xl font-bold text-white">Attendance</h1>
+            <p className="text-sm text-slate-400 mt-3">
+              Please complete onboarding first to use attendance.
+            </p>
+            <Link
+              href="/onboard"
+              className="mt-6 inline-flex rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white transition-all"
+            >
+              Go to onboarding
+            </Link>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
+      </div>
+    );
+  }
+
+  if (blockedMessage) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="glass-card p-8 max-w-md w-full text-center">
+            <Clock className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+            <h1 className="text-2xl font-bold text-white">Attendance</h1>
+            <p className="text-sm text-slate-400 mt-3">{blockedMessage}</p>
           </div>
         </main>
         <Footer />
@@ -183,13 +204,14 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        {/* Punch Card */}
         <div className="glass-card p-6 mb-6 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Today&apos;s Attendance</h2>
             <div className="flex rounded-lg border border-slate-700 overflow-hidden">
               <button
+                type="button"
                 onClick={() => setMode("WFH")}
+                aria-pressed={mode === "WFH"}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors",
                   mode === "WFH"
@@ -201,7 +223,9 @@ export default function AttendancePage() {
                 WFH
               </button>
               <button
+                type="button"
                 onClick={() => setMode("OFFICE")}
+                aria-pressed={mode === "OFFICE"}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors",
                   mode === "OFFICE"
@@ -254,7 +278,6 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        {/* Weekly Summary */}
         <div className="glass-card p-6">
           <h2 className="text-lg font-semibold text-white mb-4">
             This Week&apos;s Attendance

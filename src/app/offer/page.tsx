@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   FileText,
   CheckCircle2,
   Loader2,
-  Search,
   Briefcase,
   Calendar,
   Clock,
@@ -31,31 +31,42 @@ interface InternOffer {
 }
 
 export default function OfferPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [intern, setIntern] = useState<InternOffer | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
-  async function lookupOffer() {
-    if (!email) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/offer?email=${encodeURIComponent(email)}`);
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Offer not found");
-      }
-      const data = await res.json();
-      setIntern(data);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Could not find offer";
-      toast.error(message);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setNeedsOnboarding(false);
       setIntern(null);
-    } finally {
-      setLoading(false);
-    }
-  }
+      try {
+        const res = await fetch("/api/offer");
+        if (res.status === 401) {
+          if (!cancelled) setNeedsOnboarding(true);
+          return;
+        }
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Could not load offer");
+        }
+        const data = await res.json();
+        if (!cancelled) setIntern(data);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Could not load offer";
+        toast.error(message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleAccept() {
     if (!intern) return;
@@ -64,7 +75,7 @@ export default function OfferPage() {
       const res = await fetch("/api/offer/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ internId: intern.id }),
+        body: JSON.stringify({}),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -88,44 +99,39 @@ export default function OfferPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Offer Letter</h1>
           <p className="mt-2 text-slate-400">
-            Enter your email to view your internship offer details.
+            View your internship offer while signed in. Accept when you are ready.
           </p>
           <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
             <FileText className="h-4 w-4 text-indigo-400 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-indigo-300">
-              After accepting, your signed PDF offer letter will be emailed to you automatically via <strong>AgentMail</strong>.
+              Your PDF offer letter is sent when an admin clicks <strong>Send Offer</strong> in the dashboard (via <strong>AgentMail</strong>). Accepting here only updates your status—it does not email the PDF.
             </p>
           </div>
         </div>
 
-        {/* Email Lookup */}
-        <div className="glass-card p-6 mb-6">
-          <div className="flex gap-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && lookupOffer()}
-              className="flex-1 rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-              placeholder="Enter your email address"
-            />
-            <button
-              onClick={lookupOffer}
-              disabled={loading || !email}
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center gap-2"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              Look Up
-            </button>
+        {loading && (
+          <div className="glass-card p-8 flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 text-indigo-400 animate-spin" />
+            <p className="text-sm text-slate-400">Loading your offer…</p>
           </div>
-        </div>
+        )}
 
-        {/* Offer Details */}
-        {intern && !accepted && (
+        {!loading && needsOnboarding && (
+          <div className="glass-card p-8 text-center">
+            <FileText className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+            <p className="text-sm text-slate-400">
+              Please complete onboarding first to see your offer.
+            </p>
+            <Link
+              href="/onboard"
+              className="mt-6 inline-flex rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white transition-all"
+            >
+              Go to onboarding
+            </Link>
+          </div>
+        )}
+
+        {!loading && !needsOnboarding && intern && !accepted && (
           <div className="glass-card p-6 space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <FileText className="h-6 w-6 text-indigo-400" />
@@ -188,7 +194,7 @@ export default function OfferPage() {
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Accept &amp; Sign
+                    Accept Offer
                   </>
                 )}
               </button>
@@ -221,7 +227,7 @@ export default function OfferPage() {
               Offer Accepted!
             </h2>
             <p className="text-slate-400">
-              Welcome to IntelliForge AI! Your offer letter PDF has been generated and emailed to you via <strong>AgentMail</strong> — check your inbox!
+              Welcome to IntelliForge AI! Your acceptance has been recorded. If you need your PDF offer letter, check the email from when your admin sent it, or ask them to resend from the dashboard.
             </p>
           </div>
         )}

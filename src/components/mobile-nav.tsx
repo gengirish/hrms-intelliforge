@@ -25,6 +25,7 @@ export function MobileBottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
+              aria-current={pathname === tab.href ? "page" : undefined}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
                 active

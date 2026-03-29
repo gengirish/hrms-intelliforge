@@ -108,6 +108,13 @@ export function OfferLetterPDF({
     year: "numeric",
   });
 
+  const refDateKey = new Date().toISOString().slice(0, 10);
+  const refHash = Array.from(internName + refDateKey).reduce(
+    (acc, char) => acc + char.charCodeAt(0),
+    0
+  );
+  const refNum = 1000 + (refHash % 9000);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -122,7 +129,7 @@ export function OfferLetterPDF({
           Date: {today}
         </Text>
         <Text style={{ fontSize: 10, color: "#64748b", marginBottom: 20 }}>
-          Ref: IF/INTERN/{new Date().getFullYear()}/{Math.floor(Math.random() * 9000 + 1000)}
+          Ref: IF/INTERN/{new Date().getFullYear()}/{refNum}
         </Text>
 
         <Text style={styles.title}>Internship Offer Letter</Text>

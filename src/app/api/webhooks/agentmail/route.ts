@@ -18,8 +18,23 @@ function parseSenderEmail(from: unknown): string | null {
   return null;
 }
 
+function indicatesOfferAcceptance(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    /\bi\s+accept\b/i.test(text) ||
+    /\byes\b/.test(lower) ||
+    /\bagree\b/.test(lower) ||
+    /\bconfirm\b/.test(lower)
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const secret = req.headers.get("x-webhook-secret");
+    if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
 
     const eventType = body.event ?? body.event_type;
@@ -41,15 +56,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
-      const replyLower = bodyText.toLowerCase();
-
-      if (
-        intern.status === "OFFERED" &&
-        (replyLower.includes("accept") ||
-          replyLower.includes("yes") ||
-          replyLower.includes("agree") ||
-          replyLower.includes("confirm"))
-      ) {
+      if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
         await prisma.intern.update({
           where: { id: intern.id },
           data: { acceptedAt: new Date(), status: "ACTIVE" },
@@ -59,8 +66,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Webhook error:", err);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 }
+    );
   }
 }

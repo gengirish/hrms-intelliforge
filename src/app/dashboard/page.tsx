@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Users,
@@ -74,9 +74,9 @@ interface EmailMessage {
 }
 
 export default function DashboardPage() {
-  const [adminEmail, setAdminEmail] = useState("");
-  const [authed, setAuthed] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [bootState, setBootState] = useState<
+    "loading" | "forbidden" | "error" | "ready"
+  >("loading");
   const [interns, setInterns] = useState<Intern[]>([]);
   const [selectedIntern, setSelectedIntern] = useState<Intern | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -84,25 +84,35 @@ export default function DashboardPage() {
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks" | "emails">("overview");
 
-  async function handleAdminLogin() {
-    if (!adminEmail) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/dashboard?email=${encodeURIComponent(adminEmail)}`);
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Not authorized");
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (cancelled) return;
+        if (res.status === 401 || res.status === 403) {
+          setBootState("forbidden");
+          return;
+        }
+        if (!res.ok) {
+          toast.error("Failed to load dashboard");
+          setBootState("error");
+          return;
+        }
+        const data = await res.json();
+        setInterns(data.interns);
+        setBootState("ready");
+      } catch {
+        if (!cancelled) {
+          toast.error("Failed to load dashboard");
+          setBootState("error");
+        }
       }
-      const data = await res.json();
-      setInterns(data.interns);
-      setAuthed(true);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Login failed";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function loadInternDetail(internId: string) {
     setDetailLoading(true);
@@ -140,8 +150,7 @@ export default function DashboardPage() {
           : "Completion certificate sent!"
       );
       await loadInternDetail(internId);
-      // Refresh intern list
-      const listRes = await fetch(`/api/dashboard?email=${encodeURIComponent(adminEmail)}`);
+      const listRes = await fetch("/api/dashboard");
       if (listRes.ok) {
         const data = await listRes.json();
         setInterns(data.interns);
@@ -181,40 +190,51 @@ export default function DashboardPage() {
     completed: interns.filter((i) => i.status === "COMPLETED").length,
   };
 
-  if (!authed) {
+  if (bootState === "loading") {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full">
-            <div className="text-center mb-6">
-              <Users className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
-              <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-sm text-slate-400 mt-1">
-                Sign in with your admin email
-              </p>
-            </div>
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
-                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                placeholder="admin@intelliforge.tech"
-              />
-              <button
-                onClick={handleAdminLogin}
-                disabled={loading || !adminEmail}
-                className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Sign In"
-                )}
-              </button>
-            </div>
+          <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
+        </main>
+        <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
+      </div>
+    );
+  }
+
+  if (bootState === "forbidden") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="glass-card p-8 max-w-md w-full text-center">
+            <Users className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+            <h1 className="text-2xl font-bold text-white">Admin access required</h1>
+            <p className="text-sm text-slate-400 mt-2">
+              Sign in with an account that has admin privileges.
+            </p>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
+      </div>
+    );
+  }
+
+  if (bootState === "error") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="glass-card p-8 max-w-md w-full text-center">
+            <Users className="h-12 w-12 text-slate-500 mx-auto mb-3" />
+            <h1 className="text-2xl font-bold text-white">Unable to load dashboard</h1>
+            <p className="text-sm text-slate-400 mt-2">
+              Please refresh the page or try again later.
+            </p>
           </div>
         </main>
         <Footer />
@@ -332,7 +352,10 @@ export default function DashboardPage() {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-1 mb-6 border-b border-slate-800">
+              <div
+                className="flex gap-1 mb-6 border-b border-slate-800"
+                role="tablist"
+              >
                 {(
                   [
                     { key: "overview", label: "Overview" },
@@ -343,6 +366,9 @@ export default function DashboardPage() {
                 ).map((tab) => (
                   <button
                     key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={cn(
                       "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
@@ -693,8 +719,16 @@ export default function DashboardPage() {
                   interns.map((intern) => (
                     <tr
                       key={intern.id}
+                      tabIndex={0}
+                      role="button"
                       className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 cursor-pointer transition-colors"
                       onClick={() => loadInternDetail(intern.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          loadInternDetail(intern.id);
+                        }
+                      }}
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
