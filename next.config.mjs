@@ -2,7 +2,13 @@
 const nextConfig = {
   poweredByHeader: false,
   experimental: {
-    serverComponentsExternalPackages: ["@react-pdf/renderer"],
+    serverComponentsExternalPackages: ["@react-pdf/renderer", "agentmail"],
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.resolve.alias["@x402/fetch"] = false;
+    }
+    return config;
   },
   images: {
     remotePatterns: [
