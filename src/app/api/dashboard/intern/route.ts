@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getInternMessages } from "@/lib/agentmail";
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
@@ -20,17 +19,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Intern not found" }, { status: 404 });
   }
 
-  let messages: unknown[] = [];
-  if (intern.agentmailInboxId) {
-    try {
-      messages = await getInternMessages(intern.agentmailInboxId);
-    } catch (err) {
-      console.error("Failed to fetch agentmail messages:", err);
-    }
-  }
-
   return NextResponse.json({
     ...intern,
-    messages,
+    messages: [],
   });
 }

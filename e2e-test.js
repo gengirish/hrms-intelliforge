@@ -20,7 +20,6 @@ const results = [];
 
 const state = {
   internId: null,
-  hasInbox: false,
   currentStatus: null,
 };
 
@@ -140,13 +139,10 @@ async function testOnboarding() {
   });
 
   if (state.internId) {
-    await test("Check AgentMail inbox status", async () => {
+    await test("Intern created (shared HR inbox hr@intelliforge.tech for all mail)", async () => {
       const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
-      state.hasInbox = !!data.agentmailInboxId;
-      if (state.hasInbox) {
-        return { inbox: data.agentmailAddress };
-      }
-      return { inbox: "not created (plan limit or API error — offer/accept/attendance tests will skip)" };
+      assert(data.id === state.internId, "detail id mismatch");
+      return { email: data.email, status: data.status };
     });
   }
 }
@@ -201,7 +197,7 @@ async function testInternDetail() {
     assert(Array.isArray(data.attendance), "Missing attendance[]");
     assert(Array.isArray(data.tasks), "Missing tasks[]");
     assert(Array.isArray(data.messages), "Missing messages[]");
-    return { name: data.name, status: data.status, hasInbox: !!data.agentmailInboxId };
+    return { name: data.name, status: data.status };
   });
 }
 
@@ -237,20 +233,16 @@ async function testAdminActions() {
     return data;
   });
 
-  if (!state.hasInbox) {
-    skip("send_offer", "No AgentMail inbox — cannot send offer email");
-  } else {
-    await test("send_offer → status OFFERED", async () => {
-      const { status, data } = await api("POST", "/api/dashboard/action", {
-        action: "send_offer",
-        internId: state.internId,
-      }, "json");
-      assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
-      assert(data.status === "OFFERED", `Expected OFFERED, got ${data.status}`);
-      state.currentStatus = "OFFERED";
-      return data;
-    });
-  }
+  await test("send_offer → status OFFERED (via shared hr@intelliforge.tech)", async () => {
+    const { status, data } = await api("POST", "/api/dashboard/action", {
+      action: "send_offer",
+      internId: state.internId,
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.status === "OFFERED", `Expected OFFERED, got ${data.status}`);
+    state.currentStatus = "OFFERED";
+    return data;
+  });
 
   await test("Verify stipend persisted", async () => {
     const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
@@ -549,10 +541,10 @@ async function testWebhook() {
     return data;
   });
 
-  await test("Unknown inbox returns ok (no error)", async () => {
+  await test("message.received without sender returns ok", async () => {
     const { status, data } = await api("POST", "/api/webhooks/agentmail", {
       event: "message.received",
-      message: { inboxId: "nonexistent_inbox", extractedText: "I accept" },
+      message: { extractedText: "I accept" },
     }, "json");
     assert(status === 200, `Expected 200, got ${status}`);
     return data;
@@ -583,7 +575,7 @@ async function testFinalState() {
       stipend: `₹${(data.stipendPaise / 100).toFixed(2)}`,
       attendanceCount: data.attendance.length,
       taskCount: data.tasks.length,
-      agentmail: data.agentmailAddress || "not created",
+      hrFrom: "hr@intelliforge.tech",
     };
   });
 

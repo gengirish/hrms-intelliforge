@@ -37,13 +37,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "send_offer") {
-      if (!intern.agentmailInboxId) {
-        return NextResponse.json(
-          { error: "Intern has no AgentMail inbox. Re-submit onboarding." },
-          { status: 400 }
-        );
-      }
-
       if (intern.stipendPaise === 0) {
         return NextResponse.json(
           { error: "Set the stipend amount before sending the offer." },
@@ -63,11 +56,9 @@ export async function POST(req: NextRequest) {
         college: intern.college,
       });
       const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
-
       const pdfBase64 = pdfBuffer.toString("base64");
 
       await sendOfferLetter({
-        inboxId: intern.agentmailInboxId,
         internEmail: intern.email,
         internName: intern.name,
         role: intern.role,
@@ -85,30 +76,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "send_reminder") {
-      if (!intern.agentmailInboxId) {
-        return NextResponse.json(
-          { error: "Intern has no AgentMail inbox." },
-          { status: 400 }
-        );
-      }
-
-      await sendTaskReminder(
-        intern.agentmailInboxId,
-        intern.email,
-        intern.name
-      );
-
+      await sendTaskReminder(intern.email, intern.name);
       return NextResponse.json({ ok: true });
     }
 
     if (action === "mark_complete") {
-      if (!intern.agentmailInboxId) {
-        return NextResponse.json(
-          { error: "Intern has no AgentMail inbox." },
-          { status: 400 }
-        );
-      }
-
       const startDateStr = formatDateIST(intern.startDate);
 
       const certElement = React.createElement(CompletionCertPDF, {
@@ -119,15 +91,9 @@ export async function POST(req: NextRequest) {
         college: intern.college,
       });
       const pdfBuffer = await renderToBuffer(certElement as unknown as ReactElement);
-
       const pdfBase64 = pdfBuffer.toString("base64");
 
-      await sendCompletionEmail(
-        intern.agentmailInboxId,
-        intern.email,
-        intern.name,
-        pdfBase64
-      );
+      await sendCompletionEmail(intern.email, intern.name, pdfBase64);
 
       await prisma.intern.update({
         where: { id: internId },

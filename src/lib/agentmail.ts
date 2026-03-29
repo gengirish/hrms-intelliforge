@@ -4,21 +4,63 @@ export const agentmail = new AgentMailClient({
   apiKey: process.env.AGENTMAIL_API_KEY!,
 });
 
-export async function createInternInbox(internName: string, internId: string) {
-  const slug = internName.toLowerCase().replace(/\s+/g, ".");
-  const shortId = internId.slice(-6);
-  const username = `${slug}.${shortId}`;
+let _hrInboxId: string | null = null;
+
+async function getHRInboxId(): Promise<string> {
+  if (_hrInboxId) return _hrInboxId;
+
+  const inboxes = await agentmail.inboxes.list({ limit: 50 });
+  const existing = inboxes.inboxes?.find(
+    (ib: { email?: string; username?: string; domain?: string }) =>
+      ib.email?.toLowerCase() === "hr@intelliforge.tech" ||
+      (ib.username === "hr" && ib.domain === "intelliforge.tech")
+  );
+  if (existing) {
+    _hrInboxId = existing.inboxId;
+    return _hrInboxId;
+  }
+
   const inbox = await agentmail.inboxes.create({
-    username,
-    domain: "agentmail.to",
-    displayName: `${internName} — IntelliForge Intern`,
-    clientId: `intern-${internId}`,
+    username: "hr",
+    domain: "intelliforge.tech",
+    displayName: "IntelliForge AI — HR Team",
+    clientId: "hrms-hr-inbox",
   });
-  return { inboxId: inbox.inboxId, address: inbox.email };
+  _hrInboxId = inbox.inboxId;
+  return _hrInboxId;
+}
+
+export async function sendWelcomeEmail(
+  internEmail: string,
+  internName: string,
+  role: string
+) {
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: internEmail,
+    subject: `Welcome to IntelliForge AI, ${internName}!`,
+    html: `
+      <h2>Hi ${internName},</h2>
+      <p>Thank you for registering on the IntelliForge HRMS portal!</p>
+      <p>Your onboarding application for <strong>${role}</strong> has been received and is under review.</p>
+      <p>Here's what happens next:</p>
+      <ol>
+        <li>Our team will review your application</li>
+        <li>You'll receive an <strong>offer letter</strong> at this email address</li>
+        <li>Reply <strong>"I Accept"</strong> to confirm your internship</li>
+      </ol>
+      <p>In the meantime, you can explore the portal:</p>
+      <ul>
+        <li><a href="https://hrms.intelliforge.tech/attendance">Attendance Tracker</a></li>
+        <li><a href="https://hrms.intelliforge.tech/tasks">Task Logger</a></li>
+      </ul>
+      <br/>
+      <p>— IntelliForge AI HR Team</p>
+    `,
+  });
 }
 
 export async function sendOfferLetter({
-  inboxId,
   internEmail,
   internName,
   role,
@@ -26,7 +68,6 @@ export async function sendOfferLetter({
   startDate,
   pdfBase64,
 }: {
-  inboxId: string;
   internEmail: string;
   internName: string;
   role: string;
@@ -34,6 +75,7 @@ export async function sendOfferLetter({
   startDate: string;
   pdfBase64: string;
 }) {
+  const inboxId = await getHRInboxId();
   const stipendINR = (stipendPaise / 100).toLocaleString("en-IN");
   await agentmail.inboxes.messages.send(inboxId, {
     to: internEmail,
@@ -58,10 +100,10 @@ export async function sendOfferLetter({
 }
 
 export async function sendTaskReminder(
-  inboxId: string,
   internEmail: string,
   internName: string
 ) {
+  const inboxId = await getHRInboxId();
   const today = new Date().toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
   });
@@ -80,10 +122,10 @@ export async function sendTaskReminder(
 }
 
 export async function sendAttendanceNudge(
-  inboxId: string,
   internEmail: string,
   internName: string
 ) {
+  const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: internEmail,
     subject: `⏰ Attendance Not Logged Yet — ${new Date().toLocaleDateString("en-IN")}`,
@@ -99,11 +141,11 @@ export async function sendAttendanceNudge(
 }
 
 export async function sendCompletionEmail(
-  inboxId: string,
   internEmail: string,
   internName: string,
   pdfBase64: string
 ) {
+  const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: internEmail,
     subject: `🎓 Internship Completion Certificate — IntelliForge AI`,
@@ -124,7 +166,4 @@ export async function sendCompletionEmail(
   });
 }
 
-export async function getInternMessages(inboxId: string) {
-  const result = await agentmail.inboxes.messages.list(inboxId, { limit: 20 });
-  return result.messages;
-}
+export { getHRInboxId };

@@ -38,8 +38,8 @@ interface Intern {
   aadharUrl: string | null;
   panUrl: string | null;
   photoUrl: string | null;
-  agentmailInboxId: string | null;
-  agentmailAddress: string | null;
+  agentmailInboxId?: string | null;
+  agentmailAddress?: string | null;
   status: string;
   acceptedAt: string | null;
   createdAt: string;
@@ -371,10 +371,7 @@ export default function DashboardPage() {
                       ["Year", selectedIntern.year],
                       ["Start Date", formatDateIST(selectedIntern.startDate)],
                       ["Duration", `${selectedIntern.durationWeeks} weeks`],
-                      [
-                        "AgentMail",
-                        selectedIntern.agentmailAddress || "Not created",
-                      ],
+                      ["Email (HR)", "hr@intelliforge.tech"],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between text-sm">
                         <span className="text-slate-400">{label}</span>
@@ -553,12 +550,15 @@ export default function DashboardPage() {
               {activeTab === "emails" && (
                 <div className="glass-card p-6">
                   <h3 className="text-sm font-semibold text-white mb-4">
-                    AgentMail Messages (Last 20)
+                    Email thread
                   </h3>
                   {!selectedIntern.messages ||
                   selectedIntern.messages.length === 0 ? (
                     <p className="text-sm text-slate-400 text-center py-6">
-                      No messages yet.
+                      All HR email goes from{" "}
+                      <span className="text-slate-300">hr@intelliforge.tech</span>{" "}
+                      to this intern&apos;s address. View replies in the AgentMail
+                      console for the shared HR inbox.
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -671,7 +671,7 @@ export default function DashboardPage() {
                     Status
                   </th>
                   <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">
-                    AgentMail
+                    Email
                   </th>
                   <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">
                     Joined
@@ -725,7 +725,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
-                        {intern.agentmailAddress || "—"}
+                        {intern.email}
                       </td>
                       <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
                         {formatDateIST(intern.createdAt)}

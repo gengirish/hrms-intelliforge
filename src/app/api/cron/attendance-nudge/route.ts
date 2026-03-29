@@ -18,10 +18,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const activeInterns = await prisma.intern.findMany({
-      where: {
-        status: "ACTIVE",
-        agentmailInboxId: { not: null },
-      },
+      where: { status: "ACTIVE" },
     });
 
     const todayStart = getISTStartOfDay();
@@ -38,11 +35,7 @@ export async function GET(req: NextRequest) {
 
       if (!hasAttendance) {
         try {
-          await sendAttendanceNudge(
-            intern.agentmailInboxId!,
-            intern.email,
-            intern.name
-          );
+          await sendAttendanceNudge(intern.email, intern.name);
           sent++;
         } catch (err) {
           console.error(`Attendance nudge failed for ${intern.email}:`, err);

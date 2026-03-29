@@ -27,9 +27,11 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 
 ## AgentMail Email Flows
 
-1. **Onboarding** → `createInternInbox()` creates dedicated inbox
-2. **Send Offer** → PDF generated → `sendOfferLetter()` with attachment
-3. **Accept Offer** → Intern replies "I Accept" → webhook auto-activates
+All outbound mail uses a **single shared inbox**: `hr@intelliforge.tech` (custom domain on AgentMail). Messages are sent **to each intern’s registration email** — no per-intern inbox (avoids AgentMail inbox limits).
+
+1. **Onboarding** → Welcome email from `hr@intelliforge.tech` to the intern’s email
+2. **Send Offer** → PDF generated → `sendOfferLetter()` to the intern’s email
+3. **Accept Offer** → Intern replies "I Accept" (from their mailbox) → webhook matches sender email → auto-activates
 4. **Task Reminder** → Cron (Monday 9AM IST) → `sendTaskReminder()`
 5. **Attendance Nudge** → Cron (Daily 10:30AM IST) → `sendAttendanceNudge()`
 6. **Completion** → Certificate PDF → `sendCompletionEmail()`
@@ -78,10 +80,13 @@ npm run dev
 
 ### 6. AgentMail Webhook
 
-Register this URL in [AgentMail Console](https://console.agentmail.to):
+Register this URL in [AgentMail Console](https://console.agentmail.to) for the **hr@intelliforge.tech** inbox:
+
 ```
 https://hrms.intelliforge.tech/api/webhooks/agentmail
 ```
+
+Incoming `message.received` events are matched by the **reply sender’s email** to an intern row (case-insensitive), then offer acceptance is detected from the message body.
 
 ## Vercel Cron Jobs
 

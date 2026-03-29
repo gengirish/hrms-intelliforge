@@ -10,20 +10,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const activeInterns = await prisma.intern.findMany({
-      where: {
-        status: "ACTIVE",
-        agentmailInboxId: { not: null },
-      },
+      where: { status: "ACTIVE" },
     });
 
     let sent = 0;
     for (const intern of activeInterns) {
       try {
-        await sendTaskReminder(
-          intern.agentmailInboxId!,
-          intern.email,
-          intern.name
-        );
+        await sendTaskReminder(intern.email, intern.name);
         sent++;
       } catch (err) {
         console.error(`Task reminder failed for ${intern.email}:`, err);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { put } from "@vercel/blob";
-import { createInternInbox } from "@/lib/agentmail";
+import { sendWelcomeEmail } from "@/lib/agentmail";
 
 async function uploadFile(
   file: File,
@@ -79,16 +79,9 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      const inbox = await createInternInbox(name, intern.id);
-      await prisma.intern.update({
-        where: { id: intern.id },
-        data: {
-          agentmailInboxId: inbox.inboxId,
-          agentmailAddress: inbox.address,
-        },
-      });
+      await sendWelcomeEmail(email, name, role);
     } catch (err) {
-      console.error("AgentMail inbox creation failed:", err);
+      console.error("Welcome email failed:", err);
     }
 
     return NextResponse.json({ id: intern.id, status: "PENDING" });
