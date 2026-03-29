@@ -16,11 +16,22 @@
 
 body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 @layer base {
   * {
     @apply border-slate-700/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  input, select, textarea, button {
+    font-size: 16px;
   }
 }
 
@@ -30,5 +41,26 @@ body {
   }
   .gradient-text {
     @apply bg-gradient-to-r from-indigo-400 to-indigo-400 bg-clip-text text-transparent;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+@media (display-mode: standalone) {
+  .navbar-standalone {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+@media (max-width: 767px) {
+  main {
+    padding-bottom: 5rem;
   }
 }

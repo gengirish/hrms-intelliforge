@@ -1,0 +1,55 @@
+{
+  "name": "IntelliForge HRMS",
+  "short_name": "HRMS",
+  "description": "Intern Portal — Onboarding, Attendance, Tasks & Offers for IntelliForge AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Attendance",
+      "url": "/attendance",
+      "description": "Log daily attendance"
+    },
+    {
+      "name": "Tasks",
+      "url": "/tasks",
+      "description": "Submit weekly tasks"
+    },
+    {
+      "name": "Onboard",
+      "url": "/onboard",
+      "description": "Intern onboarding"
+    }
+  ]
+}

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { UserPlus, Clock, ClipboardList } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { MobileBottomNav } from "@/components/mobile-nav";
+import { InstallPrompt } from "@/components/install-prompt";
 
 const actions = [
   {
@@ -92,6 +94,8 @@ export default function HomePage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
+      <InstallPrompt />
     </div>
   );
 }

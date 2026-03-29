@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { Upload, CheckCircle2, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { MobileBottomNav } from "@/components/mobile-nav";
+import { InstallPrompt } from "@/components/install-prompt";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -91,6 +93,8 @@ export default function OnboardPage() {
           </div>
         </main>
         <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
       </div>
     );
   }
@@ -316,6 +320,8 @@ export default function OnboardPage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
+      <InstallPrompt />
     </div>
   );
 }

@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { MobileBottomNav } from "@/components/mobile-nav";
+import { InstallPrompt } from "@/components/install-prompt";
 import { cn, formatINR, formatDateIST, formatTimeIST, getStatusColor } from "@/lib/utils";
 
 interface Intern {
@@ -216,6 +218,8 @@ export default function DashboardPage() {
           </div>
         </main>
         <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
       </div>
     );
   }
@@ -589,6 +593,8 @@ export default function DashboardPage() {
           )}
         </main>
         <Footer />
+        <MobileBottomNav />
+        <InstallPrompt />
       </div>
     );
   }
@@ -737,6 +743,8 @@ export default function DashboardPage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
+      <InstallPrompt />
     </div>
   );
 }

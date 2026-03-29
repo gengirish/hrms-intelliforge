@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { MobileBottomNav } from "@/components/mobile-nav";
+import { InstallPrompt } from "@/components/install-prompt";
 import { formatINR, formatDateIST } from "@/lib/utils";
 
 interface InternOffer {
@@ -226,6 +228,8 @@ export default function OfferPage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
+      <InstallPrompt />
     </div>
   );
 }
