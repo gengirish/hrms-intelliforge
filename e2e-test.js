@@ -9,7 +9,7 @@
  * Env:  BASE_URL (optional, defaults to production)
  */
 
-const BASE = process.env.BASE_URL || "https://hrms-intelliforge.vercel.app";
+const BASE = process.env.BASE_URL || "https://hrms.intelliforge.tech";
 const ADMIN_EMAIL = "admin@intelliforge.tech";
 const TEST_EMAIL = `e2e.${Date.now()}@test.intelliforge.tech`;
 
