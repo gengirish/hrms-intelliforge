@@ -35,10 +35,10 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-slate-950 to-cyan-600/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-slate-950 to-indigo-600/10" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 mb-6">
-              <span className="text-xs font-medium text-blue-400">IntelliForge AI</span>
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 mb-6">
+              <span className="text-xs font-medium text-indigo-400">IntelliForge AI</span>
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="text-white">IntelliForge HRMS</span>
@@ -52,7 +52,7 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/onboard"
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
               >
                 Start Onboarding
               </Link>
@@ -73,16 +73,16 @@ export default function HomePage() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="glass-card p-6 hover:border-blue-500/50 hover:bg-slate-800/80 transition-all group"
+                className="glass-card p-6 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 mb-4 group-hover:bg-blue-500/20 transition-colors">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 mb-4 group-hover:bg-indigo-500/20 transition-colors">
                   <action.icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">
                   {action.title}
                 </h3>
                 <p className="text-sm text-slate-400 mb-4">{action.description}</p>
-                <span className="text-sm font-medium text-blue-400 group-hover:text-blue-300 transition-colors">
+                <span className="text-sm font-medium text-indigo-400 group-hover:text-blue-300 transition-colors">
                   {action.cta} &rarr;
                 </span>
               </Link>

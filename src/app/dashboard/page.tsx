@@ -186,7 +186,7 @@ export default function DashboardPage() {
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full">
             <div className="text-center mb-6">
-              <Users className="h-12 w-12 text-blue-400 mx-auto mb-3" />
+              <Users className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
               <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
               <p className="text-sm text-slate-400 mt-1">
                 Sign in with your admin email
@@ -198,13 +198,13 @@ export default function DashboardPage() {
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
-                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 placeholder="admin@intelliforge.tech"
               />
               <button
                 onClick={handleAdminLogin}
                 disabled={loading || !adminEmail}
-                className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -236,7 +236,7 @@ export default function DashboardPage() {
 
           {detailLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
             </div>
           ) : (
             <>
@@ -244,7 +244,7 @@ export default function DashboardPage() {
               <div className="glass-card p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-xl font-bold text-white">
+                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-xl font-bold text-white">
                       {selectedIntern.name.charAt(0)}
                     </div>
                     <div>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                         actionLoading === "send_offer" ||
                         selectedIntern.stipendPaise === 0
                       }
-                      className="rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                      className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
                     >
                       {actionLoading === "send_offer" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                     className={cn(
                       "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
                       activeTab === tab.key
-                        ? "border-blue-500 text-white"
+                        ? "border-indigo-500 text-white"
                         : "border-transparent text-slate-400 hover:text-white"
                     )}
                   >
@@ -393,12 +393,12 @@ export default function DashboardPage() {
                           onChange={(e) =>
                             setStipendEdit(Number(e.target.value))
                           }
-                          className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white focus:border-blue-500 outline-none transition-colors text-sm"
+                          className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white focus:border-indigo-500 outline-none transition-colors text-sm"
                         />
                       </div>
                       <button
                         onClick={() => saveStipend(selectedIntern.id)}
-                        className="rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-2 text-sm font-semibold text-white transition-colors"
+                        className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-2 text-sm font-semibold text-white transition-colors"
                       >
                         <Save className="h-4 w-4" />
                       </button>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                              className="flex items-center gap-1 text-indigo-400 hover:text-blue-300"
                             >
                               <Eye className="h-3.5 w-3.5" />
                               View
@@ -613,7 +613,7 @@ export default function DashboardPage() {
               label: "Total Interns",
               value: stats.total,
               icon: Users,
-              color: "text-blue-400",
+              color: "text-indigo-400",
             },
             {
               label: "Pending",
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-xs font-bold text-white">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-xs font-bold text-white">
                             {intern.name.charAt(0)}
                           </div>
                           <div>

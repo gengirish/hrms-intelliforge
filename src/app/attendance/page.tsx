@@ -114,7 +114,7 @@ export default function AttendancePage() {
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full">
             <div className="text-center mb-6">
-              <Clock className="h-12 w-12 text-blue-400 mx-auto mb-3" />
+              <Clock className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
               <h1 className="text-2xl font-bold text-white">Attendance</h1>
               <p className="text-sm text-slate-400 mt-1">
                 Log in with your registered email
@@ -126,13 +126,13 @@ export default function AttendancePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 placeholder="your.email@example.com"
               />
               <button
                 onClick={handleLogin}
                 disabled={loading || !email}
-                className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -140,6 +140,21 @@ export default function AttendancePage() {
                   "Continue"
                 )}
               </button>
+            </div>
+            <div className="mt-6 pt-5 border-t border-slate-700/50 space-y-2">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">What you can do</p>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <LogIn className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <span>Punch In / Punch Out with one tap</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <Home className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                <span>Toggle WFH or Office mode daily</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <CheckCircle2 className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                <span>View this week&#39;s full attendance summary</span>
+              </div>
             </div>
           </div>
         </main>
@@ -174,7 +189,7 @@ export default function AttendancePage() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors",
                   mode === "WFH"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-indigo-600 text-white"
                     : "text-slate-400 hover:text-white"
                 )}
               >
@@ -186,7 +201,7 @@ export default function AttendancePage() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors",
                   mode === "OFFICE"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-indigo-600 text-white"
                     : "text-slate-400 hover:text-white"
                 )}
               >
@@ -296,7 +311,7 @@ export default function AttendancePage() {
                             className={cn(
                               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
                               rec.mode === "WFH"
-                                ? "bg-blue-500/10 text-blue-400"
+                                ? "bg-indigo-500/10 text-indigo-400"
                                 : "bg-purple-500/10 text-purple-400"
                             )}
                           >

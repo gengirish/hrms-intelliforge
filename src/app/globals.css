@@ -29,6 +29,6 @@ body {
     @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl;
   }
   .gradient-text {
-    @apply bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-indigo-400 to-indigo-400 bg-clip-text text-transparent;
   }
 }

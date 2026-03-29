@@ -119,7 +119,7 @@ export default function TasksPage() {
       case "DONE":
         return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
       case "IN_PROGRESS":
-        return <PlayCircle className="h-4 w-4 text-blue-400" />;
+        return <PlayCircle className="h-4 w-4 text-indigo-400" />;
       default:
         return <Circle className="h-4 w-4 text-slate-400" />;
     }
@@ -132,7 +132,7 @@ export default function TasksPage() {
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full">
             <div className="text-center mb-6">
-              <ClipboardList className="h-12 w-12 text-blue-400 mx-auto mb-3" />
+              <ClipboardList className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
               <h1 className="text-2xl font-bold text-white">Weekly Tasks</h1>
               <p className="text-sm text-slate-400 mt-1">
                 Log in with your registered email
@@ -144,13 +144,13 @@ export default function TasksPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 placeholder="your.email@example.com"
               />
               <button
                 onClick={handleLogin}
                 disabled={loading || !email}
-                className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -158,6 +158,21 @@ export default function TasksPage() {
                   "Continue"
                 )}
               </button>
+            </div>
+            <div className="mt-6 pt-5 border-t border-slate-700/50 space-y-2">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">What you can do</p>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <Plus className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                <span>Log tasks with title, description and hours</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <PlayCircle className="h-4 w-4 text-yellow-400 flex-shrink-0" />
+                <span>Track status: Todo to In Progress to Done</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <span>View all tasks for the current ISO week</span>
+              </div>
             </div>
           </div>
         </main>
@@ -185,7 +200,7 @@ export default function TasksPage() {
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+              className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
               Add Task
@@ -204,7 +219,7 @@ export default function TasksPage() {
                 </label>
                 <input
                   {...register("title")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="Build landing page"
                 />
                 {errors.title && (
@@ -220,7 +235,7 @@ export default function TasksPage() {
                 <textarea
                   {...register("description")}
                   rows={3}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors resize-none"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors resize-none"
                   placeholder="Describe what you worked on..."
                 />
                 {errors.description && (
@@ -236,7 +251,7 @@ export default function TasksPage() {
                   </label>
                   <select
                     {...register("status")}
-                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   >
                     <option value="TODO">To Do</option>
                     <option value="IN_PROGRESS">In Progress</option>
@@ -252,7 +267,7 @@ export default function TasksPage() {
                     type="number"
                     step="0.5"
                     min="0.5"
-                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                     placeholder="4"
                   />
                   {errors.hours && (
@@ -266,7 +281,7 @@ export default function TasksPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-blue-600 hover:bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-colors flex items-center gap-2"
+                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-colors flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

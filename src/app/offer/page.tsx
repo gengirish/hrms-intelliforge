@@ -88,6 +88,12 @@ export default function OfferPage() {
           <p className="mt-2 text-slate-400">
             Enter your email to view your internship offer details.
           </p>
+          <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+            <FileText className="h-4 w-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-indigo-300">
+              After accepting, your signed PDF offer letter will be emailed to you automatically via <strong>AgentMail</strong>.
+            </p>
+          </div>
         </div>
 
         {/* Email Lookup */}
@@ -98,13 +104,13 @@ export default function OfferPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && lookupOffer()}
-              className="flex-1 rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+              className="flex-1 rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
               placeholder="Enter your email address"
             />
             <button
               onClick={lookupOffer}
               disabled={loading || !email}
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition-colors flex items-center gap-2"
+              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center gap-2"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -120,7 +126,7 @@ export default function OfferPage() {
         {intern && !accepted && (
           <div className="glass-card p-6 space-y-6">
             <div className="flex items-center gap-3 mb-2">
-              <FileText className="h-6 w-6 text-blue-400" />
+              <FileText className="h-6 w-6 text-indigo-400" />
               <h2 className="text-xl font-semibold text-white">
                 Offer Details for {intern.name}
               </h2>
@@ -128,7 +134,7 @@ export default function OfferPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-900/50">
-                <Briefcase className="h-5 w-5 text-blue-400" />
+                <Briefcase className="h-5 w-5 text-indigo-400" />
                 <div>
                   <p className="text-xs text-slate-400">Role</p>
                   <p className="text-sm font-medium text-white">{intern.role}</p>
@@ -170,7 +176,7 @@ export default function OfferPage() {
               <button
                 onClick={handleAccept}
                 disabled={accepting}
-                className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-indigo-500 px-6 py-3 font-semibold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {accepting ? (
                   <>
@@ -213,8 +219,7 @@ export default function OfferPage() {
               Offer Accepted!
             </h2>
             <p className="text-slate-400">
-              Welcome to IntelliForge AI! You&apos;ll receive a confirmation
-              email with your offer letter PDF shortly.
+              Welcome to IntelliForge AI! Your offer letter PDF has been generated and emailed to you via <strong>AgentMail</strong> — check your inbox!
             </p>
           </div>
         )}

@@ -118,7 +118,7 @@ export default function OnboardPage() {
                 </label>
                 <input
                   {...register("name")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="Priya Sharma"
                 />
                 {errors.name && (
@@ -133,7 +133,7 @@ export default function OnboardPage() {
                 <input
                   {...register("email")}
                   type="email"
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="priya@example.com"
                 />
                 {errors.email && (
@@ -147,7 +147,7 @@ export default function OnboardPage() {
                 </label>
                 <input
                   {...register("phone")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="+91 98765 43210"
                 />
                 {errors.phone && (
@@ -161,7 +161,7 @@ export default function OnboardPage() {
                 </label>
                 <select
                   {...register("role")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 >
                   <option value="">Select role</option>
                   <option value="AI Intern">AI Intern</option>
@@ -185,7 +185,7 @@ export default function OnboardPage() {
                 </label>
                 <input
                   {...register("college")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="IIT Delhi"
                 />
                 {errors.college && (
@@ -199,7 +199,7 @@ export default function OnboardPage() {
                 </label>
                 <input
                   {...register("branch")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="Computer Science"
                 />
                 {errors.branch && (
@@ -213,7 +213,7 @@ export default function OnboardPage() {
                 </label>
                 <select
                   {...register("year")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 >
                   <option value="">Select year</option>
                   <option value="1st Year">1st Year</option>
@@ -240,7 +240,7 @@ export default function OnboardPage() {
                 <input
                   {...register("startDate")}
                   type="date"
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 />
                 {errors.startDate && (
                   <p className="mt-1 text-xs text-red-400">{errors.startDate.message}</p>
@@ -256,7 +256,7 @@ export default function OnboardPage() {
                   type="number"
                   min={4}
                   max={52}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   placeholder="12"
                 />
                 {errors.durationWeeks && (
@@ -278,7 +278,7 @@ export default function OnboardPage() {
               {(["aadhar", "pan", "photo"] as const).map((field) => (
                 <label
                   key={field}
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 p-6 cursor-pointer hover:border-blue-500/50 transition-colors"
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 p-6 cursor-pointer hover:border-indigo-500/50 transition-colors"
                 >
                   <Upload className="h-6 w-6 text-slate-500" />
                   <span className="text-sm text-slate-400 capitalize">{field === "aadhar" ? "Aadhaar" : field === "pan" ? "PAN Card" : "Photo"}</span>
@@ -301,7 +301,7 @@ export default function OnboardPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
