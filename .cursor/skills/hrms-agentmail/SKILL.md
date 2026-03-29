@@ -1,18 +1,31 @@
 ---
 name: hrms-agentmail
-description: Integrate AgentMail (agentmail.to) for AI-powered email in the Interview Bot. Use when sending interview invitations, completion notifications, candidate follow-ups, managing per-org inboxes, handling email replies via webhooks/websockets, or attaching reports. Based on the official AgentMail skill (skills.sh/agentmail-to/agentmail-skills/agentmail).
+description: Integrate AgentMail (agentmail.to) for AI-powered email — IntelliForge HRMS (TypeScript, shared HR inbox) and Interview Bot (Python, per-org inboxes, SMTP fallback). Use for invitations, notifications, webhooks, IMAP/SMTP/mobile clients, or attachments. Based on the official AgentMail skill (skills.sh/agentmail-to/agentmail-skills/agentmail).
 ---
 
-# AgentMail Integration for Interview Bot
+# AgentMail Integration (IntelliForge)
 
-AgentMail is an API-first email platform for AI agents. This skill covers the full SDK surface tailored to Interview Bot use cases: multi-tenant org inboxes, interview invitations, completion notifications, candidate reply handling, report attachments, and real-time events.
+AgentMail is an API-first email platform for AI agents. This skill covers SDK usage for **IntelliForge HRMS** and the **AI Interview Bot**, plus **IMAP/SMTP** for standard email clients.
 
-**Docs**: https://docs.agentmail.to
-**Console**: https://console.agentmail.to
-**Official Skill**: https://skills.sh/agentmail-to/agentmail-skills/agentmail
+**Docs**: https://docs.agentmail.to  
+**IMAP & SMTP**: https://docs.agentmail.to/imap-smtp  
+**Console**: https://console.agentmail.to  
+**Official Skill**: https://skills.sh/agentmail-to/agentmail-skills/agentmail  
 **Base URL**: `https://api.agentmail.to/v0/`
 
-## Current State
+**HRMS human-readable guide** (webhook, Android/iOS): `docs/AGENTMAIL.md` in the `hrms-intelliforge` repository.
+
+## Current state by repository
+
+### IntelliForge HRMS (`hrms-intelliforge`)
+
+- TypeScript SDK: `agentmail` in `package.json`; client and sends in `src/lib/agentmail.ts`
+- Single shared inbox `hr@intelliforge.tech` (`clientId: hrms-hr-inbox`); no per-user inboxes
+- Env: `AGENTMAIL_API_KEY` only for app email (see `.env.example`)
+- Webhook: `POST /api/webhooks/agentmail` — register in console for the HR inbox
+- **No** in-app SMTP fallback; all outbound mail uses the API
+
+### AI Interview Bot (FastAPI backend)
 
 Already implemented and deployed:
 - `agentmail` SDK in `backend/pyproject.toml`
@@ -22,19 +35,48 @@ Already implemented and deployed:
 - `notifications.py` uses AgentMail API first, SMTP (`smtp.agentmail.to:465`) as fallback
 - `POST /organizations/email/setup` and `GET /organizations/email/status` endpoints
 - Settings > Email tab in frontend dashboard
-- Custom domain: `intelliforge.tech` (from: `hire-with-giri@intelliforge.tech`)
+- Custom domain example: `intelliforge.tech` (e.g. `hire-with-giri@intelliforge.tech`)
 
-## Environment Variables
+## Environment variables
+
+**HRMS (minimal):**
+
+```
+AGENTMAIL_API_KEY=am_...   # Required
+```
+
+**Interview Bot (extended + SMTP fallback):**
 
 ```
 AGENTMAIL_API_KEY=am_...                    # Required
 AGENTMAIL_DEFAULT_DOMAIN=intelliforge.tech  # Custom domain
 SMTP_HOST=smtp.agentmail.to                 # SMTP relay fallback
 SMTP_PORT=465                               # SSL
-SMTP_USER=hire-with-giri@intelliforge.tech
+SMTP_USER=<full-inbox-email@your-domain>    # Same as the sending inbox address
 SMTP_PASSWORD=am_...                        # Same as API key
-FROM_EMAIL=hire-with-giri@intelliforge.tech
+FROM_EMAIL=<full-inbox-email@your-domain>
 ```
+
+## IMAP, SMTP, and mobile or desktop mail clients
+
+Use this when operators want to read or send from **Apple Mail, Outlook, Gmail (Other/IMAP), Samsung Email, K-9 Mail**, etc. Authoritative settings and rollout status: [AgentMail IMAP & SMTP](https://docs.agentmail.to/imap-smtp).
+
+**Credentials:** username = **full inbox email**; password = **API key** (same as `AGENTMAIL_API_KEY`). Rotating the key invalidates client logins.
+
+| Protocol | Host | Port | SSL |
+|----------|------|------|-----|
+| IMAP | `imap.agentmail.to` | 993 | Required |
+| SMTP | `smtp.agentmail.to` | 465 | Required |
+
+**SMTP auth:** use the **full inbox address** as the SMTP username (matches AgentMail code samples). If login fails, check the official doc for updates.
+
+**From address:** must match the inbox address or sending may be rejected.
+
+**IMAP:** the official doc may still describe IMAP as rolling out; clients need IMAP (or similar) to sync **incoming** mail on a phone. **Android:** add account → IMAP/manual → enter IMAP then SMTP with SSL. **iOS:** Settings → Mail → Accounts → Other → IMAP, same hosts and credentials.
+
+**Security:** the API key grants full AgentMail access; avoid storing it on untrusted devices.
+
+See `docs/AGENTMAIL.md` in **hrms-intelliforge** for HRMS-specific webhook URL and step-by-step Android/iOS notes.
 
 ## SDK Setup
 
@@ -516,6 +558,9 @@ inbox = client.inboxes.create(client_id=f"org-{org_id}")
 
 | File | What It Does |
 |------|-------------|
+| `docs/AGENTMAIL.md` (hrms-intelliforge) | HRMS webhook, IMAP/SMTP, Android/iOS |
+| `src/lib/agentmail.ts` (hrms-intelliforge) | TS client, `hr@intelliforge.tech` inbox, transactional sends |
+| `src/app/api/webhooks/agentmail/route.ts` (hrms-intelliforge) | Inbound webhook (e.g. offer acceptance) |
 | `backend/src/interviewbot/config.py` | `agentmail_api_key`, `agentmail_default_domain` settings |
 | `backend/src/interviewbot/services/agentmail_client.py` | SDK client, inbox creation, email sending |
 | `backend/src/interviewbot/services/notifications.py` | AgentMail-first with SMTP fallback, SSL on port 465 |
@@ -530,7 +575,7 @@ inbox = client.inboxes.create(client_id=f"org-{org_id}")
 ## Error Handling
 
 - Always wrap AgentMail calls in try/except and log failures via structlog
-- Fall back to SMTP when AgentMail API is not configured or fails
+- **Interview Bot:** fall back to SMTP when the AgentMail API is not configured or fails (**HRMS** uses API only)
 - Use `client_id` for idempotent inbox creation (safe to retry)
 - Handle 429 rate limit responses with exponential backoff
 - Check `error.body.message` (TS) or `str(e)` (Python) for detailed error info

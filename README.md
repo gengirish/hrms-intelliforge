@@ -29,6 +29,8 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 
 All outbound mail uses a **single shared inbox**: `hr@intelliforge.tech` (custom domain on AgentMail). Messages are sent **to each intern’s registration email** — no per-intern inbox (avoids AgentMail inbox limits).
 
+**Full AgentMail reference** (webhook, IMAP/SMTP, Android/iOS mail apps): [docs/AGENTMAIL.md](./docs/AGENTMAIL.md).
+
 1. **Onboarding** → Welcome email from `hr@intelliforge.tech` to the intern’s email
 2. **Send Offer** → PDF generated → `sendOfferLetter()` to the intern’s email
 3. **Accept Offer** → Intern replies "I Accept" (from their mailbox) → webhook matches sender email → auto-activates

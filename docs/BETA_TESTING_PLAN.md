@@ -298,6 +298,8 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 ### 7.7 Email Automation (AgentMail)
 
+Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGENTMAIL.md](./AGENTMAIL.md).
+
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
 | EM-01 | Welcome email | Complete intern onboarding | Email received from `hr@intelliforge.tech` with intern name, role, portal links | P0 |
