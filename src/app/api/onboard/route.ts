@@ -1,34 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseAdmin } from "@/lib/supabase-server";
+import { put } from "@vercel/blob";
 import { createInternInbox } from "@/lib/agentmail";
+
 async function uploadFile(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
   file: File,
   folder: string,
   email: string
 ): Promise<string | null> {
   try {
     const ext = file.name.split(".").pop();
-    const path = `${folder}/${email.replace(/[@.]/g, "_")}_${Date.now()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const { data, error } = await supabase.storage
-      .from("hrms-docs")
-      .upload(path, buffer, { contentType: file.type });
-
-    if (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("hrms-docs")
-      .getPublicUrl(data.path);
-
-    return urlData.publicUrl;
-  } catch {
+    const pathname = `hrms-docs/${folder}/${email.replace(/[@.]/g, "_")}_${Date.now()}.${ext}`;
+    const blob = await put(pathname, file, { access: "public" });
+    return blob.url;
+  } catch (err) {
+    console.error("Upload error:", err);
     return null;
   }
 }
@@ -60,19 +46,18 @@ export async function POST(req: NextRequest) {
     let panUrl: string | null = null;
     let photoUrl: string | null = null;
 
-    const supabase = createSupabaseAdmin();
     const aadharFile = formData.get("aadhar") as File | null;
     const panFile = formData.get("pan") as File | null;
     const photoFile = formData.get("photo") as File | null;
 
     if (aadharFile && aadharFile.size > 0) {
-      aadharUrl = await uploadFile(supabase, aadharFile, "aadhar", email);
+      aadharUrl = await uploadFile(aadharFile, "aadhar", email);
     }
     if (panFile && panFile.size > 0) {
-      panUrl = await uploadFile(supabase, panFile, "pan", email);
+      panUrl = await uploadFile(panFile, "pan", email);
     }
     if (photoFile && photoFile.size > 0) {
-      photoUrl = await uploadFile(supabase, photoFile, "photos", email);
+      photoUrl = await uploadFile(photoFile, "photos", email);
     }
 
     const intern = await prisma.intern.create({

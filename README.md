@@ -6,9 +6,10 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 ## Tech Stack
 
 - **Next.js 14** (App Router)
-- **Supabase** (Postgres + Auth + Storage)
+- **Neon** (Serverless Postgres)
 - **Prisma ORM**
 - **Tailwind CSS**
+- **Vercel Blob** (file storage)
 - **AgentMail** TypeScript SDK (email automation)
 - **@react-pdf/renderer** (offer letter & certificate PDF)
 - **Vercel** deployment
@@ -48,10 +49,8 @@ npm install
 Copy `.env.example` to `.env` and fill in:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+DATABASE_URL=postgresql://user:password@your-neon-host.neon.tech/neondb?sslmode=require
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AGENTMAIL_API_KEY=am_your_api_key
 CRON_SECRET=your-cron-secret
 ```
@@ -63,11 +62,7 @@ npx prisma generate
 npx prisma db push
 ```
 
-### 4. Supabase Storage
-
-Create a public bucket named `hrms-docs` in your Supabase project.
-
-### 5. Admin Setup
+### 4. Admin Setup
 
 Insert your admin email into the `admins` table:
 
@@ -75,13 +70,13 @@ Insert your admin email into the `admins` table:
 INSERT INTO admins (id, email, role) VALUES (gen_random_uuid(), 'admin@intelliforge.tech', 'ADMIN');
 ```
 
-### 6. Run Development Server
+### 5. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-### 7. AgentMail Webhook
+### 6. AgentMail Webhook
 
 Register this URL in [AgentMail Console](https://console.agentmail.to):
 ```
@@ -102,7 +97,7 @@ Configured in `vercel.json`:
 - Dates: DD/MM/YYYY display, ISO in DB
 - Timezone: Asia/Kolkata (IST)
 - Stipend: stored in paise (Int), displayed as ₹ with `en-IN` locale
-- File uploads: Supabase Storage bucket `hrms-docs`
+- File uploads: Vercel Blob storage
 
 ## License
 

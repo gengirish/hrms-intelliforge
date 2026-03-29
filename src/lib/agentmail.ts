@@ -5,8 +5,9 @@ export const agentmail = new AgentMailClient({
 });
 
 export async function createInternInbox(internName: string, internId: string) {
-  const username =
-    internName.toLowerCase().replace(/\s+/g, ".") + ".intern";
+  const slug = internName.toLowerCase().replace(/\s+/g, ".");
+  const shortId = internId.slice(-6);
+  const username = `${slug}.${shortId}`;
   const inbox = await agentmail.inboxes.create({
     username,
     domain: "agentmail.to",
