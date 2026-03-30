@@ -15,9 +15,9 @@ test.describe("Authentication", () => {
     await expect(page).toHaveURL(/\/sign-up/);
   });
 
-  test("unauthenticated user sees Sign In button on homepage", async ({ page }) => {
+  test("unauthenticated user sees Sign In link on homepage", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "Sign In" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign In" }).first()).toBeVisible();
   });
 
   test("sign-in page has IntelliForge branding", async ({ page }) => {

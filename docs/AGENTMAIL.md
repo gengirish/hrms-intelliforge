@@ -15,11 +15,22 @@ This document describes how **IntelliForge HRMS** uses [AgentMail](https://www.a
 | Item | Value |
 |------|--------|
 | Integration | TypeScript SDK (`agentmail` package) |
-| Code | [`src/lib/agentmail.ts`](../src/lib/agentmail.ts) |
+| Email transport | [`src/lib/agentmail.ts`](../src/lib/agentmail.ts) |
+| Orchestrator | [`src/lib/notifications.ts`](../src/lib/notifications.ts) — routes to email + WhatsApp |
 | Shared inbox | `hr@intelliforge.tech` (created automatically if missing, `clientId: hrms-hr-inbox`) |
 | Environment | `AGENTMAIL_API_KEY` (see [`.env.example`](../.env.example)) |
 | Outbound | All sends go through the **API** (no SMTP relay in this app) |
 | Inbound / replies | Webhook — register URL below in the console for this inbox |
+
+### Unified Notification Orchestrator
+
+All notification call sites (onboard, dashboard actions, cron jobs) now go through `notify()` in `src/lib/notifications.ts` instead of calling AgentMail functions directly. The orchestrator:
+
+1. Sends the email via AgentMail (`src/lib/agentmail.ts`)
+2. Sends a WhatsApp template if the intern opted in (`src/lib/whatsapp.ts`)
+3. Logs both to the `NotificationLog` database table with delivery status tracking
+
+The AgentMail functions (`sendWelcomeEmail`, `sendOfferLetter`, etc.) are still the email transport layer — they are called by the orchestrator, not by API routes directly.
 
 **Webhook URL** (production):
 
@@ -27,7 +38,7 @@ This document describes how **IntelliForge HRMS** uses [AgentMail](https://www.a
 https://hrms.intelliforge.tech/api/webhooks/agentmail
 ```
 
-Incoming `message.received` events are used to match **offer acceptance** replies (sender email + body). See [README.md](../README.md#6-agentmail-webhook).
+Incoming `message.received` events are used to match **offer acceptance** replies (sender email + body). See [README.md](../README.md#communication-system).
 
 ---
 
@@ -98,7 +109,8 @@ Many apps require **both** IMAP and SMTP to add a full account; SMTP alone is us
 
 ---
 
-## Related internal docs
+## Related docs
 
-- [README — AgentMail flows and webhook](../README.md#agentmail-email-flows)
+- [README — Communication system](../README.md#communication-system)
+- [WhatsApp Business setup](./whatsapp-business-setup-guide.md)
 - [Beta testing — email scenarios](./BETA_TESTING_PLAN.md#77-email-automation-agentmail)

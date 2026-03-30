@@ -3,7 +3,7 @@
 **Product:** IntelliForge HRMS Intern Portal
 **Version:** 0.1.0 (Beta)
 **Production URL:** https://hrms.intelliforge.tech
-**Date:** 29 March 2026
+**Date:** 30 March 2026
 **Prepared by:** IntelliForge AI Engineering Team
 
 ---
@@ -17,18 +17,19 @@
 5. [Test Environment](#5-test-environment)
 6. [Entry & Exit Criteria](#6-entry--exit-criteria)
 7. [Test Scenarios](#7-test-scenarios)
-   - 7.1 [Page Load & Navigation](#71-page-load--navigation)
-   - 7.2 [Intern Onboarding](#72-intern-onboarding)
-   - 7.3 [Admin Dashboard](#73-admin-dashboard)
-   - 7.4 [Offer Letter Flow](#74-offer-letter-flow)
-   - 7.5 [Attendance Management](#75-attendance-management)
-   - 7.6 [Task Logging](#76-task-logging)
-   - 7.7 [Email Automation (AgentMail)](#77-email-automation-agentmail)
-   - 7.8 [PDF Generation](#78-pdf-generation)
-   - 7.9 [Cron Jobs](#79-cron-jobs)
-   - 7.10 [PWA & Mobile Experience](#710-pwa--mobile-experience)
-   - 7.11 [Security & Access Control](#711-security--access-control)
-   - 7.12 [Edge Cases & Error Handling](#712-edge-cases--error-handling)
+   - 7.1 [Authentication & IAM](#71-authentication--iam)
+   - 7.2 [Page Load & Navigation](#72-page-load--navigation)
+   - 7.3 [Intern Onboarding](#73-intern-onboarding)
+   - 7.4 [Admin Dashboard](#74-admin-dashboard)
+   - 7.5 [Offer Letter Flow](#75-offer-letter-flow)
+   - 7.6 [Attendance Management](#76-attendance-management)
+   - 7.7 [Task Logging](#77-task-logging)
+   - 7.8 [Email Automation (AgentMail)](#78-email-automation-agentmail)
+   - 7.9 [PDF Generation](#79-pdf-generation)
+   - 7.10 [Cron Jobs](#710-cron-jobs)
+   - 7.11 [PWA & Mobile Experience](#711-pwa--mobile-experience)
+   - 7.12 [Security & Access Control](#712-security--access-control)
+   - 7.13 [Edge Cases & Error Handling](#713-edge-cases--error-handling)
 8. [API Endpoint Test Matrix](#8-api-endpoint-test-matrix)
 9. [Bug Reporting Process](#9-bug-reporting-process)
 10. [Beta Timeline](#10-beta-timeline)
@@ -49,6 +50,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 | Module | Description |
 |--------|-------------|
+| Custom IAM | Email+password sign-in, magic link (passwordless), password reset — JWT HttpOnly cookies, role-based access (admin/intern) |
 | Self-Service Onboarding | Intern registration with document uploads (Aadhaar, PAN, photo) |
 | Admin Dashboard | Intern lifecycle management, stipend configuration, status transitions |
 | Offer Letter System | PDF offer generation, email delivery, web + email acceptance |

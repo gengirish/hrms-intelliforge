@@ -37,10 +37,10 @@ test.describe("Homepage", () => {
     await expect(cta).toHaveAttribute("href", "/dashboard");
   });
 
-  test("should show Sign In button when not authenticated", async ({ page }) => {
+  test("should show Sign In link when not authenticated", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "Sign In" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign In" }).first()).toBeVisible();
   });
 
   test("should have footer visible", async ({ page }) => {

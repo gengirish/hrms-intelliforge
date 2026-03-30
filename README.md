@@ -11,6 +11,7 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 - **Tailwind CSS**
 - **Vercel Blob** (file storage)
 - **AgentMail** TypeScript SDK (email automation)
+- **WhatsApp Business Cloud API** (real-time WhatsApp messaging)
 - **@react-pdf/renderer** (offer letter & certificate PDF)
 - **Vercel** deployment
 
@@ -19,24 +20,49 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 | Page | Description |
 |------|-------------|
 | `/` | Home — hero + action cards |
-| `/onboard` | Intern self-onboarding form with doc uploads |
+| `/onboard` | Intern self-onboarding form with doc uploads + WhatsApp opt-in |
 | `/offer` | Offer letter view — lookup by email, accept |
 | `/attendance` | Daily punch in/out with WFH/Office toggle |
 | `/tasks` | Weekly task log with hours tracking |
-| `/dashboard` | Admin panel — manage interns, send offers, view emails |
+| `/dashboard` | Admin panel — manage interns, send offers, notification history |
 
-## AgentMail Email Flows
+## Communication System
 
-All outbound mail uses a **single shared inbox**: `hr@intelliforge.tech` (custom domain on AgentMail). Messages are sent **to each intern’s registration email** — no per-intern inbox (avoids AgentMail inbox limits).
+All outbound communication is routed through a **unified notification orchestrator** (`src/lib/notifications.ts`) that sends via both **Email** and **WhatsApp**, with full delivery tracking.
 
-**Full AgentMail reference** (webhook, IMAP/SMTP, Android/iOS mail apps): [docs/AGENTMAIL.md](./docs/AGENTMAIL.md).
+### Channels
 
-1. **Onboarding** → Welcome email from `hr@intelliforge.tech` to the intern’s email
-2. **Send Offer** → PDF generated → `sendOfferLetter()` to the intern’s email
-3. **Accept Offer** → Intern replies "I Accept" (from their mailbox) → webhook matches sender email → auto-activates
-4. **Task Reminder** → Cron (Monday 9AM IST) → `sendTaskReminder()`
-5. **Attendance Nudge** → Cron (Daily 10:30AM IST) → `sendAttendanceNudge()`
-6. **Completion** → Certificate PDF → `sendCompletionEmail()`
+| Channel | Provider | Code |
+|---------|----------|------|
+| Email | AgentMail (`hr@intelliforge.tech`) | `src/lib/agentmail.ts` |
+| WhatsApp | Meta Business Cloud API | `src/lib/whatsapp.ts` |
+
+### Notification Flows
+
+Every notification goes through `notify(internId, type, data)` which handles channel routing, opt-in checks, and logging to `NotificationLog`:
+
+| # | Event | Email | WhatsApp |
+|---|-------|-------|----------|
+| 1 | **Onboarding** | Welcome HTML with portal links | `intern_welcome` template |
+| 2 | **Send Offer** | PDF attachment + offer details | `offer_letter` template (links to email for PDF) |
+| 3 | **Accept Offer** | — | `offer_accepted` confirmation template |
+| 4 | **Task Reminder** | HTML with task log link | `task_reminder` template |
+| 5 | **Attendance Nudge** | HTML with attendance link | `attendance_nudge` template |
+| 6 | **Completion** | Certificate PDF attachment | `completion_cert` template (links to email for PDF) |
+
+### Offer Acceptance (Dual-Channel)
+
+Interns can accept offers by replying on **either** channel:
+- **Email**: Reply "I Accept" to the offer email → AgentMail webhook auto-activates
+- **WhatsApp**: Reply "ACCEPT", "Yes", "Agree", or "Confirm" → WhatsApp webhook auto-activates
+
+### Delivery Tracking
+
+WhatsApp delivery statuses (sent → delivered → read) are tracked in real-time via webhook and stored in `NotificationLog`. Admins can view full notification history per intern in the dashboard **Notifications** tab.
+
+**Detailed docs:**
+- [AgentMail setup](./docs/AGENTMAIL.md) — webhook, IMAP/SMTP, mobile clients
+- [WhatsApp Business setup](./docs/whatsapp-business-setup-guide.md) — Meta account, phone registration, templates
 
 ## Setup
 
@@ -53,10 +79,17 @@ npm install
 Copy `.env.example` to `.env` and fill in:
 
 ```env
+# Required
 DATABASE_URL=postgresql://user:password@your-neon-host.neon.tech/neondb?sslmode=require
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AGENTMAIL_API_KEY=am_your_api_key
 CRON_SECRET=your-cron-secret
+
+# WhatsApp (optional — omit to use email-only)
+WHATSAPP_ACCESS_TOKEN=EAA...
+WHATSAPP_PHONE_NUMBER_ID=123456789012345
+WHATSAPP_APP_SECRET=your-meta-app-secret
+WHATSAPP_VERIFY_TOKEN=your-custom-verify-token
 ```
 
 ### 3. Database Setup
@@ -80,15 +113,39 @@ INSERT INTO admins (id, email, role) VALUES (gen_random_uuid(), 'admin@intellifo
 npm run dev
 ```
 
-### 6. AgentMail Webhook
+### 6. Webhooks
 
-Register this URL in [AgentMail Console](https://console.agentmail.to) for the **hr@intelliforge.tech** inbox:
+Register both webhook URLs in their respective consoles:
 
+**AgentMail** — [console.agentmail.to](https://console.agentmail.to) for the `hr@intelliforge.tech` inbox:
 ```
 https://hrms.intelliforge.tech/api/webhooks/agentmail
 ```
 
-Incoming `message.received` events are matched by the **reply sender’s email** to an intern row (case-insensitive), then offer acceptance is detected from the message body.
+**WhatsApp** — [developers.facebook.com](https://developers.facebook.com) in your app's WhatsApp Configuration:
+```
+https://hrms.intelliforge.tech/api/webhooks/whatsapp
+```
+Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/whatsapp-business-setup-guide.md) for full instructions.
+
+## API Routes
+
+### Notification APIs (Admin)
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/notifications?internId=...` | GET | List notification history (paginated, filterable by channel) |
+| `/api/notifications/send` | POST | Send manual notification to intern |
+| `/api/notifications/preferences?internId=...` | GET | Get intern's notification preferences |
+| `/api/notifications/preferences` | PUT | Update notification preferences + WhatsApp opt-in |
+
+### Webhook Routes (Public)
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/webhooks/agentmail` | POST | AgentMail inbound — offer acceptance via email |
+| `/api/webhooks/whatsapp` | GET | Meta webhook verification (challenge-response) |
+| `/api/webhooks/whatsapp` | POST | WhatsApp inbound — offer acceptance + delivery status tracking |
 
 ## Vercel Cron Jobs
 
@@ -96,14 +153,25 @@ Configured in `vercel.json`:
 
 | Cron | Schedule | Description |
 |------|----------|-------------|
-| `/api/cron/task-reminder` | Monday 9:00 AM IST | Weekly task log reminder |
-| `/api/cron/attendance-nudge` | Weekdays 10:30 AM IST | Daily attendance nudge |
+| `/api/cron/task-reminder` | Monday 9:00 AM IST | Weekly task log reminder (email + WhatsApp) |
+| `/api/cron/attendance-nudge` | Weekdays 10:30 AM IST | Daily attendance nudge (email + WhatsApp) |
+
+## Database Models
+
+### Notification-Related
+
+| Model | Purpose |
+|-------|---------|
+| `NotificationLog` | Tracks every sent notification — channel, type, status, delivery timestamps, external IDs |
+| `NotificationPreference` | Per-intern email/WhatsApp toggle |
+| `Intern.whatsappOptIn` | Explicit WhatsApp consent (set during onboarding) |
 
 ## Indian Conventions
 
 - Dates: DD/MM/YYYY display, ISO in DB
 - Timezone: Asia/Kolkata (IST)
 - Stipend: stored in paise (Int), displayed as ₹ with `en-IN` locale
+- Phone: stored as-is, normalized to E.164 (`+91XXXXXXXXXX`) for WhatsApp
 - File uploads: Vercel Blob storage
 
 ## License
