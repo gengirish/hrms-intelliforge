@@ -114,6 +114,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, status: "COMPLETED" });
     }
 
+    if (action === "deactivate") {
+      await prisma.intern.update({
+        where: { id: internId },
+        data: { deactivated: true, deactivatedAt: new Date() },
+      });
+      return NextResponse.json({ ok: true, deactivated: true });
+    }
+
+    if (action === "reactivate") {
+      await prisma.intern.update({
+        where: { id: internId },
+        data: { deactivated: false, deactivatedAt: null },
+      });
+      return NextResponse.json({ ok: true, deactivated: false });
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err: unknown) {
     return serverError(err, "Dashboard action error");

@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const activeInterns = await prisma.intern.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", deactivated: false },
     });
 
     const todayStart = getISTStartOfDay();

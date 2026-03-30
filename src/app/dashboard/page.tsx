@@ -23,6 +23,8 @@ import {
   Sparkles,
   ShieldCheck,
   ShieldAlert,
+  UserX,
+  UserCheck,
   ShieldQuestion,
 } from "lucide-react";
 import {
@@ -63,6 +65,8 @@ interface Intern {
   agentmailAddress?: string | null;
   whatsappOptIn?: boolean;
   status: string;
+  deactivated?: boolean;
+  deactivatedAt?: string | null;
   acceptedAt: string | null;
   createdAt: string;
   attendance?: AttendanceRecord[];
@@ -150,6 +154,7 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
   const [isSavingStipend, setIsSavingStipend] = useState(false);
+  const [showDeactivated, setShowDeactivated] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "attendance" | "tasks" | "emails" | "notifications" | "analytics"
   >("overview");
@@ -323,6 +328,10 @@ export default function DashboardPage() {
           ? "Offer letter sent!"
           : action === "send_reminder"
           ? "Task reminder sent!"
+          : action === "deactivate"
+          ? "Intern deactivated"
+          : action === "reactivate"
+          ? "Intern reactivated"
           : "Completion certificate sent!"
       );
       await loadInternDetail(internId);
@@ -362,11 +371,13 @@ export default function DashboardPage() {
     }
   }
 
+  const activeInterns = interns.filter((i) => !i.deactivated);
   const stats = {
-    total: interns.length,
-    pending: interns.filter((i) => i.status === "PENDING").length,
-    active: interns.filter((i) => i.status === "ACTIVE").length,
-    completed: interns.filter((i) => i.status === "COMPLETED").length,
+    total: activeInterns.length,
+    pending: activeInterns.filter((i) => i.status === "PENDING").length,
+    active: activeInterns.filter((i) => i.status === "ACTIVE").length,
+    completed: activeInterns.filter((i) => i.status === "COMPLETED").length,
+    deactivated: interns.filter((i) => i.deactivated).length,
   };
 
   if (bootState === "loading") {
@@ -541,6 +552,37 @@ export default function DashboardPage() {
                         Mark Complete + Send Certificate
                       </button>
                     </>
+                  )}
+                  {!selectedIntern.deactivated ? (
+                    <button
+                      onClick={() =>
+                        handleAction("deactivate", selectedIntern.id)
+                      }
+                      disabled={actionLoading === "deactivate"}
+                      className="rounded-lg bg-red-600/80 hover:bg-red-600 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                    >
+                      {actionLoading === "deactivate" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserX className="h-4 w-4" />
+                      )}
+                      Deactivate
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        handleAction("reactivate", selectedIntern.id)
+                      }
+                      disabled={actionLoading === "reactivate"}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                    >
+                      {actionLoading === "reactivate" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserCheck className="h-4 w-4" />
+                      )}
+                      Reactivate
+                    </button>
                   )}
                 </div>
               </div>
@@ -1165,8 +1207,17 @@ export default function DashboardPage() {
 
         {/* Intern Table */}
         <div className="glass-card overflow-hidden">
-          <div className="p-4 border-b border-slate-700">
+          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Interns</h2>
+            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showDeactivated}
+                onChange={(e) => setShowDeactivated(e.target.checked)}
+                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+              />
+              Show deactivated
+            </label>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1191,23 +1242,30 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {interns.length === 0 ? (
+                {(() => {
+                  const filtered = showDeactivated
+                    ? interns
+                    : interns.filter((i) => !i.deactivated);
+                  if (filtered.length === 0) return (
                   <tr>
                     <td
                       colSpan={6}
                       className="py-12 text-center text-slate-400"
                     >
-                      No interns onboarded yet.
+                      {showDeactivated ? "No interns onboarded yet." : "No active interns. Toggle \"Show deactivated\" to see all."}
                     </td>
                   </tr>
-                ) : (
-                  interns.map((intern) => (
+                  );
+                  return filtered.map((intern) => (
                     <tr
                       key={intern.id}
                       tabIndex={0}
                       role="button"
                       aria-label={`View details for ${intern.name}`}
-                      className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 cursor-pointer transition-colors"
+                      className={cn(
+                        "border-b border-slate-800 last:border-0 hover:bg-slate-800/30 cursor-pointer transition-colors",
+                        intern.deactivated && "opacity-50"
+                      )}
                       onClick={() => loadInternDetail(intern.id)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -1235,14 +1293,21 @@ export default function DashboardPage() {
                         {intern.role}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            getStatusColor(intern.status)
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                              getStatusColor(intern.status)
+                            )}
+                          >
+                            {intern.status}
+                          </span>
+                          {intern.deactivated && (
+                            <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-red-900/50 text-red-400">
+                              Deactivated
+                            </span>
                           )}
-                        >
-                          {intern.status}
-                        </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
                         {intern.email}
@@ -1254,8 +1319,8 @@ export default function DashboardPage() {
                         <ChevronRight className="h-4 w-4 text-slate-600" />
                       </td>
                     </tr>
-                  ))
-                )}
+                  ));
+                })()}
               </tbody>
             </table>
           </div>

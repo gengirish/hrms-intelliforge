@@ -102,6 +102,8 @@ model Intern {
   agentmailAddress String?
   whatsappOptIn    Boolean      @default(false)
   status           InternStatus @default(PENDING)
+  deactivated      Boolean      @default(false)
+  deactivatedAt    DateTime?
   acceptedAt       DateTime?
   createdAt        DateTime     @default(now())
 

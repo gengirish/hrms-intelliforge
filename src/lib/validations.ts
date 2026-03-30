@@ -27,7 +27,7 @@ export const resetPasswordSchema = z.object({
 
 export const actionSchema = z.object({
   internId: z.string().min(1),
-  action: z.enum(["update_stipend", "send_offer", "send_reminder", "mark_complete"]),
+  action: z.enum(["update_stipend", "send_offer", "send_reminder", "mark_complete", "deactivate", "reactivate"]),
   stipendPaise: z.number().int().min(0).max(10000000).optional(),
 });
 
