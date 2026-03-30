@@ -326,6 +326,8 @@ export default function DashboardPage() {
       toast.success(
         action === "send_offer"
           ? "Offer letter sent!"
+          : action === "approve_offer"
+          ? "Offer approved — intern is now active!"
           : action === "send_reminder"
           ? "Task reminder sent!"
           : action === "deactivate"
@@ -375,6 +377,7 @@ export default function DashboardPage() {
   const stats = {
     total: activeInterns.length,
     pending: activeInterns.filter((i) => i.status === "PENDING").length,
+    offered: activeInterns.filter((i) => i.status === "OFFERED").length,
     active: activeInterns.filter((i) => i.status === "ACTIVE").length,
     completed: activeInterns.filter((i) => i.status === "COMPLETED").length,
     deactivated: interns.filter((i) => i.deactivated).length,
@@ -503,22 +506,44 @@ export default function DashboardPage() {
                 {/* Action Buttons */}
                 <div className="mt-6 flex flex-wrap gap-3">
                   {selectedIntern.status === "PENDING" && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleAction("send_offer", selectedIntern.id)
+                        }
+                        disabled={
+                          actionLoading === "send_offer" ||
+                          selectedIntern.stipendPaise === 0
+                        }
+                        title={selectedIntern.stipendPaise === 0 ? "Set the stipend first before sending the offer" : undefined}
+                        className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                      >
+                        {actionLoading === "send_offer" ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        Send Offer Letter
+                      </button>
+                      {selectedIntern.stipendPaise === 0 && (
+                        <span className="text-xs text-amber-400">Set stipend first →</span>
+                      )}
+                    </div>
+                  )}
+                  {selectedIntern.status === "OFFERED" && (
                     <button
                       onClick={() =>
-                        handleAction("send_offer", selectedIntern.id)
+                        handleAction("approve_offer", selectedIntern.id)
                       }
-                      disabled={
-                        actionLoading === "send_offer" ||
-                        selectedIntern.stipendPaise === 0
-                      }
-                      className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                      disabled={actionLoading === "approve_offer"}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
                     >
-                      {actionLoading === "send_offer" ? (
+                      {actionLoading === "approve_offer" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Send className="h-4 w-4" />
+                        <CheckCircle2 className="h-4 w-4" />
                       )}
-                      Send Offer Letter
+                      Approve Offer (Mark Active)
                     </button>
                   )}
                   {selectedIntern.status === "ACTIVE" && (
@@ -1166,7 +1191,7 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
             {
               label: "Total Interns",
@@ -1179,6 +1204,12 @@ export default function DashboardPage() {
               value: stats.pending,
               icon: Clock,
               color: "text-yellow-400",
+            },
+            {
+              label: "Offered",
+              value: stats.offered,
+              icon: Send,
+              color: "text-blue-400",
             },
             {
               label: "Active",

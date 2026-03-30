@@ -51,6 +51,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "send_offer") {
+      if (intern.status !== "PENDING") {
+        return NextResponse.json(
+          { error: `Cannot send offer — intern status is "${intern.status}" (expected PENDING).` },
+          { status: 400 }
+        );
+      }
       if (intern.stipendPaise === 0) {
         return NextResponse.json(
           { error: "Set the stipend amount before sending the offer." },
@@ -61,22 +67,39 @@ export async function POST(req: NextRequest) {
       const stipendINR = formatINR(intern.stipendPaise);
       const startDateStr = formatDateIST(intern.startDate);
 
-      const pdfElement = React.createElement(OfferLetterPDF, {
-        internName: intern.name,
-        role: intern.role,
-        stipendINR,
-        startDate: startDateStr,
-        durationWeeks: intern.durationWeeks,
-        college: intern.college,
-      });
-      const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
-      const pdfBase64 = pdfBuffer.toString("base64");
+      let pdfBase64: string;
+      try {
+        const pdfElement = React.createElement(OfferLetterPDF, {
+          internName: intern.name,
+          role: intern.role,
+          stipendINR,
+          startDate: startDateStr,
+          durationWeeks: intern.durationWeeks,
+          college: intern.college,
+        });
+        const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
+        pdfBase64 = pdfBuffer.toString("base64");
+      } catch (pdfErr) {
+        console.error("PDF render failed:", pdfErr);
+        return NextResponse.json(
+          { error: "Failed to generate the offer letter PDF. Please try again." },
+          { status: 500 }
+        );
+      }
 
-      await notify(internId, "OFFER_LETTER", {
-        stipendPaise: intern.stipendPaise,
-        startDate: startDateStr,
-        pdfBase64,
-      });
+      try {
+        await notify(internId, "OFFER_LETTER", {
+          stipendPaise: intern.stipendPaise,
+          startDate: startDateStr,
+          pdfBase64,
+        });
+      } catch (notifyErr) {
+        console.error("Offer notification failed:", notifyErr);
+        return NextResponse.json(
+          { error: "Offer letter PDF was generated but email delivery failed. Check AGENTMAIL configuration." },
+          { status: 502 }
+        );
+      }
 
       await prisma.intern.update({
         where: { id: internId },
@@ -86,25 +109,69 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, status: "OFFERED" });
     }
 
+    if (action === "approve_offer") {
+      if (intern.status !== "OFFERED") {
+        return NextResponse.json(
+          { error: `Cannot approve — intern status is "${intern.status}" (expected OFFERED).` },
+          { status: 400 }
+        );
+      }
+
+      await prisma.intern.update({
+        where: { id: internId },
+        data: { status: "ACTIVE", acceptedAt: new Date() },
+      });
+
+      try {
+        await notify(internId, "OFFER_ACCEPTED", {
+          startDate: formatDateIST(intern.startDate),
+        });
+      } catch {
+        // non-critical — status is already updated
+      }
+
+      return NextResponse.json({ ok: true, status: "ACTIVE" });
+    }
+
     if (action === "send_reminder") {
       await notify(internId, "TASK_REMINDER");
       return NextResponse.json({ ok: true });
     }
 
     if (action === "mark_complete") {
+      if (intern.status !== "ACTIVE") {
+        return NextResponse.json(
+          { error: `Cannot mark complete — intern status is "${intern.status}" (expected ACTIVE).` },
+          { status: 400 }
+        );
+      }
+
       const startDateStr = formatDateIST(intern.startDate);
 
-      const certElement = React.createElement(CompletionCertPDF, {
-        internName: intern.name,
-        role: intern.role,
-        startDate: startDateStr,
-        durationWeeks: intern.durationWeeks,
-        college: intern.college,
-      });
-      const pdfBuffer = await renderToBuffer(certElement as unknown as ReactElement);
-      const pdfBase64 = pdfBuffer.toString("base64");
+      let pdfBase64: string;
+      try {
+        const certElement = React.createElement(CompletionCertPDF, {
+          internName: intern.name,
+          role: intern.role,
+          startDate: startDateStr,
+          durationWeeks: intern.durationWeeks,
+          college: intern.college,
+        });
+        const pdfBuffer = await renderToBuffer(certElement as unknown as ReactElement);
+        pdfBase64 = pdfBuffer.toString("base64");
+      } catch (pdfErr) {
+        console.error("Certificate PDF render failed:", pdfErr);
+        return NextResponse.json(
+          { error: "Failed to generate the completion certificate PDF. Please try again." },
+          { status: 500 }
+        );
+      }
 
-      await notify(internId, "COMPLETION_CERT", { pdfBase64 });
+      try {
+        await notify(internId, "COMPLETION_CERT", { pdfBase64 });
+      } catch (notifyErr) {
+        console.error("Completion notification failed:", notifyErr);
+      }
 
       await prisma.intern.update({
         where: { id: internId },
