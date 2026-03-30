@@ -85,11 +85,16 @@ function toDbType(t: NotificationType): DbNotificationType {
   return t as unknown as DbNotificationType;
 }
 
+export interface NotifyResult {
+  emailSent: boolean;
+  emailError?: string;
+}
+
 export async function notify(
   internId: string,
   type: NotificationType,
   data: NotificationData = {}
-): Promise<void> {
+): Promise<NotifyResult> {
   const prismaType = toDbType(type);
   const intern = await prisma.intern.findUnique({
     where: { id: internId },
@@ -105,6 +110,9 @@ export async function notify(
     APP_URL
   );
 
+  let emailSent = false;
+  let emailError: string | undefined;
+
   if (prefs.email) {
     if (type === "CUSTOM") {
       await prisma.notificationLog.create({
@@ -117,6 +125,7 @@ export async function notify(
           status: NotificationStatus.PENDING,
         },
       });
+      emailSent = true;
     } else if (type !== "OFFER_ACCEPTED") {
       try {
         switch (type) {
@@ -160,8 +169,10 @@ export async function notify(
             sentAt: new Date(),
           },
         });
+        emailSent = true;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        emailError = msg;
         await prisma.notificationLog.create({
           data: {
             internId,
@@ -279,4 +290,6 @@ export async function notify(
       });
     }
   }
+
+  return { emailSent, emailError };
 }

@@ -13,7 +13,7 @@ export const agentmail = new AgentMailClient({
   apiKey: process.env.AGENTMAIL_API_KEY!,
 });
 
-const HR_INBOX_ID = process.env.AGENTMAIL_HR_INBOX_ID;
+const HR_INBOX_ID = process.env.AGENTMAIL_HR_INBOX_ID?.trim();
 
 if (!HR_INBOX_ID) {
   console.warn(

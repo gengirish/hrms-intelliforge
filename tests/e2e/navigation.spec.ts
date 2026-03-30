@@ -56,6 +56,30 @@ test.describe("Page Load", () => {
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
   });
+
+  test("/create-org page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/create-org");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/dashboard/hiring page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/dashboard/hiring");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/dashboard/settings page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/dashboard/settings");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/reset-password page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/reset-password");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
 });
 
 test.describe("Error Handling", () => {

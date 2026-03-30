@@ -87,16 +87,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      try {
-        await notify(internId, "OFFER_LETTER", {
-          stipendPaise: intern.stipendPaise,
-          startDate: startDateStr,
-          pdfBase64,
-        });
-      } catch (notifyErr) {
-        console.error("Offer notification failed:", notifyErr);
+      const result = await notify(internId, "OFFER_LETTER", {
+        stipendPaise: intern.stipendPaise,
+        startDate: startDateStr,
+        pdfBase64,
+      });
+
+      if (!result.emailSent) {
         return NextResponse.json(
-          { error: "Offer letter PDF was generated but email delivery failed. Check AGENTMAIL configuration." },
+          { error: `Offer letter email failed: ${result.emailError || "Unknown error"}. Status was NOT changed.` },
           { status: 502 }
         );
       }
@@ -167,10 +166,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      try {
-        await notify(internId, "COMPLETION_CERT", { pdfBase64 });
-      } catch (notifyErr) {
-        console.error("Completion notification failed:", notifyErr);
+      const result = await notify(internId, "COMPLETION_CERT", { pdfBase64 });
+      if (!result.emailSent) {
+        console.error("Completion cert email failed:", result.emailError);
       }
 
       await prisma.intern.update({
