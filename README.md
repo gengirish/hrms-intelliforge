@@ -20,6 +20,8 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 | Page | Description |
 |------|-------------|
 | `/` | Home — hero + action cards |
+| `/sign-in` | Email + password login, magic link (passwordless) sign-in |
+| `/sign-up` | Account registration (admin or intern) with email verification |
 | `/onboard` | Intern self-onboarding form with doc uploads + WhatsApp opt-in |
 | `/offer` | Offer letter view — lookup by email, accept |
 | `/attendance` | Daily punch in/out with WFH/Office toggle |
@@ -81,9 +83,11 @@ Copy `.env.example` to `.env` and fill in:
 ```env
 # Required
 DATABASE_URL=postgresql://user:password@your-neon-host.neon.tech/neondb?sslmode=require
+JWT_SECRET=your-secret-at-least-32-chars    # openssl rand -hex 32
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AGENTMAIL_API_KEY=am_your_api_key
 CRON_SECRET=your-cron-secret
+NEXT_PUBLIC_APP_URL=https://hrms.intelliforge.tech
 
 # WhatsApp (optional — omit to use email-only)
 WHATSAPP_ACCESS_TOKEN=EAA...
@@ -101,10 +105,11 @@ npx prisma db push
 
 ### 4. Admin Setup
 
-Insert your admin email into the `admins` table:
+Create an admin account by signing up at `/sign-up` with account type "Admin", or insert directly:
 
 ```sql
-INSERT INTO admins (id, email, role) VALUES (gen_random_uuid(), 'admin@intelliforge.tech', 'ADMIN');
+INSERT INTO admins (id, email, "passwordHash", "emailVerified", role)
+VALUES (gen_random_uuid(), 'admin@intelliforge.tech', '<bcrypt-hash>', true, 'ADMIN');
 ```
 
 ### 5. Run Development Server
@@ -129,6 +134,19 @@ https://hrms.intelliforge.tech/api/webhooks/whatsapp
 Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/whatsapp-business-setup-guide.md) for full instructions.
 
 ## API Routes
+
+### Authentication
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/auth/register` | POST | Create account (admin or intern) |
+| `/api/auth/login` | POST | Sign in with email + password |
+| `/api/auth/me` | GET | Get current authenticated user (from JWT cookie) |
+| `/api/auth/logout` | POST | Sign out (clears session cookie) |
+| `/api/auth/magic-link` | POST | Send passwordless sign-in link via email |
+| `/api/auth/verify` | GET | Verify email address or consume magic link token |
+| `/api/auth/forgot-password` | POST | Send password reset email |
+| `/api/auth/reset-password` | POST | Reset password with token |
 
 ### Notification APIs (Admin)
 

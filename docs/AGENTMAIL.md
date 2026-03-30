@@ -113,4 +113,4 @@ Many apps require **both** IMAP and SMTP to add a full account; SMTP alone is us
 
 - [README — Communication system](../README.md#communication-system)
 - [WhatsApp Business setup](./whatsapp-business-setup-guide.md)
-- [Beta testing — email scenarios](./BETA_TESTING_PLAN.md#77-email-automation-agentmail)
+- [Beta testing — email scenarios](./BETA_TESTING_PLAN.md#78-email-automation-agentmail)

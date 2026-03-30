@@ -84,7 +84,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 | Area | Details |
 |------|---------|
-| Functional Testing | All 6 pages, 14 API endpoints, 6 email flows, 2 PDF templates, 2 cron jobs |
+| Functional Testing | All 8 pages, 20 API endpoints, 6 email flows, 2 PDF templates, 2 cron jobs |
 | UI/UX Testing | Responsive layout, mobile navigation, form validation, toast notifications, loading states |
 | Integration Testing | AgentMail email delivery + webhook, Vercel Blob uploads, Neon PostgreSQL, Vercel Cron |
 | Browser Compatibility | Chrome 120+, Firefox 120+, Safari 17+, Edge 120+, Samsung Internet |
@@ -162,7 +162,8 @@ This Beta Testing Plan defines the structured approach for validating the portal
 - [ ] Vercel Blob token valid and storage accessible
 - [ ] Neon database accessible and schema up to date (`npx prisma db push`)
 - [ ] PWA icons generated and available in `/public/`
-- [ ] E2E test suite (`node e2e-test.js`) passes against production
+- [ ] Playwright E2E tests pass against production (`npx playwright test`)
+- [ ] Node E2E integration suite passes (`node e2e-test.js`)
 
 ---
 
@@ -196,7 +197,29 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 ## 7. Test Scenarios
 
-### 7.1 Page Load & Navigation
+### 7.1 Authentication & IAM
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| AU-01 | Sign-up with valid credentials | Navigate to `/sign-up`, fill name, email, password (8+ chars), confirm password, select account type, submit | Account created, verification email sent, user auto-logged in with profile visible in navbar | P0 |
+| AU-02 | Sign-up — password mismatch | Enter mismatched passwords, submit | Client-side error "Passwords do not match" | P0 |
+| AU-03 | Sign-up — short password | Enter 7-char password | Client-side error "Password must be at least 8 characters" | P1 |
+| AU-04 | Sign-up — duplicate email | Register with an already-used email | 409 "An account with this email already exists" | P0 |
+| AU-05 | Sign-in with email + password | Navigate to `/sign-in`, enter valid credentials, submit | "Signed in successfully" toast, redirected to home, profile avatar visible in navbar | P0 |
+| AU-06 | Sign-in — wrong password | Enter correct email but wrong password | 401 "Invalid email or password" | P0 |
+| AU-07 | Sign-in — non-existent email | Enter unregistered email | 401 "Invalid email or password" (no enumeration) | P0 |
+| AU-08 | Sign-in — rate limiting | Attempt 6+ logins within 60 seconds | 429 "Too many login attempts. Try again in a minute." | P1 |
+| AU-09 | Magic link sign-in | Enter email on sign-in page, click "Send Magic Link" | Success toast, email received with sign-in link, clicking link logs user in | P0 |
+| AU-10 | Magic link — expired | Click magic link after 15 minutes | Redirect to `/sign-in?error=expired_link` with error banner | P1 |
+| AU-11 | Email verification | After sign-up, click verification link in email | Redirect to `/sign-in?verified=true` with success banner, emailVerified set to true | P0 |
+| AU-12 | Email verification — broken link | Verification link with `<br>` or HTML tags in URL | URL sanitized, link works correctly (APP_URL trimmed and stripped) | P0 |
+| AU-13 | Profile display after login | Sign in, navigate to any page | Navbar shows user initials avatar (not "Sign In" link) | P0 |
+| AU-14 | User dropdown menu | Click profile avatar in navbar | Dropdown shows name, email, account type badge, and "Sign out" button | P1 |
+| AU-15 | Sign out | Click "Sign out" in dropdown | Session cookie cleared, redirected to home, "Sign In" link restored in navbar | P0 |
+| AU-16 | Session persistence | Sign in, close browser, reopen site | User still authenticated (JWT cookie valid for 7 days) | P1 |
+| AU-17 | Protected page redirect | Visit `/dashboard` while signed out | Appropriate auth gate behavior (redirect or 401) | P1 |
+
+### 7.2 Page Load & Navigation
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -208,7 +231,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | PL-06 | 404 handling | Navigate to `/nonexistent` | Next.js default 404 or custom error page | P2 |
 | PL-07 | Page load performance | Measure LCP on each page | LCP < 2.5 seconds on 4G connection | P1 |
 
-### 7.2 Intern Onboarding
+### 7.3 Intern Onboarding
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -225,7 +248,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | OB-11 | Welcome email received | Complete onboarding successfully | AgentMail welcome email arrives with correct name, role, and portal links | P0 |
 | OB-12 | Onboarding without documents | Submit with all text fields but no file attachments | Intern created successfully, document URLs null | P1 |
 
-### 7.3 Admin Dashboard
+### 7.4 Admin Dashboard
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -245,7 +268,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | AD-14 | Status badge colors | View interns with different statuses | Each status (PENDING, OFFERED, ACTIVE, COMPLETED) has distinct badge styling | P2 |
 | AD-15 | Back navigation | From intern detail, click back | Returns to intern list with state preserved | P2 |
 
-### 7.4 Offer Letter Flow
+### 7.5 Offer Letter Flow
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -261,7 +284,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | OF-10 | Offer letter PDF content | Open the PDF attached to offer email | Contains intern name, role, stipend in ₹, start date, duration, college, ref number | P0 |
 | OF-11 | Status display per state | Check `/offer` page for PENDING, OFFERED, ACTIVE interns | Appropriate messaging displayed for each status | P1 |
 
-### 7.5 Attendance Management
+### 7.6 Attendance Management
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -279,7 +302,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | AT-12 | IST date boundary | Punch in at 11:30 PM IST, punch out at 12:30 AM IST | Records attributed to correct IST calendar dates | P1 |
 | AT-13 | Today's record display | Punch in for today | Today's record shows punchIn time, mode, and working hours | P0 |
 
-### 7.6 Task Logging
+### 7.7 Task Logging
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -298,7 +321,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | TK-13 | Tasks filtered by week | Create tasks, advance to next week | Only current week's tasks visible | P1 |
 | TK-14 | Unknown intern email | Enter unregistered email | 404 "Intern not found" | P1 |
 
-### 7.7 Email Automation (AgentMail)
+### 7.8 Email Automation (AgentMail)
 
 Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGENTMAIL.md](./AGENTMAIL.md).
 
@@ -316,7 +339,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | EM-10 | Email HTML rendering | Open emails in Gmail, Outlook, Apple Mail | HTML renders correctly across major clients | P1 |
 | EM-11 | AgentMail API failure | Simulate API downtime / invalid key | Onboarding still succeeds (email failure logged, not blocking) | P1 |
 
-### 7.8 PDF Generation
+### 7.9 PDF Generation
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -328,7 +351,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | PF-06 | PDF file validity | Download and open in multiple PDF readers | Opens without errors in Chrome PDF viewer, Adobe Reader, Preview | P1 |
 | PF-07 | Special characters in name | Onboard intern with name containing accents/special chars | PDF renders name correctly without encoding issues | P2 |
 
-### 7.9 Cron Jobs
+### 7.10 Cron Jobs
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -340,7 +363,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | CR-06 | Nudge skips already-attended | Intern punched in today, then cron fires | That intern does NOT receive a nudge email | P1 |
 | CR-07 | No ACTIVE interns | All interns are PENDING/COMPLETED | Cron returns `{ ok: true, sent: 0, total: 0 }` | P2 |
 
-### 7.10 PWA & Mobile Experience
+### 7.11 PWA & Mobile Experience
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -356,7 +379,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | PW-10 | Mobile responsive — attendance | Open `/attendance` on mobile | Mode toggle and punch buttons accessible, weekly table scrollable | P1 |
 | PW-11 | PWA shortcuts | Long-press PWA icon (Android) | Shortcuts available: Attendance, Tasks, Onboard | P2 |
 
-### 7.11 Security & Access Control
+### 7.12 Security & Access Control
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -371,7 +394,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | SC-09 | Email enumeration | Use offer/attendance/tasks endpoints with guessed emails | Returns 404 (acceptable), no additional info leakage | P2 |
 | SC-10 | Webhook authenticity | Send fake webhook payload to `/api/webhooks/agentmail` | Returns 200 OK (current behavior — flag for security review) | P1 |
 
-### 7.12 Edge Cases & Error Handling
+### 7.13 Edge Cases & Error Handling
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
@@ -392,20 +415,26 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 
 | # | Method | Endpoint | Happy Path | Validation (400) | Auth (401/403) | Not Found (404) | Conflict (409) | Server Error (500) |
 |---|--------|----------|:----------:|:-----------------:|:--------------:|:----------------:|:--------------:|:------------------:|
-| 1 | POST | `/api/onboard` | OB-01 | OB-03 | — | — | OB-04 | EG-07 |
-| 2 | GET | `/api/dashboard` | AD-01 | AD-03 | AD-02 | — | — | EG-08 |
-| 3 | GET | `/api/dashboard/intern` | AD-07 | SC-03 | — | AD-07* | — | EG-08 |
-| 4 | POST | `/api/dashboard/action` | AD-10 | AD-09 | SC-04 | AD-10* | — | EG-08 |
-| 5 | GET | `/api/offer` | OF-01 | OF-03 | — | OF-02 | — | — |
-| 6 | POST | `/api/offer/accept` | OF-04 | OF-05 | — | OF-04* | — | — |
-| 7 | GET | `/api/attendance` | AT-01 | AT-03 | AT-02 | AT-03 | — | — |
-| 8 | POST | `/api/attendance` | AT-04 | AT-06 | — | — | — | — |
-| 9 | GET | `/api/tasks` | TK-01 | TK-14 | — | TK-14 | — | — |
-| 10 | POST | `/api/tasks` | TK-02 | TK-05 | — | — | — | — |
-| 11 | DELETE | `/api/tasks` | TK-09 | TK-10 | — | — | — | — |
-| 12 | GET | `/api/cron/task-reminder` | CR-01 | — | CR-04 | — | — | — |
-| 13 | GET | `/api/cron/attendance-nudge` | CR-02 | — | CR-04 | — | — | — |
-| 14 | POST | `/api/webhooks/agentmail` | EM-06 | — | — | — | — | — |
+| 1 | POST | `/api/auth/register` | AU-01 | AU-02, AU-03 | — | — | AU-04 | — |
+| 2 | POST | `/api/auth/login` | AU-05 | — | AU-06, AU-07 | — | — | — |
+| 3 | GET | `/api/auth/me` | AU-13 | — | AU-13* | — | — | — |
+| 4 | POST | `/api/auth/logout` | AU-15 | — | — | — | — | — |
+| 5 | POST | `/api/auth/magic-link` | AU-09 | — | — | — | — | — |
+| 6 | GET | `/api/auth/verify` | AU-11 | AU-10 | — | — | — | — |
+| 7 | POST | `/api/onboard` | OB-01 | OB-03 | — | — | OB-04 | EG-07 |
+| 8 | GET | `/api/dashboard` | AD-01 | AD-03 | AD-02 | — | — | EG-08 |
+| 9 | GET | `/api/dashboard/intern` | AD-07 | SC-03 | — | AD-07* | — | EG-08 |
+| 10 | POST | `/api/dashboard/action` | AD-10 | AD-09 | SC-04 | AD-10* | — | EG-08 |
+| 11 | GET | `/api/offer` | OF-01 | OF-03 | — | OF-02 | — | — |
+| 12 | POST | `/api/offer/accept` | OF-04 | OF-05 | — | OF-04* | — | — |
+| 13 | GET | `/api/attendance` | AT-01 | AT-03 | AT-02 | AT-03 | — | — |
+| 14 | POST | `/api/attendance` | AT-04 | AT-06 | — | — | — | — |
+| 15 | GET | `/api/tasks` | TK-01 | TK-14 | — | TK-14 | — | — |
+| 16 | POST | `/api/tasks` | TK-02 | TK-05 | — | — | — | — |
+| 17 | DELETE | `/api/tasks` | TK-09 | TK-10 | — | — | — | — |
+| 18 | GET | `/api/cron/task-reminder` | CR-01 | — | CR-04 | — | — | — |
+| 19 | GET | `/api/cron/attendance-nudge` | CR-02 | — | CR-04 | — | — | — |
+| 20 | POST | `/api/webhooks/agentmail` | EM-06 | — | — | — | — | — |
 
 ---
 
@@ -523,7 +552,8 @@ Published every Friday covering:
 | Email delivery success | ≥ 95% | AgentMail delivery reports |
 | Page load time (LCP) | < 2.5s on 4G | Lighthouse / WebPageTest |
 | Uptime during beta period | ≥ 99.5% | Vercel status monitoring |
-| E2E test pass rate | 100% (0 failures) | `node e2e-test.js` output |
+| Playwright E2E pass rate | 38/38 (0 failures) | `npx playwright test` output |
+| Node E2E integration pass rate | 100% (0 failures) | `node e2e-test.js` output |
 
 ### 12.2 Qualitative Metrics
 
@@ -584,6 +614,14 @@ Published every Friday covering:
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
+| POST | `/api/auth/register` | None | Create account (admin or intern) |
+| POST | `/api/auth/login` | None | Sign in with email + password |
+| GET | `/api/auth/me` | JWT cookie | Get current authenticated user |
+| POST | `/api/auth/logout` | JWT cookie | Sign out (clears session cookie) |
+| POST | `/api/auth/magic-link` | None | Send passwordless sign-in link |
+| GET | `/api/auth/verify` | None | Verify email or consume magic link token |
+| POST | `/api/auth/forgot-password` | None | Send password reset email |
+| POST | `/api/auth/reset-password` | None | Reset password with token |
 | POST | `/api/onboard` | None | Register new intern |
 | GET | `/api/dashboard` | Admin email | List all interns |
 | GET | `/api/dashboard/intern` | None* | Get intern detail |
@@ -603,7 +641,24 @@ Published every Friday covering:
 
 ### C. E2E Test Suite Reference
 
-Run the automated E2E test suite before and after each beta phase:
+#### Playwright (browser + API tests)
+
+Run the Playwright E2E suite before and after each beta phase:
+
+```bash
+# Run all 38 tests against production (default baseURL in playwright.config.ts)
+npx playwright test
+
+# Run with visible browser
+npx playwright test --headed
+
+# View HTML report after run
+npx playwright show-report
+```
+
+The suite covers 6 spec files: `homepage`, `auth`, `navigation`, `api`, `responsive`, `security-headers` — 38 tests total.
+
+#### Node integration tests
 
 ```bash
 # Against production
@@ -613,7 +668,7 @@ node e2e-test.js
 BASE_URL=http://localhost:3000 node e2e-test.js
 ```
 
-The suite covers 11 test groups with ~40 assertions across all API endpoints.
+The integration suite covers 11 test groups with ~40 assertions across all API endpoints.
 
 ### D. Test Data Cleanup
 
@@ -627,4 +682,4 @@ DELETE FROM interns WHERE email LIKE 'e2e.%@test.intelliforge.tech';
 
 ---
 
-*Document Version: 1.0 | Last Updated: 29 March 2026 | IntelliForge AI*
+*Document Version: 1.1 | Last Updated: 30 March 2026 | IntelliForge AI*
