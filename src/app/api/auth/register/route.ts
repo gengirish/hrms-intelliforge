@@ -19,11 +19,7 @@ export async function POST(req: Request) {
       return errorResponse(parsed.error.errors[0].message, 400);
     }
 
-    const { email, password, name, accountType } = parsed.data;
-
-    if (accountType === "admin") {
-      return errorResponse("Admin accounts cannot be self-registered", 403);
-    }
+    const { email, password, name } = parsed.data;
 
     const existingAdmin = await prisma.admin.findUnique({ where: { email } });
     const existingIntern = await prisma.intern.findUnique({ where: { email } });

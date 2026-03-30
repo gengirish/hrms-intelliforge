@@ -15,7 +15,6 @@ export default function SignUpPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "intern" as "admin" | "intern",
   });
   const [loading, setLoading] = useState(false);
   const [passwordShortError, setPasswordShortError] = useState<string | null>(
@@ -59,7 +58,6 @@ export default function SignUpPage() {
           name: form.name,
           email: form.email,
           password: form.password,
-          accountType: form.accountType,
         }),
       });
       const data = await res.json();
@@ -120,20 +118,6 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="accountType" className="block text-sm font-medium text-slate-300 mb-1.5">
-                Account Type
-              </label>
-              <select
-                id="accountType"
-                value={form.accountType}
-                onChange={(e) => update("accountType", e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              >
-                <option value="intern">Intern</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">

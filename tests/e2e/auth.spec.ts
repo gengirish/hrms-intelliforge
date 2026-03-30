@@ -57,7 +57,6 @@ test.describe("Authentication", () => {
     await page.goto("/sign-up");
     await expect(page.getByLabel("Full Name")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Account Type")).toBeVisible();
     await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Confirm Password")).toBeVisible();
   });
@@ -79,11 +78,6 @@ test.describe("Authentication", () => {
     await page.goto("/");
     await page.getByRole("link", { name: "Sign In" }).first().click();
     await expect(page).toHaveURL(/\/sign-in/);
-  });
-
-  test("sign-up account type defaults to Intern", async ({ page }) => {
-    await page.goto("/sign-up");
-    await expect(page.getByLabel("Account Type")).toHaveValue("intern");
   });
 
   test("sign-in page has Forgot password link", async ({ page }) => {
