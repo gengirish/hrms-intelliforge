@@ -11,6 +11,8 @@ import {
   Calendar,
   Clock,
   IndianRupee,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -178,6 +180,26 @@ export default function OfferPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="/api/offer/pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 rounded-lg bg-slate-700 hover:bg-slate-600 px-5 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Offer Letter PDF
+              </a>
+              <a
+                href="/api/offer/pdf"
+                download
+                className="flex-1 rounded-lg border border-slate-600 hover:bg-slate-800 px-5 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </a>
             </div>
 
             {intern.status === "OFFERED" && (
