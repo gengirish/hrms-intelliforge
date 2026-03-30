@@ -21,12 +21,12 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 |------|-------------|
 | `/` | Home — hero + action cards |
 | `/sign-in` | Email + password login, magic link (passwordless) sign-in |
-| `/sign-up` | Account registration (admin or intern) with email verification |
+| `/sign-up` | Intern account registration with email verification |
 | `/onboard` | Intern self-onboarding form with doc uploads + WhatsApp opt-in |
-| `/offer` | Offer letter view — lookup by email, accept |
+| `/offer` | Offer letter view + PDF download, accept offer |
 | `/attendance` | Daily punch in/out with WFH/Office toggle |
 | `/tasks` | Weekly task log with hours tracking |
-| `/dashboard` | Admin panel — manage interns, send offers, notification history |
+| `/dashboard` | Admin panel — manage interns, send/approve offers, deactivate, notification history |
 
 ## Communication System
 
@@ -86,6 +86,7 @@ DATABASE_URL=postgresql://user:password@your-neon-host.neon.tech/neondb?sslmode=
 JWT_SECRET=your-secret-at-least-32-chars    # openssl rand -hex 32
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AGENTMAIL_API_KEY=am_your_api_key
+AGENTMAIL_HR_INBOX_ID=hr@intelliforge.tech   # inbox ID from AgentMail console
 CRON_SECRET=your-cron-secret
 NEXT_PUBLIC_APP_URL=https://hrms.intelliforge.tech
 
@@ -105,11 +106,18 @@ npx prisma db push
 
 ### 4. Admin Setup
 
-Create an admin account by signing up at `/sign-up` with account type "Admin", or insert directly:
+Admin self-registration is disabled. Create admin accounts via a database script:
+
+```bash
+# Using the provided helper script
+node scripts/create-admin.js
+```
+
+Or insert directly into the database:
 
 ```sql
 INSERT INTO admins (id, email, "passwordHash", "emailVerified", role)
-VALUES (gen_random_uuid(), 'admin@intelliforge.tech', '<bcrypt-hash>', true, 'ADMIN');
+VALUES (gen_random_uuid(), 'hr@intelliforge.tech', '<bcrypt-hash>', true, 'ADMIN');
 ```
 
 ### 5. Run Development Server
@@ -139,7 +147,7 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | Create account (admin or intern) |
+| `/api/auth/register` | POST | Create intern account |
 | `/api/auth/login` | POST | Sign in with email + password |
 | `/api/auth/me` | GET | Get current authenticated user (from JWT cookie) |
 | `/api/auth/logout` | POST | Sign out (clears session cookie) |
@@ -147,6 +155,17 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 | `/api/auth/verify` | GET | Verify email address or consume magic link token |
 | `/api/auth/forgot-password` | POST | Send password reset email |
 | `/api/auth/reset-password` | POST | Reset password with token |
+
+### Offer & Dashboard
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/offer` | GET | Get offer details for authenticated intern |
+| `/api/offer/accept` | POST | Accept offer (intern self-service) |
+| `/api/offer/pdf` | GET | Generate and download offer letter PDF on demand |
+| `/api/dashboard` | GET | List all interns (admin only) |
+| `/api/dashboard/intern` | GET | Get intern detail with attendance, tasks, emails |
+| `/api/dashboard/action` | POST | Admin actions: `update_stipend`, `send_offer`, `approve_offer`, `send_reminder`, `mark_complete`, `deactivate`, `reactivate` |
 
 ### Notification APIs (Admin)
 
@@ -183,6 +202,20 @@ Configured in `vercel.json`:
 | `NotificationLog` | Tracks every sent notification — channel, type, status, delivery timestamps, external IDs |
 | `NotificationPreference` | Per-intern email/WhatsApp toggle |
 | `Intern.whatsappOptIn` | Explicit WhatsApp consent (set during onboarding) |
+
+## Indian Conventions
+
+## Intern Lifecycle
+
+```
+PENDING ──send_offer──→ OFFERED ──approve_offer / accept──→ ACTIVE ──mark_complete──→ COMPLETED
+   ↑                                                          ↓
+onboard                                                   deactivate / reactivate
+```
+
+- **send_offer**: Admin sends offer letter (generates PDF, emails via AgentMail). Only if stipend > 0.
+- **approve_offer**: Admin manually approves (OFFERED → ACTIVE). Alternatively, intern accepts via `/offer` page or email reply.
+- **deactivate / reactivate**: Soft delete — deactivated interns are excluded from cron jobs and hidden by default in dashboard.
 
 ## Indian Conventions
 

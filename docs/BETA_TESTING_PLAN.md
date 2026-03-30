@@ -55,10 +55,10 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 | Module | Description |
 |--------|-------------|
-| Custom IAM | Email+password sign-in, magic link (passwordless), password reset — JWT HttpOnly cookies, role-based access (admin/intern) |
+| Custom IAM | Email+password sign-in, magic link (passwordless), password reset — JWT HttpOnly cookies, role-based access (admin/intern). Admin self-registration disabled; admin accounts created via DB scripts only. |
 | Self-Service Onboarding | Intern registration with document uploads (Aadhaar, PAN, photo) |
-| Admin Dashboard | Intern lifecycle management, stipend configuration, status transitions |
-| Offer Letter System | PDF offer generation, email delivery, web + email acceptance |
+| Admin Dashboard | Intern lifecycle management, stipend configuration, status transitions, soft delete (deactivate/reactivate) |
+| Offer Letter System | PDF offer generation, email delivery, web + email acceptance, on-demand PDF download |
 | Attendance Tracking | Daily punch in/out with WFH/Office mode, weekly history |
 | Task Management | Weekly task logging with hours, status tracking, CRUD operations |
 | Email Automation | AgentMail-powered welcome, offer, reminder, nudge, and completion emails |
@@ -161,6 +161,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | `DATABASE_URL` | Neon PostgreSQL connection string |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob file upload token |
 | `AGENTMAIL_API_KEY` | AgentMail API key for email automation |
+| `AGENTMAIL_HR_INBOX_ID` | AgentMail HR inbox ID (e.g. `hr@intelliforge.tech`) |
 | `CRON_SECRET` | Bearer token for cron endpoint authentication |
 | `OPENAI_API_KEY` | OpenAI API key for AI features (WhatsApp bot, reviews, OCR) |
 | `WHATSAPP_PHONE_NUMBER_ID` | Meta WhatsApp Business API phone number ID |
@@ -177,9 +178,9 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 ### 5.2 Pre-Beta Setup Checklist
 
-- [ ] Admin email (`admin@intelliforge.tech`) exists in the `admins` table
+- [ ] Admin email (`hr@intelliforge.tech`) exists in the `admins` table (created via `node scripts/create-admin.js`)
 - [ ] AgentMail webhook registered at `https://hrms.intelliforge.tech/api/webhooks/agentmail`
-- [ ] AgentMail HR inbox (`hr@intelliforge.tech`) created or auto-creates on first use
+- [ ] `AGENTMAIL_HR_INBOX_ID` env var set to `hr@intelliforge.tech` (no trailing whitespace)
 - [ ] Vercel Cron jobs active and CRON_SECRET configured in Vercel environment
 - [ ] Vercel Blob token valid and storage accessible
 - [ ] Neon database accessible and schema up to date (`npx prisma db push`)
@@ -223,7 +224,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 | ID | Scenario | Steps | Expected Result | Priority |
 |----|----------|-------|-----------------|----------|
-| AU-01 | Sign-up with valid credentials | Navigate to `/sign-up`, fill name, email, password (8+ chars), confirm password, select account type, submit | Account created, verification email sent, user auto-logged in with profile visible in navbar | P0 |
+| AU-01 | Sign-up with valid credentials | Navigate to `/sign-up`, fill name, email, password (8+ chars), confirm password, submit | Intern account created, verification email sent, user auto-logged in with profile visible in navbar | P0 |
 | AU-02 | Sign-up — password mismatch | Enter mismatched passwords, submit | Client-side error "Passwords do not match" | P0 |
 | AU-03 | Sign-up — short password | Enter 7-char password | Client-side error "Password must be at least 8 characters" | P1 |
 | AU-04 | Sign-up — duplicate email | Register with an already-used email | 409 "An account with this email already exists" | P0 |
@@ -277,15 +278,19 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | AD-01 | Admin login | Enter `admin@intelliforge.tech`, click Sign In | Dashboard loads with intern list | P0 |
 | AD-02 | Non-admin rejection | Enter `random@example.com`, click Sign In | 403 error, "Not authorized. Admin access required." | P0 |
 | AD-03 | Empty email rejection | Click Sign In without entering email | 400 error or client-side validation | P0 |
-| AD-04 | KPI cards accuracy | View dashboard after creating test interns | Total, Pending, Active, Completed counts match actual data | P0 |
+| AD-04 | KPI cards accuracy | View dashboard after creating test interns | Total, Pending, Offered, Active, Completed counts match actual data | P0 |
 | AD-05 | Intern list display | View intern table | All interns listed with name, email, role, status, date | P0 |
 | AD-06 | Intern list ordering | Create multiple interns, view list | Most recently created intern appears first (createdAt desc) | P1 |
 | AD-07 | Intern detail view | Click on an intern row | Full detail loads: personal info, documents, attendance, tasks | P0 |
 | AD-08 | Stipend update | Set stipend to 15000 paise, click Save | Stipend persisted; displayed as ₹150.00 | P0 |
-| AD-09 | Stipend zero edge case | Set stipend to 0, attempt Send Offer | Send Offer blocked with appropriate error (stipend required) | P1 |
-| AD-10 | Send Offer action | For PENDING intern with stipend > 0, click Send Offer | Status changes to OFFERED, offer email sent with PDF attachment | P0 |
-| AD-11 | Send Task Reminder | For ACTIVE intern, click Send Task Reminder | Reminder email sent, success toast shown | P1 |
-| AD-12 | Mark Complete | For ACTIVE intern, click Mark Complete + Send Certificate | Status changes to COMPLETED, certificate email sent with PDF | P0 |
+| AD-09 | Stipend zero edge case | Set stipend to 0, attempt Send Offer | Send Offer button disabled with "Set stipend first" hint | P1 |
+| AD-10 | Send Offer action | For PENDING intern with stipend > 0, click Send Offer | Status changes to OFFERED only after email sends successfully; PDF attachment included | P0 |
+| AD-10a | Send Offer — email failure | Trigger send_offer when email delivery fails | Status remains PENDING, toast shows specific error (e.g. "Inbox not found") | P0 |
+| AD-11 | Approve Offer | For OFFERED intern, click Approve Offer (Mark Active) | Status changes to ACTIVE, `acceptedAt` set | P0 |
+| AD-12 | Send Task Reminder | For ACTIVE intern, click Send Task Reminder | Reminder email sent, success toast shown | P1 |
+| AD-13 | Mark Complete | For ACTIVE intern, click Mark Complete + Send Certificate | Status changes to COMPLETED, certificate email sent with PDF | P0 |
+| AD-14 | Deactivate intern | For ACTIVE intern, click Deactivate | Intern soft-deleted, hidden from default list, excluded from cron jobs | P1 |
+| AD-15 | Reactivate intern | Toggle "Show deactivated", click Reactivate | Intern restored to ACTIVE status, visible in default list again | P1 |
 | AD-13 | Document links | Click Aadhaar/PAN/Photo links in intern detail | Document opens in new tab from Vercel Blob URL | P1 |
 | AD-14 | Status badge colors | View interns with different statuses | Each status (PENDING, OFFERED, ACTIVE, COMPLETED) has distinct badge styling | P2 |
 | AD-15 | Back navigation | From intern detail, click back | Returns to intern list with state preserved | P2 |
@@ -305,6 +310,9 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | OF-09 | Non-acceptance reply | Reply with "Thank you" (no acceptance keyword) | Status remains OFFERED, no change | P1 |
 | OF-10 | Offer letter PDF content | Open the PDF attached to offer email | Contains intern name, role, stipend in ₹, start date, duration, college, ref number | P0 |
 | OF-11 | Status display per state | Check `/offer` page for PENDING, OFFERED, ACTIVE interns | Appropriate messaging displayed for each status | P1 |
+| OF-12 | View offer letter PDF on portal | Sign in as OFFERED/ACTIVE intern, visit `/offer`, click "View Offer Letter PDF" | PDF opens in new tab via `/api/offer/pdf` | P0 |
+| OF-13 | Download offer letter PDF | Click "Download PDF" button on `/offer` page | Browser downloads PDF with filename containing intern name | P1 |
+| OF-14 | PDF unavailable for PENDING | Sign in as PENDING intern, visit `/offer` | No PDF buttons shown; message says offer not sent yet | P1 |
 
 ### 7.6 Attendance Management
 
@@ -522,6 +530,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | 10 | POST | `/api/dashboard/action` | AD-10 | AD-09 | SC-04 | AD-10* | — | EG-08 |
 | 11 | GET | `/api/offer` | OF-01 | OF-03 | — | OF-02 | — | — |
 | 12 | POST | `/api/offer/accept` | OF-04 | OF-05 | — | OF-04* | — | — |
+| 12a | GET | `/api/offer/pdf` | OF-12 | OF-14 | OF-12* | — | — | — |
 | 13 | GET | `/api/attendance` | AT-01 | AT-03 | AT-02 | AT-03 | — | — |
 | 14 | POST | `/api/attendance` | AT-04 | AT-06 | — | — | — | — |
 | 15 | GET | `/api/tasks` | TK-01 | TK-14 | — | TK-14 | — | — |
@@ -717,18 +726,21 @@ Published every Friday covering:
 ### A. Intern Status State Machine
 
 ```
-  ┌──────────┐   send_offer    ┌──────────┐   accept (web/email)   ┌──────────┐   mark_complete   ┌───────────┐
-  │ PENDING  │ ──────────────→ │ OFFERED  │ ──────────────────────→│  ACTIVE  │ ────────────────→ │ COMPLETED │
-  └──────────┘                 └──────────┘                        └──────────┘                   └───────────┘
-       ↑                                                                                               
-   onboarding                                                                                          
+  ┌──────────┐   send_offer    ┌──────────┐  approve / accept   ┌──────────┐   mark_complete   ┌───────────┐
+  │ PENDING  │ ──────────────→ │ OFFERED  │ ──────────────────→ │  ACTIVE  │ ────────────────→ │ COMPLETED │
+  └──────────┘                 └──────────┘                     └──────────┘                   └───────────┘
+       ↑                                                          ↕ deactivate
+   onboarding                                                   ↕ reactivate
 ```
+
+- **approve_offer**: Admin manually approves (OFFERED → ACTIVE)
+- **deactivate / reactivate**: Soft-delete toggle; deactivated interns are hidden by default and excluded from cron jobs
 
 ### B. API Quick Reference
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| POST | `/api/auth/register` | None | Create account (admin or intern) |
+| POST | `/api/auth/register` | None | Create intern account (admin self-registration disabled) |
 | POST | `/api/auth/login` | None | Sign in with email + password |
 | GET | `/api/auth/me` | JWT cookie | Get current authenticated user |
 | POST | `/api/auth/logout` | JWT cookie | Sign out (clears session cookie) |
@@ -739,9 +751,10 @@ Published every Friday covering:
 | POST | `/api/onboard` | None | Register new intern |
 | GET | `/api/dashboard` | Admin email | List all interns |
 | GET | `/api/dashboard/intern` | None* | Get intern detail |
-| POST | `/api/dashboard/action` | None* | Admin actions (stipend, offer, reminder, complete) |
+| POST | `/api/dashboard/action` | None* | Admin actions: `update_stipend`, `send_offer`, `approve_offer`, `send_reminder`, `mark_complete`, `deactivate`, `reactivate` |
 | GET | `/api/offer` | None | Look up offer by email |
 | POST | `/api/offer/accept` | None | Accept offer |
+| GET | `/api/offer/pdf` | JWT cookie | Generate and download offer letter PDF on demand |
 | GET | `/api/attendance` | None | Get attendance by email |
 | POST | `/api/attendance` | None | Punch in/out |
 | GET | `/api/tasks` | None | Get tasks by email |
@@ -815,4 +828,4 @@ DELETE FROM interns WHERE email LIKE 'e2e.%@test.intelliforge.tech';
 
 ---
 
-*Document Version: 2.0 | Last Updated: 30 March 2026 | IntelliForge AI*
+*Document Version: 2.1 | Last Updated: 30 March 2026 | IntelliForge AI*

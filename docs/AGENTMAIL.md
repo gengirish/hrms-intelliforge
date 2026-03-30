@@ -17,8 +17,8 @@ This document describes how **IntelliForge HRMS** uses [AgentMail](https://www.a
 | Integration | TypeScript SDK (`agentmail` package) |
 | Email transport | [`src/lib/agentmail.ts`](../src/lib/agentmail.ts) |
 | Orchestrator | [`src/lib/notifications.ts`](../src/lib/notifications.ts) — routes to email + WhatsApp |
-| Shared inbox | `hr@intelliforge.tech` (created automatically if missing, `clientId: hrms-hr-inbox`) |
-| Environment | `AGENTMAIL_API_KEY` (see [`.env.example`](../.env.example)) |
+| Shared inbox | `hr@intelliforge.tech` (set via `AGENTMAIL_HR_INBOX_ID` env var) |
+| Environment | `AGENTMAIL_API_KEY` + `AGENTMAIL_HR_INBOX_ID` (see [`.env.example`](../.env.example)) |
 | Outbound | All sends go through the **API** (no SMTP relay in this app) |
 | Inbound / replies | Webhook — register URL below in the console for this inbox |
 
@@ -31,6 +31,15 @@ All notification call sites (onboard, dashboard actions, cron jobs) now go throu
 3. Logs both to the `NotificationLog` database table with delivery status tracking
 
 The AgentMail functions (`sendWelcomeEmail`, `sendOfferLetter`, etc.) are still the email transport layer — they are called by the orchestrator, not by API routes directly.
+
+### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `AGENTMAIL_API_KEY` | API key for authentication with AgentMail SDK |
+| `AGENTMAIL_HR_INBOX_ID` | Inbox address for the shared HR inbox (e.g. `hr@intelliforge.tech`). Must match an existing inbox in the AgentMail console. The code trims whitespace defensively — ensure no trailing `\r\n` in Vercel env vars. |
+
+> **Note:** Runtime inbox creation was removed. The HR inbox must be pre-created in the [AgentMail Console](https://console.agentmail.to/) and its address set in `AGENTMAIL_HR_INBOX_ID`.
 
 **Webhook URL** (production):
 
