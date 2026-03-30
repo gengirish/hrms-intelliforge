@@ -33,9 +33,6 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password);
 
-    let userId: string;
-    let role: "admin" | "intern";
-
     const intern = await prisma.intern.create({
       data: {
         email,
@@ -51,8 +48,8 @@ export async function POST(req: Request) {
         durationWeeks: 0,
       },
     });
-    userId = intern.id;
-    role = "intern";
+    const userId = intern.id;
+    const role: "admin" | "intern" = "intern";
 
     try {
       await sendVerificationEmail(email, name);

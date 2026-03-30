@@ -16,7 +16,27 @@ import {
   Save,
   Send,
   MessageSquare,
+  BarChart3,
+  TrendingUp,
+  AlertTriangle,
+  RefreshCw,
+  Sparkles,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldQuestion,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Legend,
+} from "recharts";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
@@ -88,6 +108,38 @@ interface NotificationRecord {
   createdAt: string;
 }
 
+interface PerformanceScoreRecord {
+  id: string;
+  weekLabel: string;
+  attendanceScore: number;
+  taskScore: number;
+  consistencyScore: number;
+  overallScore: number;
+  riskLevel: string;
+}
+
+interface PerformanceReviewRecord {
+  id: string;
+  summary: string;
+  recommendation: string;
+  periodStart: string;
+  periodEnd: string;
+  generatedAt: string;
+}
+
+interface DocVerification {
+  id: string;
+  documentType: string;
+  status: string;
+  extractedName: string | null;
+  extractedNumber: string | null;
+  nameMatch: boolean | null;
+  formatValid: boolean | null;
+  reviewNote: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+}
+
 export default function DashboardPage() {
   const [bootState, setBootState] = useState<
     "loading" | "forbidden" | "error" | "ready"
@@ -99,10 +151,15 @@ export default function DashboardPage() {
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
   const [isSavingStipend, setIsSavingStipend] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "attendance" | "tasks" | "emails" | "notifications"
+    "overview" | "attendance" | "tasks" | "emails" | "notifications" | "analytics"
   >("overview");
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [perfScores, setPerfScores] = useState<PerformanceScoreRecord[]>([]);
+  const [perfReview, setPerfReview] = useState<PerformanceReviewRecord | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [docVerifications, setDocVerifications] = useState<DocVerification[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +200,7 @@ export default function DashboardPage() {
       setSelectedIntern(data);
       setStipendEdit(data.stipendPaise);
       setActiveTab("overview");
+      loadDocVerifications(internId);
     } catch {
       toast.error("Failed to load intern details");
     } finally {
@@ -161,6 +219,90 @@ export default function DashboardPage() {
       toast.error("Failed to load notifications");
     } finally {
       setNotificationsLoading(false);
+    }
+  }
+
+  async function loadDocVerifications(internId: string) {
+    try {
+      const res = await fetch(`/api/documents/verify?internId=${internId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocVerifications(data.verifications ?? []);
+      }
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  async function triggerVerification(internId: string, documentType: "AADHAAR" | "PAN", documentUrl: string) {
+    try {
+      const res = await fetch("/api/documents/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ internId, documentType, documentUrl }),
+      });
+      if (res.ok) {
+        toast.success("Verification triggered");
+        await loadDocVerifications(internId);
+      } else {
+        toast.error("Verification failed");
+      }
+    } catch {
+      toast.error("Verification failed");
+    }
+  }
+
+  async function reviewDocument(verificationId: string, action: "APPROVE" | "REJECT", internId: string) {
+    try {
+      const res = await fetch("/api/documents/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verificationId, action }),
+      });
+      if (res.ok) {
+        toast.success(action === "APPROVE" ? "Document approved" : "Document rejected");
+        await loadDocVerifications(internId);
+      }
+    } catch {
+      toast.error("Review failed");
+    }
+  }
+
+  async function loadAnalytics(internId: string) {
+    setAnalyticsLoading(true);
+    try {
+      const [scoresRes, reviewRes] = await Promise.all([
+        fetch(`/api/analytics/scores?internId=${internId}`),
+        fetch(`/api/analytics/review?internId=${internId}`),
+      ]);
+      if (scoresRes.ok) {
+        const data = await scoresRes.json();
+        setPerfScores(data.scores ?? []);
+      }
+      if (reviewRes.ok) {
+        const data = await reviewRes.json();
+        setPerfReview(data.review ?? null);
+      }
+    } catch {
+      toast.error("Failed to load analytics");
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }
+
+  async function regenerateReview(internId: string) {
+    setReviewLoading(true);
+    try {
+      const res = await fetch(`/api/analytics/review?internId=${internId}&regenerate=true`);
+      if (res.ok) {
+        const data = await res.json();
+        setPerfReview(data.review ?? null);
+        toast.success("Review regenerated");
+      }
+    } catch {
+      toast.error("Failed to regenerate review");
+    } finally {
+      setReviewLoading(false);
     }
   }
 
@@ -329,6 +471,21 @@ export default function DashboardPage() {
                     >
                       {selectedIntern.status}
                     </span>
+                    {perfScores.length > 0 && (() => {
+                      const latest = perfScores[perfScores.length - 1];
+                      const riskColors: Record<string, string> = {
+                        LOW: "bg-emerald-900/50 text-emerald-400",
+                        MEDIUM: "bg-yellow-900/50 text-yellow-400",
+                        HIGH: "bg-orange-900/50 text-orange-400",
+                        CRITICAL: "bg-red-900/50 text-red-400",
+                      };
+                      return (
+                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold", riskColors[latest.riskLevel] ?? riskColors.LOW)}>
+                          {latest.riskLevel === "HIGH" || latest.riskLevel === "CRITICAL" ? <AlertTriangle className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
+                          {latest.riskLevel} Risk
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -398,6 +555,7 @@ export default function DashboardPage() {
                     { key: "overview", label: "Overview" },
                     { key: "attendance", label: "Attendance" },
                     { key: "tasks", label: "Tasks" },
+                    { key: "analytics", label: "Analytics" },
                     { key: "emails", label: "Emails" },
                     { key: "notifications", label: "Notifications" },
                   ] as const
@@ -413,6 +571,9 @@ export default function DashboardPage() {
                       setActiveTab(tab.key);
                       if (tab.key === "notifications" && selectedIntern) {
                         loadNotifications(selectedIntern.id);
+                      }
+                      if (tab.key === "analytics" && selectedIntern) {
+                        loadAnalytics(selectedIntern.id);
                       }
                     }}
                     className={cn(
@@ -499,32 +660,83 @@ export default function DashboardPage() {
                     <h3 className="text-sm font-semibold text-white pt-4">
                       Documents
                     </h3>
-                    <div className="space-y-2">
-                      {[
-                        ["Aadhaar", selectedIntern.aadharUrl],
-                        ["PAN Card", selectedIntern.panUrl],
-                        ["Photo", selectedIntern.photoUrl],
-                      ].map(([label, url]) => (
-                        <div
-                          key={label}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <span className="text-slate-400">{label}</span>
-                          {url ? (
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-indigo-400 hover:text-blue-300"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                              View
-                            </a>
-                          ) : (
-                            <span className="text-slate-600">Not uploaded</span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="space-y-3">
+                      {([
+                        ["Aadhaar", selectedIntern.aadharUrl, "AADHAAR"],
+                        ["PAN Card", selectedIntern.panUrl, "PAN"],
+                        ["Photo", selectedIntern.photoUrl, null],
+                      ] as const).map(([label, url, docType]) => {
+                        const verification = docType
+                          ? docVerifications.find((v) => v.documentType === docType)
+                          : null;
+                        return (
+                          <div key={label} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-400 flex items-center gap-2">
+                                {label}
+                                {verification && (
+                                  <span className={cn(
+                                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                                    verification.status === "VERIFIED" ? "bg-emerald-900/50 text-emerald-400" :
+                                    verification.status === "MISMATCH" || verification.status === "REJECTED" ? "bg-red-900/50 text-red-400" :
+                                    verification.status === "PROCESSING" ? "bg-yellow-900/50 text-yellow-400" :
+                                    "bg-slate-700 text-slate-300"
+                                  )}>
+                                    {verification.status === "VERIFIED" ? <ShieldCheck className="h-3 w-3" /> :
+                                     verification.status === "MISMATCH" || verification.status === "REJECTED" ? <ShieldAlert className="h-3 w-3" /> :
+                                     <ShieldQuestion className="h-3 w-3" />}
+                                    {verification.status}
+                                  </span>
+                                )}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                {url ? (
+                                  <a
+                                    href={url as string}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-indigo-400 hover:text-blue-300 text-xs"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-600 text-xs">Not uploaded</span>
+                                )}
+                                {url && docType && !verification && (
+                                  <button
+                                    onClick={() => triggerVerification(selectedIntern.id, docType as "AADHAAR" | "PAN", url as string)}
+                                    className="text-xs text-amber-400 hover:text-amber-300"
+                                  >
+                                    Verify
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {verification && verification.status !== "VERIFIED" && verification.status !== "REJECTED" && (
+                              <div className="flex items-center gap-2 pl-2">
+                                <button
+                                  onClick={() => reviewDocument(verification.id, "APPROVE", selectedIntern.id)}
+                                  className="text-xs text-emerald-400 hover:text-emerald-300"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => reviewDocument(verification.id, "REJECT", selectedIntern.id)}
+                                  className="text-xs text-red-400 hover:text-red-300"
+                                >
+                                  Reject
+                                </button>
+                                {verification.reviewNote && (
+                                  <span className="text-xs text-slate-500 truncate max-w-48" title={verification.reviewNote}>
+                                    {verification.reviewNote}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
               </div>
@@ -640,6 +852,115 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   )}
+              </div>
+
+              <div
+                id="panel-analytics"
+                role="tabpanel"
+                aria-labelledby="tab-analytics"
+                hidden={activeTab !== "analytics"}
+                className="space-y-6"
+              >
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+                  </div>
+                ) : perfScores.length === 0 ? (
+                  <div className="glass-card p-8 text-center">
+                    <BarChart3 className="h-10 w-10 text-slate-500 mx-auto mb-3" />
+                    <p className="text-sm text-slate-400">No performance scores computed yet.</p>
+                    <p className="text-xs text-slate-500 mt-1">Scores are computed daily via cron job.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Score Trend Chart */}
+                    <div className="glass-card p-6">
+                      <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-indigo-400" />
+                        Performance Trend
+                      </h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={perfScores}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <XAxis dataKey="weekLabel" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                            <YAxis domain={[0, 100]} tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                            <Tooltip
+                              contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px" }}
+                              labelStyle={{ color: "#e2e8f0" }}
+                            />
+                            <Legend />
+                            <Line type="monotone" dataKey="overallScore" name="Overall" stroke="#818cf8" strokeWidth={2} dot={{ fill: "#818cf8" }} />
+                            <Line type="monotone" dataKey="attendanceScore" name="Attendance" stroke="#34d399" strokeWidth={1.5} strokeDasharray="5 5" />
+                            <Line type="monotone" dataKey="taskScore" name="Tasks" stroke="#fbbf24" strokeWidth={1.5} strokeDasharray="5 5" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Score Breakdown Bar Chart */}
+                    <div className="glass-card p-6">
+                      <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-indigo-400" />
+                        Latest Score Breakdown
+                      </h3>
+                      <div className="h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={[perfScores[perfScores.length - 1]]} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <XAxis type="number" domain={[0, 100]} tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                            <YAxis type="category" dataKey="weekLabel" tick={{ fill: "#94a3b8", fontSize: 12 }} width={80} />
+                            <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px" }} />
+                            <Bar dataKey="attendanceScore" name="Attendance" fill="#34d399" barSize={20} />
+                            <Bar dataKey="taskScore" name="Tasks" fill="#fbbf24" barSize={20} />
+                            <Bar dataKey="consistencyScore" name="Consistency" fill="#818cf8" barSize={20} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* AI Review Card */}
+                    <div className="glass-card p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-amber-400" />
+                          AI Performance Review
+                        </h3>
+                        <button
+                          onClick={() => selectedIntern && regenerateReview(selectedIntern.id)}
+                          disabled={reviewLoading}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                        >
+                          {reviewLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                          Regenerate
+                        </button>
+                      </div>
+                      {perfReview ? (
+                        <div className="space-y-3">
+                          <p className="text-sm text-slate-300 leading-relaxed">{perfReview.summary}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500">Recommendation:</span>
+                            <span className={cn(
+                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                              perfReview.recommendation === "CONVERT_FULL_TIME" ? "bg-emerald-100 text-emerald-800" :
+                              perfReview.recommendation === "EXTEND" ? "bg-blue-100 text-blue-800" :
+                              perfReview.recommendation === "ON_TRACK" ? "bg-slate-100 text-slate-800" :
+                              "bg-orange-100 text-orange-800"
+                            )}>
+                              {perfReview.recommendation.replace(/_/g, " ")}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            Generated {formatDateIST(perfReview.generatedAt)}
+                            {" "}({formatDateIST(perfReview.periodStart)} — {formatDateIST(perfReview.periodEnd)})
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400">No review generated yet. Click &ldquo;Regenerate&rdquo; to create one.</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div

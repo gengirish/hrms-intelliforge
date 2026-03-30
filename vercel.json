@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/attendance-nudge",
       "schedule": "0 5 * * 1-5"
+    },
+    {
+      "path": "/api/cron/performance-scores",
+      "schedule": "30 18 * * *"
     }
   ]
 }

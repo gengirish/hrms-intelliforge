@@ -31,6 +31,7 @@ export interface SessionPayload extends JWTPayload {
   sub: string;
   role: "admin" | "intern";
   email: string;
+  orgId?: string;
   tokenVersion?: number;
 }
 
@@ -38,12 +39,14 @@ export async function signJWT(payload: {
   userId: string;
   role: "admin" | "intern";
   email: string;
+  orgId?: string;
   tokenVersion?: number;
 }): Promise<string> {
   const tokenVersion = payload.tokenVersion ?? 0;
   return new SignJWT({
     role: payload.role,
     email: payload.email,
+    orgId: payload.orgId,
     tokenVersion,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -96,8 +99,13 @@ export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   const userId = hdrs.get("x-user-id");
   const role = hdrs.get("x-user-role") as "admin" | "intern" | null;
   const email = hdrs.get("x-user-email");
+  const orgId = hdrs.get("x-user-org-id") ?? undefined;
   if (!userId || !role || !email) return null;
-  return { sub: userId, role, email } as SessionPayload;
+  return { sub: userId, role, email, orgId } as SessionPayload;
+}
+
+export function getOrgId(session: SessionPayload): string | undefined {
+  return session.orgId;
 }
 
 export async function getAuthIntern() {

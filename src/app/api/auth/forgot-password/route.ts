@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const user = admin || intern;
 
     if (user) {
-      const name = "name" in user ? user.name : undefined;
+      const name = "name" in user ? (user.name ?? undefined) : undefined;
       await sendPasswordResetEmail(email, name);
     }
 

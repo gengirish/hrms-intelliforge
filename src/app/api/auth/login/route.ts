@@ -25,9 +25,9 @@ export async function POST(req: Request) {
       const valid = await verifyPassword(password, admin.passwordHash);
       if (!valid) return errorResponse("Invalid email or password", 401);
 
-      const token = await signJWT({ userId: admin.id, role: "admin", email });
+      const token = await signJWT({ userId: admin.id, role: "admin", email, orgId: admin.orgId ?? undefined });
       const response = NextResponse.json({
-        user: { id: admin.id, email: admin.email, role: "admin" },
+        user: { id: admin.id, email: admin.email, role: "admin", orgId: admin.orgId },
       });
       setAuthCookie(response, token);
       return response;

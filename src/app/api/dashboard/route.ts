@@ -13,7 +13,10 @@ export async function GET() {
       );
     }
 
+    const where = admin.orgId ? { orgId: admin.orgId } : {};
+
     const interns = await prisma.intern.findMany({
+      where,
       orderBy: { createdAt: "desc" },
     });
 

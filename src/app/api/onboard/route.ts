@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { notify } from "@/lib/notifications";
 import { onboardSchema } from "@/lib/validations";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { verifyDocument } from "@/lib/ai/document-verifier";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -112,6 +113,25 @@ export async function POST(req: NextRequest) {
       photoUrl = await uploadFile(photoFile, "photos", email);
     }
 
+    const admin = await prisma.admin.findUnique({ where: { id: session.sub } });
+    const orgId = admin?.orgId ?? undefined;
+
+    if (orgId) {
+      const org = await prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { maxInterns: true },
+      });
+      if (org) {
+        const currentCount = await prisma.intern.count({ where: { orgId } });
+        if (currentCount >= org.maxInterns) {
+          return NextResponse.json(
+            { error: `Intern limit reached (${org.maxInterns}). Upgrade your plan to add more.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const intern = await prisma.intern.create({
       data: {
         name,
@@ -128,6 +148,7 @@ export async function POST(req: NextRequest) {
         photoUrl,
         status: "PENDING",
         whatsappOptIn: whatsappOptIn ?? false,
+        orgId,
       },
     });
 
@@ -135,6 +156,17 @@ export async function POST(req: NextRequest) {
       await notify(intern.id, "WELCOME");
     } catch (err) {
       console.error("Welcome notification failed:", err);
+    }
+
+    if (aadharUrl) {
+      verifyDocument(intern.id, "AADHAAR", aadharUrl).catch((err) =>
+        console.error("Aadhaar verification failed:", err)
+      );
+    }
+    if (panUrl) {
+      verifyDocument(intern.id, "PAN", panUrl).catch((err) =>
+        console.error("PAN verification failed:", err)
+      );
     }
 
     return NextResponse.json({ id: intern.id, status: "PENDING" });

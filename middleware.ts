@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   "/sign-in",
   "/sign-up",
   "/reset-password",
+  "/create-org",
 ];
 
 const PUBLIC_API_PREFIXES = [
@@ -56,6 +57,9 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-user-id", payload.sub as string);
     requestHeaders.set("x-user-role", payload.role as string);
     requestHeaders.set("x-user-email", payload.email as string);
+    if (payload.orgId) {
+      requestHeaders.set("x-user-org-id", payload.orgId as string);
+    }
 
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {

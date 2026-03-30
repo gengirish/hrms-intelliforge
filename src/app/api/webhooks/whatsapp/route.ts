@@ -4,8 +4,11 @@ import {
   verifyWhatsAppSignature,
   formatPhoneE164,
   sendWhatsAppTemplate,
+  sendWhatsAppText,
 } from "@/lib/whatsapp";
 import { formatDateIST } from "@/lib/utils";
+import { parseIntent } from "@/lib/wa-bot/intent-parser";
+import { executeIntent } from "@/lib/wa-bot/executor";
 
 function indicatesOfferAcceptance(text: string): boolean {
   const lower = text.toLowerCase();
@@ -95,11 +98,9 @@ export async function POST(req: NextRequest) {
             where: { phone: { contains: last10 } },
           });
 
-          if (
-            intern &&
-            intern.status === "OFFERED" &&
-            indicatesOfferAcceptance(bodyText)
-          ) {
+          if (!intern) continue;
+
+          if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
             await prisma.intern.update({
               where: { id: intern.id },
               data: { status: "ACTIVE", acceptedAt: new Date() },
@@ -111,7 +112,32 @@ export async function POST(req: NextRequest) {
             console.info(
               `[whatsapp-webhook] Intern ${intern.name} auto-accepted via WhatsApp`
             );
+            continue;
           }
+
+          const startMs = Date.now();
+          const intent = await parseIntent(bodyText);
+          const response = await executeIntent(intern, intent);
+          const latencyMs = Date.now() - startMs;
+
+          await Promise.all([
+            sendWhatsAppText(e164, response),
+            prisma.botInteractionLog.create({
+              data: {
+                internId: intern.id,
+                channel: "WHATSAPP",
+                input: bodyText,
+                intent: intent.action,
+                response,
+                success: intent.action !== "UNKNOWN",
+                latencyMs,
+              },
+            }),
+          ]);
+
+          console.info(
+            `[wa-bot] ${intern.name}: "${bodyText}" → ${intent.action} (${latencyMs}ms)`
+          );
         }
 
         for (const status of value.statuses ?? []) {

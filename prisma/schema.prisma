@@ -55,8 +55,32 @@ enum TokenType {
   MAGIC_LINK
 }
 
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  domain            String?
+  logoUrl           String?
+  whatsappPhoneId   String?
+  whatsappToken     String?
+  agentmailInboxId  String?
+  agentmailEmail    String?
+  plan              String   @default("free")
+  stripeCustomerId  String?
+  stripeSubId       String?
+  maxInterns        Int      @default(5)
+  createdAt         DateTime @default(now())
+
+  admins      Admin[]
+  interns     Intern[]
+  jobPostings JobPosting[]
+
+  @@map("organizations")
+}
+
 model Intern {
   id               String       @id @default(cuid())
+  orgId            String?
   passwordHash     String?
   emailVerified    Boolean      @default(false)
   name             String
@@ -81,11 +105,17 @@ model Intern {
   acceptedAt       DateTime?
   createdAt        DateTime     @default(now())
 
-  attendance       Attendance[]
-  tasks            Task[]
-  notifications    NotificationLog[]
-  notificationPref NotificationPreference?
+  org                Organization?        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  attendance         Attendance[]
+  tasks              Task[]
+  notifications      NotificationLog[]
+  notificationPref   NotificationPreference?
+  botInteractions    BotInteractionLog[]
+  performanceScores       PerformanceScore[]
+  performanceReviews      PerformanceReview[]
+  documentVerifications   DocumentVerification[]
 
+  @@index([orgId])
   @@index([status])
   @@map("interns")
 }
@@ -122,12 +152,17 @@ model Task {
 
 model Admin {
   id            String   @id @default(cuid())
+  orgId         String?
   passwordHash  String
   emailVerified Boolean  @default(false)
   email         String   @unique
+  name          String?
   role          String   @default("ADMIN")
   mentees       Intern[] @relation("InternMentor")
 
+  org Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
   @@map("admins")
 }
 
@@ -175,4 +210,108 @@ model NotificationPreference {
   intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+model PerformanceScore {
+  id               String   @id @default(cuid())
+  internId         String
+  weekLabel        String
+  attendanceScore  Float
+  taskScore        Float
+  consistencyScore Float
+  overallScore     Float
+  riskLevel        String   @default("LOW")
+  createdAt        DateTime @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@unique([internId, weekLabel])
+  @@map("performance_scores")
+}
+
+model PerformanceReview {
+  id             String   @id @default(cuid())
+  internId       String
+  periodStart    DateTime
+  periodEnd      DateTime
+  summary        String
+  recommendation String
+  generatedAt    DateTime @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@map("performance_reviews")
+}
+
+model BotInteractionLog {
+  id        String   @id @default(cuid())
+  internId  String
+  channel   String   @default("WHATSAPP")
+  input     String
+  intent    String
+  response  String
+  success   Boolean
+  latencyMs Int?
+  createdAt DateTime @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@index([internId, createdAt])
+  @@map("bot_interaction_logs")
+}
+
+model DocumentVerification {
+  id              String    @id @default(cuid())
+  internId        String
+  documentType    String
+  documentUrl     String?
+  extractedName   String?
+  extractedNumber String?
+  nameMatch       Boolean?
+  formatValid     Boolean?
+  status          String    @default("PENDING")
+  reviewNote      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@index([internId])
+  @@map("document_verifications")
+}
+
+model JobPosting {
+  id                String   @id @default(cuid())
+  orgId             String
+  title             String
+  description       String
+  skills            String[]
+  interviewBotJobId String?
+  interviewLink     String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  candidates Candidate[]
+
+  @@index([orgId])
+  @@map("job_postings")
+}
+
+model Candidate {
+  id                String   @id @default(cuid())
+  jobPostingId      String
+  name              String
+  email             String
+  phone             String?
+  interviewScore    Float?
+  interviewStatus   String   @default("PENDING")
+  reportUrl         String?
+  convertedToIntern Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+
+  @@index([jobPostingId])
+  @@map("candidates")
 }
