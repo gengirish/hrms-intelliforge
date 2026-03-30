@@ -13,30 +13,19 @@ export const agentmail = new AgentMailClient({
   apiKey: process.env.AGENTMAIL_API_KEY!,
 });
 
-let _hrInboxId: string | null = null;
+const HR_INBOX_ID = process.env.AGENTMAIL_HR_INBOX_ID;
+
+if (!HR_INBOX_ID) {
+  console.warn(
+    "AGENTMAIL_HR_INBOX_ID is not set — set it to the hr@intelliforge.tech inbox ID from the AgentMail console"
+  );
+}
 
 async function getHRInboxId(): Promise<string> {
-  if (_hrInboxId) return _hrInboxId;
-
-  const inboxes = await agentmail.inboxes.list({ limit: 50 });
-  const existing = inboxes.inboxes?.find(
-    (ib: { email?: string; username?: string; domain?: string }) =>
-      ib.email?.toLowerCase() === "hr@intelliforge.tech" ||
-      (ib.username === "hr" && ib.domain === "intelliforge.tech")
+  if (HR_INBOX_ID) return HR_INBOX_ID;
+  throw new Error(
+    "AGENTMAIL_HR_INBOX_ID environment variable is required. Get the inbox ID from https://console.agentmail.to"
   );
-  if (existing) {
-    _hrInboxId = existing.inboxId;
-    return _hrInboxId;
-  }
-
-  const inbox = await agentmail.inboxes.create({
-    username: "hr",
-    domain: "intelliforge.tech",
-    displayName: "IntelliForge AI — HR Team",
-    clientId: "hrms-hr-inbox",
-  });
-  _hrInboxId = inbox.inboxId;
-  return _hrInboxId;
 }
 
 export async function sendWelcomeEmail(
