@@ -6,82 +6,78 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 
-const styles = StyleSheet.create({
-  page: {
-    padding: 50,
-    fontFamily: "Helvetica",
-    backgroundColor: "#ffffff",
-  },
-  header: {
-    marginBottom: 30,
-    borderBottom: "2px solid #1e293b",
-    paddingBottom: 15,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1e293b",
-  },
-  logoSub: {
-    fontSize: 10,
-    color: "#64748b",
-    marginTop: 2,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1e293b",
-    marginBottom: 20,
-    marginTop: 20,
-    textAlign: "center",
-  },
-  body: {
-    fontSize: 11,
-    lineHeight: 1.8,
-    color: "#334155",
-  },
-  field: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#1e293b",
-    width: 160,
-  },
-  value: {
-    fontSize: 11,
-    color: "#334155",
-    flex: 1,
-  },
-  signatureSection: {
-    marginTop: 60,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  signatureBlock: {
-    width: "40%",
-  },
-  signatureLine: {
-    borderTop: "1px solid #94a3b8",
-    marginTop: 40,
-    paddingTop: 5,
-  },
-  signatureLabel: {
-    fontSize: 10,
-    color: "#64748b",
-  },
+/* ── brand palette ─────────────────────────────────────── */
+const C = {
+  indigo: "#4f46e5",
+  indigoDark: "#3730a3",
+  slate900: "#0f172a",
+  slate700: "#334155",
+  slate500: "#64748b",
+  slate300: "#cbd5e1",
+  slate100: "#f1f5f9",
+  white: "#ffffff",
+  emerald: "#059669",
+};
+
+/* ── shared styles ─────────────────────────────────────── */
+const base = StyleSheet.create({
+  page: { paddingTop: 0, paddingBottom: 60, paddingHorizontal: 0, fontFamily: "Helvetica", backgroundColor: C.white },
   footer: {
-    position: "absolute",
-    bottom: 30,
-    left: 50,
-    right: 50,
-    textAlign: "center",
-    fontSize: 8,
-    color: "#94a3b8",
-    borderTop: "1px solid #e2e8f0",
-    paddingTop: 10,
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    backgroundColor: C.slate100, paddingVertical: 12, paddingHorizontal: 50,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+  },
+  footerText: { fontSize: 7.5, color: C.slate500 },
+});
+
+/* ── offer letter styles ───────────────────────────────── */
+const o = StyleSheet.create({
+  accentBar: { height: 6, backgroundColor: C.indigo },
+  header: {
+    backgroundColor: C.slate900, paddingVertical: 22, paddingHorizontal: 50,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+  },
+  brand: { fontSize: 22, fontFamily: "Helvetica-Bold", color: C.white, letterSpacing: 0.5 },
+  brandTag: { fontSize: 8.5, color: C.slate300, marginTop: 2, letterSpacing: 0.3 },
+  refBox: { alignItems: "flex-end" },
+  refText: { fontSize: 8.5, color: C.slate300 },
+  body: { paddingHorizontal: 50, paddingTop: 28 },
+  titleBar: {
+    backgroundColor: C.indigo, borderRadius: 4, paddingVertical: 8,
+    paddingHorizontal: 16, marginBottom: 22, alignSelf: "center",
+  },
+  titleText: { fontSize: 15, fontFamily: "Helvetica-Bold", color: C.white, letterSpacing: 0.6, textAlign: "center" },
+  greeting: { fontSize: 11, color: C.slate700, lineHeight: 1.7 },
+  para: { fontSize: 10.5, color: C.slate700, lineHeight: 1.75, marginTop: 10 },
+  tableWrap: {
+    marginTop: 18, marginBottom: 18, borderRadius: 4,
+    border: `1px solid ${C.slate300}`, overflow: "hidden",
+  },
+  tableHeader: {
+    backgroundColor: C.slate900, paddingVertical: 7, paddingHorizontal: 14,
+  },
+  tableHeaderText: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.white, letterSpacing: 0.4 },
+  row: { flexDirection: "row", borderBottom: `1px solid ${C.slate300}` },
+  rowAlt: { backgroundColor: C.slate100 },
+  cell: { paddingVertical: 8, paddingHorizontal: 14 },
+  cellLabel: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.slate900, width: 155 },
+  cellValue: { fontSize: 10, color: C.slate700, flex: 1 },
+  sectionTitle: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.slate900, marginTop: 16, marginBottom: 6 },
+  term: { fontSize: 9.5, color: C.slate700, lineHeight: 1.65, marginBottom: 3 },
+  acceptBox: {
+    marginTop: 16, padding: 14, backgroundColor: "#eef2ff",
+    borderRadius: 4, borderLeft: `3px solid ${C.indigo}`,
+  },
+  acceptText: { fontSize: 10, color: C.indigoDark, lineHeight: 1.6 },
+  sigSection: { marginTop: 40, flexDirection: "row", justifyContent: "space-between" },
+  sigBlock: { width: "42%" },
+  sigLine: { borderTop: `1.5px solid ${C.slate900}`, marginTop: 36, paddingTop: 6 },
+  sigName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.slate900 },
+  sigRole: { fontSize: 8.5, color: C.slate500, marginTop: 1 },
+  confidential: {
+    position: "absolute", top: 400, left: 140,
+    fontSize: 60, color: "#e2e8f0", fontFamily: "Helvetica-Bold",
+    opacity: 0.18, transform: "rotate(-35deg)",
   },
 });
 
@@ -114,90 +110,147 @@ export function OfferLetterPDF({
     0
   );
   const refNum = 1000 + (refHash % 9000);
+  const refStr = `IF/INTERN/${new Date().getFullYear()}/${refNum}`;
+
+  const details: [string, string][] = [
+    ["Position", role],
+    ["Monthly Stipend", stipendINR],
+    ["Start Date", startDate],
+    ["Duration", `${durationWeeks} weeks`],
+    ["Work Mode", "Remote / Hybrid"],
+    ["Reporting To", "IntelliForge AI — HR Team"],
+  ];
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>IntelliForge AI</Text>
-          <Text style={styles.logoSub}>
-            Artificial Intelligence &middot; Machine Learning &middot; Innovation
+      <Page size="A4" style={base.page}>
+        {/* watermark */}
+        <Text style={o.confidential}>CONFIDENTIAL</Text>
+
+        {/* accent bar */}
+        <View style={o.accentBar} />
+
+        {/* header */}
+        <View style={o.header}>
+          <View>
+            <Text style={o.brand}>IntelliForge AI</Text>
+            <Text style={o.brandTag}>Artificial Intelligence &bull; Machine Learning &bull; Innovation</Text>
+          </View>
+          <View style={o.refBox}>
+            <Text style={o.refText}>Date: {today}</Text>
+            <Text style={[o.refText, { marginTop: 2 }]}>Ref: {refStr}</Text>
+          </View>
+        </View>
+
+        {/* body */}
+        <View style={o.body}>
+          {/* title badge */}
+          <View style={o.titleBar}>
+            <Text style={o.titleText}>INTERNSHIP OFFER LETTER</Text>
+          </View>
+
+          {/* greeting */}
+          <Text style={o.greeting}>Dear <Text style={{ fontFamily: "Helvetica-Bold" }}>{internName}</Text>,</Text>
+          <Text style={o.para}>
+            We are delighted to extend this formal offer of internship at IntelliForge AI.
+            Based on your academic credentials at {college} and demonstrated aptitude, we are
+            confident you will make a meaningful contribution to our team.
           </Text>
-        </View>
+          <Text style={o.para}>
+            The terms and details of your internship engagement are outlined below.
+          </Text>
 
-        <Text style={{ fontSize: 10, color: "#64748b", marginBottom: 4 }}>
-          Date: {today}
-        </Text>
-        <Text style={{ fontSize: 10, color: "#64748b", marginBottom: 20 }}>
-          Ref: IF/INTERN/{new Date().getFullYear()}/{refNum}
-        </Text>
-
-        <Text style={styles.title}>Internship Offer Letter</Text>
-
-        <Text style={styles.body}>
-          Dear {internName},
-        </Text>
-        <Text style={[styles.body, { marginTop: 10 }]}>
-          We are pleased to offer you an internship position at IntelliForge AI.
-          Based on your qualifications from {college}, we believe you will be
-          a valuable addition to our team.
-        </Text>
-
-        <View style={{ marginTop: 20, marginBottom: 20 }}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Position:</Text>
-            <Text style={styles.value}>{role}</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Monthly Stipend:</Text>
-            <Text style={styles.value}>{stipendINR}</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Start Date:</Text>
-            <Text style={styles.value}>{startDate}</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Duration:</Text>
-            <Text style={styles.value}>{durationWeeks} weeks</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Location:</Text>
-            <Text style={styles.value}>Remote / Hybrid</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Reporting:</Text>
-            <Text style={styles.value}>IntelliForge AI HR Team</Text>
-          </View>
-        </View>
-
-        <Text style={styles.body}>
-          Please confirm your acceptance by replying to the email with
-          &quot;I Accept&quot; or signing below.
-        </Text>
-
-        <View style={styles.signatureSection}>
-          <View style={styles.signatureBlock}>
-            <View style={styles.signatureLine}>
-              <Text style={styles.signatureLabel}>IntelliForge AI</Text>
-              <Text style={styles.signatureLabel}>Authorized Signatory</Text>
+          {/* details table */}
+          <View style={o.tableWrap}>
+            <View style={o.tableHeader}>
+              <Text style={o.tableHeaderText}>INTERNSHIP DETAILS</Text>
             </View>
+            {details.map(([label, value], i) => (
+              <View
+                key={label}
+                style={[
+                  o.row,
+                  i % 2 === 1 ? o.rowAlt : {},
+                  i === details.length - 1 ? { borderBottom: "none" } : {},
+                ]}
+              >
+                <Text style={[o.cell, o.cellLabel]}>{label}</Text>
+                <Text style={[o.cell, o.cellValue]}>{value}</Text>
+              </View>
+            ))}
           </View>
-          <View style={styles.signatureBlock}>
-            <View style={styles.signatureLine}>
-              <Text style={styles.signatureLabel}>{internName}</Text>
-              <Text style={styles.signatureLabel}>Intern</Text>
+
+          {/* terms */}
+          <Text style={o.sectionTitle}>Terms &amp; Conditions</Text>
+          <Text style={o.term}>1. This internship is for the specified duration and may be extended by mutual agreement.</Text>
+          <Text style={o.term}>2. You will be expected to follow IntelliForge AI policies, maintain professionalism, and meet assigned deliverables.</Text>
+          <Text style={o.term}>3. The stipend will be disbursed monthly upon satisfactory performance.</Text>
+          <Text style={o.term}>4. A Certificate of Completion will be issued upon successful completion of the programme.</Text>
+          <Text style={o.term}>5. Either party may terminate this engagement with 7 days written notice.</Text>
+
+          {/* acceptance CTA */}
+          <View style={o.acceptBox}>
+            <Text style={o.acceptText}>
+              To accept this offer, please reply to the email with &quot;I Accept&quot; or sign in to the
+              portal at hrms.intelliforge.tech/offer and click &quot;Accept &amp; Sign&quot;.
+            </Text>
+          </View>
+
+          {/* signatures */}
+          <View style={o.sigSection}>
+            <View style={o.sigBlock}>
+              <View style={o.sigLine}>
+                <Text style={o.sigName}>IntelliForge AI</Text>
+                <Text style={o.sigRole}>Authorized Signatory</Text>
+              </View>
+            </View>
+            <View style={o.sigBlock}>
+              <View style={o.sigLine}>
+                <Text style={o.sigName}>{internName}</Text>
+                <Text style={o.sigRole}>Intern Acceptance</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text>IntelliForge AI &middot; www.intelliforge.tech</Text>
-          <Text>&copy; 2026 IntelliForge AI. All rights reserved.</Text>
+        {/* footer */}
+        <View style={base.footer}>
+          <Text style={base.footerText}>IntelliForge AI &bull; www.intelliforge.tech &bull; hr@intelliforge.tech</Text>
+          <Text style={base.footerText}>&copy; {new Date().getFullYear()} IntelliForge AI. All rights reserved.  |  {refStr}</Text>
         </View>
       </Page>
     </Document>
   );
 }
+
+/* ── completion certificate styles ──────────────────────── */
+const cert = StyleSheet.create({
+  border: {
+    position: "absolute", top: 20, left: 20, right: 20, bottom: 20,
+    border: `2px solid ${C.indigo}`, borderRadius: 2,
+  },
+  innerBorder: {
+    position: "absolute", top: 26, left: 26, right: 26, bottom: 26,
+    border: `0.5px solid ${C.slate300}`, borderRadius: 1,
+  },
+  content: { paddingHorizontal: 60, paddingTop: 50, alignItems: "center" },
+  topBar: { width: 80, height: 4, backgroundColor: C.indigo, borderRadius: 2, marginBottom: 20 },
+  brand: { fontSize: 26, fontFamily: "Helvetica-Bold", color: C.slate900, letterSpacing: 1 },
+  brandTag: { fontSize: 9, color: C.slate500, marginTop: 3, letterSpacing: 0.5 },
+  divider: { width: 200, height: 1, backgroundColor: C.slate300, marginVertical: 18 },
+  certTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", color: C.indigo, letterSpacing: 2, marginBottom: 24 },
+  preText: { fontSize: 12, color: C.slate500, marginBottom: 6 },
+  name: { fontSize: 26, fontFamily: "Helvetica-Bold", color: C.slate900, marginBottom: 4 },
+  college: { fontSize: 11, color: C.slate500, marginBottom: 20 },
+  bodyText: { fontSize: 11, color: C.slate700, lineHeight: 1.8, textAlign: "center", maxWidth: 400 },
+  commendation: { fontSize: 10.5, color: C.slate700, lineHeight: 1.7, textAlign: "center", marginTop: 14, maxWidth: 380, fontStyle: "italic" },
+  sigSection: { marginTop: 50, flexDirection: "row", justifyContent: "space-between", width: "100%", paddingHorizontal: 10 },
+  sigBlock: { width: "38%", alignItems: "center" },
+  sigLine: { borderTop: `1.5px solid ${C.slate900}`, width: "100%", paddingTop: 6, alignItems: "center" },
+  sigName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.slate900 },
+  sigRole: { fontSize: 8.5, color: C.slate500, marginTop: 1 },
+  certId: { position: "absolute", bottom: 35, fontSize: 7.5, color: C.slate500 },
+});
 
 interface CompletionCertProps {
   internName: string;
@@ -217,61 +270,58 @@ export function CompletionCertPDF({
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + durationWeeks * 7);
 
+  const certHash = Array.from(internName + startDate).reduce(
+    (acc, char) => acc + char.charCodeAt(0), 0
+  );
+  const certId = `IF/CERT/${new Date().getFullYear()}/${(1000 + (certHash % 9000))}`;
+
   return (
     <Document>
-      <Page size="A4" style={[styles.page, { textAlign: "center" }]}>
-        <View style={[styles.header, { textAlign: "center", borderBottom: "3px solid #1e293b" }]}>
-          <Text style={[styles.logo, { textAlign: "center" }]}>IntelliForge AI</Text>
-          <Text style={[styles.logoSub, { textAlign: "center" }]}>
-            Certificate of Internship Completion
+      <Page size="A4" style={[base.page, { paddingBottom: 0 }]}>
+        {/* decorative double border */}
+        <View style={cert.border} />
+        <View style={cert.innerBorder} />
+
+        <View style={cert.content}>
+          <View style={cert.topBar} />
+          <Text style={cert.brand}>IntelliForge AI</Text>
+          <Text style={cert.brandTag}>Artificial Intelligence &bull; Machine Learning &bull; Innovation</Text>
+          <View style={cert.divider} />
+
+          <Text style={cert.certTitle}>CERTIFICATE OF COMPLETION</Text>
+
+          <Text style={cert.preText}>This is to certify that</Text>
+          <Text style={cert.name}>{internName}</Text>
+          <Text style={cert.college}>from {college}</Text>
+
+          <Text style={cert.bodyText}>
+            has successfully completed a {durationWeeks}-week internship as a{"\n"}
+            <Text style={{ fontFamily: "Helvetica-Bold" }}>{role}</Text> at IntelliForge AI{"\n"}
+            from {new Date(startDate).toLocaleDateString("en-IN")} to {endDate.toLocaleDateString("en-IN")}.
           </Text>
-        </View>
 
-        <Text style={{ fontSize: 14, color: "#64748b", marginTop: 30, textAlign: "center" }}>
-          This is to certify that
-        </Text>
+          <Text style={cert.commendation}>
+            During the internship, {internName} demonstrated commendable skills,
+            dedication, and exemplary professional conduct deserving of this recognition.
+          </Text>
 
-        <Text style={{ fontSize: 22, fontWeight: "bold", color: "#1e293b", marginTop: 10, textAlign: "center" }}>
-          {internName}
-        </Text>
-
-        <Text style={{ fontSize: 11, color: "#64748b", marginTop: 5, textAlign: "center" }}>
-          from {college}
-        </Text>
-
-        <Text style={{ fontSize: 12, color: "#334155", marginTop: 20, lineHeight: 1.8, textAlign: "center" }}>
-          has successfully completed a {durationWeeks}-week internship as a{"\n"}
-          <Text style={{ fontWeight: "bold" }}>{role}</Text> at IntelliForge AI{"\n"}
-          from {new Date(startDate).toLocaleDateString("en-IN")} to{" "}
-          {endDate.toLocaleDateString("en-IN")}.
-        </Text>
-
-        <Text style={{ fontSize: 11, color: "#334155", marginTop: 20, textAlign: "center" }}>
-          During the internship, {internName} demonstrated commendable skills,
-          dedication, and professional conduct.
-        </Text>
-
-        <View style={[styles.signatureSection, { marginTop: 80 }]}>
-          <View style={styles.signatureBlock}>
-            <View style={styles.signatureLine}>
-              <Text style={styles.signatureLabel}>IntelliForge AI</Text>
-              <Text style={styles.signatureLabel}>Director</Text>
+          <View style={cert.sigSection}>
+            <View style={cert.sigBlock}>
+              <View style={cert.sigLine}>
+                <Text style={cert.sigName}>IntelliForge AI</Text>
+                <Text style={cert.sigRole}>Director</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.signatureBlock}>
-            <View style={styles.signatureLine}>
-              <Text style={styles.signatureLabel}>Date</Text>
-              <Text style={styles.signatureLabel}>
-                {new Date().toLocaleDateString("en-IN")}
-              </Text>
+            <View style={cert.sigBlock}>
+              <View style={cert.sigLine}>
+                <Text style={cert.sigName}>{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</Text>
+                <Text style={cert.sigRole}>Date of Issue</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text>IntelliForge AI &middot; www.intelliforge.tech</Text>
-          <Text>&copy; 2026 IntelliForge AI. All rights reserved.</Text>
-        </View>
+        <Text style={cert.certId}>{certId}  |  www.intelliforge.tech  |  &copy; {new Date().getFullYear()} IntelliForge AI</Text>
       </Page>
     </Document>
   );
