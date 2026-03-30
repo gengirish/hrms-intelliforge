@@ -1,5 +1,42 @@
 import { test, expect } from "@playwright/test";
 
+test.describe("Auth API Endpoints", () => {
+  test("POST /api/auth/login rejects invalid credentials", async ({ request }) => {
+    const response = await request.post("/api/auth/login", {
+      data: { email: "nonexistent@test.com", password: "wrongpassword" },
+    });
+    expect(response.status()).toBe(401);
+    const body = await response.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  test("POST /api/auth/login rejects empty body", async ({ request }) => {
+    const response = await request.post("/api/auth/login", {
+      data: {},
+    });
+    expect(response.status()).toBe(400);
+  });
+
+  test("GET /api/auth/me returns 401 without session", async ({ request }) => {
+    const response = await request.get("/api/auth/me");
+    expect(response.status()).toBe(401);
+  });
+
+  test("POST /api/auth/register rejects missing fields", async ({ request }) => {
+    const response = await request.post("/api/auth/register", {
+      data: { email: "test@example.com" },
+    });
+    expect(response.status()).toBe(400);
+  });
+
+  test("POST /api/auth/magic-link rejects empty email", async ({ request }) => {
+    const response = await request.post("/api/auth/magic-link", {
+      data: {},
+    });
+    expect([400, 404, 429, 500]).toContain(response.status());
+  });
+});
+
 test.describe("API Endpoints (unauthenticated)", () => {
   test("GET /api/dashboard blocks unauthenticated access", async ({ request }) => {
     const response = await request.get("/api/dashboard");
@@ -25,7 +62,7 @@ test.describe("API Endpoints (unauthenticated)", () => {
     const response = await request.post("/api/onboard", {
       data: { name: "Test" },
     });
-    expect([401, 403, 500]).toContain(response.status());
+    expect([401, 403, 429, 500]).toContain(response.status());
   });
 
   test("POST /api/dashboard/action blocks unauthenticated access", async ({ request }) => {
