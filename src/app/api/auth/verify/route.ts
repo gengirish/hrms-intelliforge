@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { signJWT, setAuthCookie } from "@/lib/auth";
 import { consumeToken } from "@/lib/auth-email";
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
+  .trim()
+  .replace(/<[^>]*>/g, "");
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

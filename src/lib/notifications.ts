@@ -14,7 +14,9 @@ import {
 import { sendWhatsAppTemplate, formatPhoneE164 } from "@/lib/whatsapp";
 import { formatINR } from "@/lib/utils";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
+  .trim()
+  .replace(/<[^>]*>/g, "");
 
 export type NotificationType =
   | "WELCOME"

@@ -5,7 +5,9 @@ if (!process.env.AGENTMAIL_API_KEY) {
   console.warn("AGENTMAIL_API_KEY is not set — email features will fail");
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
+  .trim()
+  .replace(/<[^>]*>/g, "");
 
 export const agentmail = new AgentMailClient({
   apiKey: process.env.AGENTMAIL_API_KEY!,

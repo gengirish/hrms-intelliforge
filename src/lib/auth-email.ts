@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { agentmail, getHRInboxId } from "@/lib/agentmail";
 import { escapeHtml } from "@/lib/html-escape";
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
+  .trim()
+  .replace(/<[^>]*>/g, "");
 
 const TOKEN_EXPIRY_MINUTES = 15;
 
