@@ -21,6 +21,10 @@ export async function POST(req: Request) {
 
     const { email, password, name, accountType } = parsed.data;
 
+    if (accountType === "admin") {
+      return errorResponse("Admin accounts cannot be self-registered", 403);
+    }
+
     const existingAdmin = await prisma.admin.findUnique({ where: { email } });
     const existingIntern = await prisma.intern.findUnique({ where: { email } });
     if (existingAdmin || existingIntern) {
@@ -32,31 +36,23 @@ export async function POST(req: Request) {
     let userId: string;
     let role: "admin" | "intern";
 
-    if (accountType === "admin") {
-      const admin = await prisma.admin.create({
-        data: { email, passwordHash, emailVerified: false },
-      });
-      userId = admin.id;
-      role = "admin";
-    } else {
-      const intern = await prisma.intern.create({
-        data: {
-          email,
-          passwordHash,
-          emailVerified: false,
-          name,
-          phone: "",
-          college: "",
-          branch: "",
-          year: "",
-          role: "",
-          startDate: new Date(),
-          durationWeeks: 0,
-        },
-      });
-      userId = intern.id;
-      role = "intern";
-    }
+    const intern = await prisma.intern.create({
+      data: {
+        email,
+        passwordHash,
+        emailVerified: false,
+        name,
+        phone: "",
+        college: "",
+        branch: "",
+        year: "",
+        role: "",
+        startDate: new Date(),
+        durationWeeks: 0,
+      },
+    });
+    userId = intern.id;
+    role = "intern";
 
     try {
       await sendVerificationEmail(email, name);

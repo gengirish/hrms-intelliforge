@@ -6,9 +6,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 
+const signInSuspenseFallback = (
+  <div className="min-h-screen flex items-center justify-center bg-slate-950">
+    <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+  </div>
+);
+
 export default function SignInPage() {
   return (
-    <Suspense>
+    <Suspense fallback={signInSuspenseFallback}>
       <SignInForm />
     </Suspense>
   );
@@ -26,9 +32,11 @@ function SignInForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setLoginError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
@@ -38,7 +46,9 @@ function SignInForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Login failed");
+        const msg = data.error || "Invalid email or password";
+        toast.error(msg);
+        setLoginError(msg);
         return;
       }
       toast.success("Signed in successfully");
@@ -47,6 +57,7 @@ function SignInForm() {
       router.refresh();
     } catch {
       toast.error("Network error. Please try again.");
+      setLoginError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +120,10 @@ function SignInForm() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setLoginError(null);
+                }}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 placeholder="you@example.com"
               />
@@ -132,11 +146,20 @@ function SignInForm() {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setLoginError(null);
+                }}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 placeholder="Enter your password"
               />
             </div>
+
+            {loginError && (
+              <p className="text-sm text-red-400 mt-1" role="alert">
+                {loginError}
+              </p>
+            )}
 
             <button
               type="submit"

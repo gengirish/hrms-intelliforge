@@ -8,9 +8,20 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hrms.intelliforge.tech"),
   title: "IntelliForge HRMS — Intern Portal",
   description:
     "Human Resource Management System for IntelliForge AI internship program. Onboard, track attendance, manage tasks, and more.",
+  openGraph: {
+    title: "IntelliForge HRMS — Intern Portal",
+    description:
+      "Human Resource Management System for IntelliForge AI internship program. Onboard, track attendance, manage tasks, and more.",
+    siteName: "IntelliForge HRMS",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

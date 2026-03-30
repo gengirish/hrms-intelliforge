@@ -108,7 +108,9 @@ export async function POST(req: NextRequest) {
               intern.name,
               formatDateIST(intern.startDate),
             ]);
-            console.log(`Intern ${intern.name} auto-accepted via WhatsApp`);
+            console.info(
+              `[whatsapp-webhook] Intern ${intern.name} auto-accepted via WhatsApp`
+            );
           }
         }
 

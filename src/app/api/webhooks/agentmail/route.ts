@@ -30,8 +30,15 @@ function indicatesOfferAcceptance(text: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
+    const configuredSecret = process.env.WEBHOOK_SECRET;
+    if (!configuredSecret) {
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 503 }
+      );
+    }
     const secret = req.headers.get("x-webhook-secret");
-    if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
+    if (secret !== configuredSecret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

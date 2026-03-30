@@ -18,20 +18,35 @@ export default function SignUpPage() {
     accountType: "intern" as "admin" | "intern",
   });
   const [loading, setLoading] = useState(false);
+  const [passwordShortError, setPasswordShortError] = useState<string | null>(
+    null
+  );
+  const [passwordMismatchError, setPasswordMismatchError] = useState<
+    string | null
+  >(null);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "password") {
+      setPasswordShortError(null);
+      setPasswordMismatchError(null);
+    }
+    if (field === "confirmPassword") setPasswordMismatchError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setPasswordShortError(null);
+    setPasswordMismatchError(null);
 
-    if (form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
     if (form.password.length < 8) {
       toast.error("Password must be at least 8 characters");
+      setPasswordShortError("Password must be at least 8 characters");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      setPasswordMismatchError("Passwords do not match");
       return;
     }
 
@@ -134,6 +149,11 @@ export default function SignUpPage() {
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 placeholder="Min 8 characters"
               />
+              {passwordShortError && (
+                <p className="text-sm text-red-400 mt-1" role="alert">
+                  {passwordShortError}
+                </p>
+              )}
             </div>
 
             <div>
@@ -149,6 +169,11 @@ export default function SignUpPage() {
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 placeholder="Repeat your password"
               />
+              {passwordMismatchError && (
+                <p className="text-sm text-red-400 mt-1" role="alert">
+                  {passwordMismatchError}
+                </p>
+              )}
             </div>
 
             <button

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ["@react-pdf/renderer", "agentmail"],

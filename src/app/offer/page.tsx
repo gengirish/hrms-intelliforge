@@ -209,6 +209,18 @@ export default function OfferPage() {
               </div>
             )}
 
+            {intern.status === "COMPLETED" && (
+              <div className="flex flex-col gap-2 p-5 rounded-xl bg-gradient-to-br from-violet-500/15 to-indigo-500/10 border border-violet-500/25">
+                <CheckCircle2 className="h-8 w-8 text-violet-400" />
+                <h3 className="text-lg font-semibold text-white">
+                  Your internship is complete!
+                </h3>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  Thank you for your time at IntelliForge AI.
+                </p>
+              </div>
+            )}
+
             {intern.status === "PENDING" && (
               <div className="flex items-center gap-2 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
                 <Clock className="h-5 w-5 text-yellow-400" />

@@ -346,6 +346,7 @@ export default function TasksPage() {
                 <button
                   type="button"
                   onClick={() => deleteTask(task.id)}
+                  aria-label={`Delete task: ${task.title}`}
                   className="opacity-60 hover:opacity-100 focus:opacity-100 p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
                 >
                   <Trash2 className="h-4 w-4" />

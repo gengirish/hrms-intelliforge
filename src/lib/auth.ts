@@ -31,14 +31,21 @@ export interface SessionPayload extends JWTPayload {
   sub: string;
   role: "admin" | "intern";
   email: string;
+  tokenVersion?: number;
 }
 
 export async function signJWT(payload: {
   userId: string;
   role: "admin" | "intern";
   email: string;
+  tokenVersion?: number;
 }): Promise<string> {
-  return new SignJWT({ role: payload.role, email: payload.email })
+  const tokenVersion = payload.tokenVersion ?? 0;
+  return new SignJWT({
+    role: payload.role,
+    email: payload.email,
+    tokenVersion,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.userId)
     .setIssuedAt()

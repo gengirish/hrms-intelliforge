@@ -27,7 +27,10 @@ async function uploadFile(
   try {
     const ext = file.name.split(".").pop();
     const pathname = `hrms-docs/${folder}/${email.replace(/[@.]/g, "_")}_${Date.now()}.${ext}`;
-    const blob = await put(pathname, file, { access: "public" });
+    const blob = await put(pathname, file, {
+      access: "private",
+      addRandomSuffix: true,
+    });
     return blob.url;
   } catch (err) {
     console.error("Upload error:", err);

@@ -97,6 +97,7 @@ export default function DashboardPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
+  const [isSavingStipend, setIsSavingStipend] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "attendance" | "tasks" | "emails" | "notifications"
   >("overview");
@@ -198,6 +199,7 @@ export default function DashboardPage() {
 
   async function saveStipend(internId: string) {
     if (stipendEdit === null) return;
+    setIsSavingStipend(true);
     try {
       const res = await fetch("/api/dashboard/action", {
         method: "POST",
@@ -213,6 +215,8 @@ export default function DashboardPage() {
       await loadInternDetail(internId);
     } catch {
       toast.error("Failed to update stipend");
+    } finally {
+      setIsSavingStipend(false);
     }
   }
 
@@ -400,9 +404,11 @@ export default function DashboardPage() {
                 ).map((tab) => (
                   <button
                     key={tab.key}
+                    id={`tab-${tab.key}`}
                     type="button"
                     role="tab"
                     aria-selected={activeTab === tab.key}
+                    aria-controls={`panel-${tab.key}`}
                     onClick={() => {
                       setActiveTab(tab.key);
                       if (tab.key === "notifications" && selectedIntern) {
@@ -422,8 +428,13 @@ export default function DashboardPage() {
               </div>
 
               {/* Tab Content */}
-              {activeTab === "overview" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                id="panel-overview"
+                role="tabpanel"
+                aria-labelledby="tab-overview"
+                hidden={activeTab !== "overview"}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
                   {/* Personal Info */}
                   <div className="glass-card p-6 space-y-3">
                     <h3 className="text-sm font-semibold text-white mb-3">
@@ -463,10 +474,22 @@ export default function DashboardPage() {
                         />
                       </div>
                       <button
+                        type="button"
                         onClick={() => saveStipend(selectedIntern.id)}
-                        className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-2 text-sm font-semibold text-white transition-colors"
+                        disabled={isSavingStipend}
+                        className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-3 py-2 text-sm font-semibold text-white transition-colors inline-flex items-center gap-2"
                       >
-                        <Save className="h-4 w-4" />
+                        {isSavingStipend ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Save
+                          </>
+                        )}
                       </button>
                     </div>
                     <p className="text-xs text-slate-400">
@@ -504,11 +527,15 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   </div>
-                </div>
-              )}
+              </div>
 
-              {activeTab === "attendance" && (
-                <div className="glass-card p-6">
+              <div
+                id="panel-attendance"
+                role="tabpanel"
+                aria-labelledby="tab-attendance"
+                hidden={activeTab !== "attendance"}
+                className="glass-card p-6"
+              >
                   <h3 className="text-sm font-semibold text-white mb-4">
                     Attendance Records
                   </h3>
@@ -564,11 +591,15 @@ export default function DashboardPage() {
                       </table>
                     </div>
                   )}
-                </div>
-              )}
+              </div>
 
-              {activeTab === "tasks" && (
-                <div className="glass-card p-6">
+              <div
+                id="panel-tasks"
+                role="tabpanel"
+                aria-labelledby="tab-tasks"
+                hidden={activeTab !== "tasks"}
+                className="glass-card p-6"
+              >
                   <h3 className="text-sm font-semibold text-white mb-4">
                     Task Log
                   </h3>
@@ -609,11 +640,15 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
 
-              {activeTab === "emails" && (
-                <div className="glass-card p-6">
+              <div
+                id="panel-emails"
+                role="tabpanel"
+                aria-labelledby="tab-emails"
+                hidden={activeTab !== "emails"}
+                className="glass-card p-6"
+              >
                   <h3 className="text-sm font-semibold text-white mb-4">
                     Email thread
                   </h3>
@@ -652,11 +687,15 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
 
-              {activeTab === "notifications" && (
-                <div className="glass-card p-6">
+              <div
+                id="panel-notifications"
+                role="tabpanel"
+                aria-labelledby="tab-notifications"
+                hidden={activeTab !== "notifications"}
+                className="glass-card p-6"
+              >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-white">
                       Notification History
@@ -739,8 +778,7 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
             </>
           )}
         </main>
@@ -847,6 +885,7 @@ export default function DashboardPage() {
                       key={intern.id}
                       tabIndex={0}
                       role="button"
+                      aria-label={`View details for ${intern.name}`}
                       className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 cursor-pointer transition-colors"
                       onClick={() => loadInternDetail(intern.id)}
                       onKeyDown={(e) => {

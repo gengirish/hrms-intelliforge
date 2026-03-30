@@ -2,12 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 
+const NOTIFY_CONCURRENCY = 15;
+
 function getISTStartOfDay() {
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istNow = new Date(now.getTime() + istOffset);
   istNow.setUTCHours(0, 0, 0, 0);
   return new Date(istNow.getTime() - istOffset);
+}
+
+async function notifyInBatches(
+  items: { id: string; email: string }[],
+  type: "ATTENDANCE_NUDGE"
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0;
+  let failed = 0;
+  for (let i = 0; i < items.length; i += NOTIFY_CONCURRENCY) {
+    const batch = items.slice(i, i + NOTIFY_CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map((intern) => notify(intern.id, type))
+    );
+    for (let j = 0; j < results.length; j++) {
+      const r = results[j];
+      const intern = batch[j];
+      if (r.status === "fulfilled") {
+        sent++;
+      } else {
+        failed++;
+        console.error(`Attendance nudge failed for ${intern.email}:`, r.reason);
+      }
+    }
+  }
+  return { sent, failed };
 }
 
 export async function GET(req: NextRequest) {
@@ -31,26 +58,42 @@ export async function GET(req: NextRequest) {
     const todayStart = getISTStartOfDay();
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
-    let sent = 0;
-    for (const intern of activeInterns) {
-      const hasAttendance = await prisma.attendance.findFirst({
-        where: {
-          internId: intern.id,
-          date: { gte: todayStart, lt: todayEnd },
-        },
+    if (activeInterns.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        sent: 0,
+        failed: 0,
+        total: 0,
       });
-
-      if (!hasAttendance) {
-        try {
-          await notify(intern.id, "ATTENDANCE_NUDGE");
-          sent++;
-        } catch (err) {
-          console.error(`Attendance nudge failed for ${intern.email}:`, err);
-        }
-      }
     }
 
-    return NextResponse.json({ ok: true, sent, total: activeInterns.length });
+    const internIds = activeInterns.map((i) => i.id);
+    const todaysAttendance = await prisma.attendance.findMany({
+      where: {
+        internId: { in: internIds },
+        date: { gte: todayStart, lt: todayEnd },
+      },
+      select: { internId: true },
+    });
+    const internIdsWithAttendance = new Set(
+      todaysAttendance.map((a) => a.internId)
+    );
+
+    const internsNeedingNudge = activeInterns.filter(
+      (intern) => !internIdsWithAttendance.has(intern.id)
+    );
+
+    const { sent, failed } = await notifyInBatches(
+      internsNeedingNudge.map((i) => ({ id: i.id, email: i.email })),
+      "ATTENDANCE_NUDGE"
+    );
+
+    return NextResponse.json({
+      ok: true,
+      sent,
+      failed,
+      total: activeInterns.length,
+    });
   } catch (err) {
     console.error("Cron attendance-nudge error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
