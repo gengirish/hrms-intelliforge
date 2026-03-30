@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { put } from "@vercel/blob";
-import { sendWelcomeEmail } from "@/lib/agentmail";
+import { getSession } from "@/lib/auth";
+import { notify } from "@/lib/notifications";
 import { onboardSchema } from "@/lib/validations";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
@@ -41,16 +41,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const { userId } = await auth();
-    if (!userId) {
+    const session = await getSession();
+    if (!session?.sub) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const existingClerk = await prisma.intern.findUnique({
-      where: { clerkId: userId },
-    });
-    if (existingClerk) {
-      return NextResponse.json({ error: "Already onboarded" }, { status: 409 });
     }
 
     const formData = await req.formData();
@@ -65,6 +58,7 @@ export async function POST(req: NextRequest) {
       role: formData.get("role"),
       startDate: formData.get("startDate"),
       durationWeeks: formData.get("durationWeeks"),
+      whatsappOptIn: formData.get("whatsappOptIn"),
     });
 
     if (!parsed.success) {
@@ -83,6 +77,7 @@ export async function POST(req: NextRequest) {
       role,
       startDate,
       durationWeeks,
+      whatsappOptIn,
     } = parsed.data;
 
     const existingEmail = await prisma.intern.findUnique({ where: { email } });
@@ -116,7 +111,6 @@ export async function POST(req: NextRequest) {
 
     const intern = await prisma.intern.create({
       data: {
-        clerkId: userId,
         name,
         email,
         phone,
@@ -130,13 +124,14 @@ export async function POST(req: NextRequest) {
         panUrl,
         photoUrl,
         status: "PENDING",
+        whatsappOptIn: whatsappOptIn ?? false,
       },
     });
 
     try {
-      await sendWelcomeEmail(email, name, role);
+      await notify(intern.id, "WELCOME");
     } catch (err) {
-      console.error("Welcome email failed:", err);
+      console.error("Welcome notification failed:", err);
     }
 
     return NextResponse.json({ id: intern.id, status: "PENDING" });

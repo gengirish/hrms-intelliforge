@@ -1,0 +1,122 @@
+import { randomBytes, createHash } from "crypto";
+import { prisma } from "@/lib/prisma";
+import { agentmail, getHRInboxId } from "@/lib/agentmail";
+import { escapeHtml } from "@/lib/html-escape";
+
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech";
+
+const TOKEN_EXPIRY_MINUTES = 15;
+
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export { hashToken };
+
+async function storeToken(
+  identifier: string,
+  rawToken: string,
+  type: "EMAIL_VERIFY" | "PASSWORD_RESET" | "MAGIC_LINK"
+) {
+  const hashed = hashToken(rawToken);
+  const expires = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000);
+
+  await prisma.verificationToken.deleteMany({
+    where: { identifier, type },
+  });
+
+  await prisma.verificationToken.create({
+    data: { identifier, token: hashed, type, expires },
+  });
+}
+
+export async function sendMagicLinkEmail(email: string, name?: string) {
+  const token = generateToken();
+  await storeToken(email, token, "MAGIC_LINK");
+
+  const link = `${APP_URL}/api/auth/verify?token=${token}&email=${encodeURIComponent(email)}&type=magic`;
+  const greeting = name ? `Hi ${escapeHtml(name)}` : "Hi";
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: "Sign in to IntelliForge HRMS",
+    html: `
+      <h2>${greeting},</h2>
+      <p>Click the link below to sign in to the IntelliForge HRMS portal:</p>
+      <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Sign In to HRMS
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">This link expires in ${TOKEN_EXPIRY_MINUTES} minutes. If you didn't request this, ignore this email.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
+export async function sendVerificationEmail(email: string, name: string) {
+  const token = generateToken();
+  await storeToken(email, token, "EMAIL_VERIFY");
+
+  const link = `${APP_URL}/api/auth/verify?token=${token}&email=${encodeURIComponent(email)}&type=verify`;
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: "Verify your IntelliForge HRMS email",
+    html: `
+      <h2>Hi ${escapeHtml(name)},</h2>
+      <p>Please verify your email address to complete registration:</p>
+      <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Verify Email
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">This link expires in ${TOKEN_EXPIRY_MINUTES} minutes.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
+export async function sendPasswordResetEmail(email: string, name?: string) {
+  const token = generateToken();
+  await storeToken(email, token, "PASSWORD_RESET");
+
+  const link = `${APP_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+  const greeting = name ? `Hi ${escapeHtml(name)}` : "Hi";
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: "Reset your IntelliForge HRMS password",
+    html: `
+      <h2>${greeting},</h2>
+      <p>Click the link below to reset your password:</p>
+      <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Reset Password
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">This link expires in ${TOKEN_EXPIRY_MINUTES} minutes. If you didn't request this, ignore this email.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
+export async function consumeToken(
+  email: string,
+  rawToken: string,
+  type: "EMAIL_VERIFY" | "PASSWORD_RESET" | "MAGIC_LINK"
+) {
+  const hashed = hashToken(rawToken);
+  const record = await prisma.verificationToken.findUnique({
+    where: { identifier_token: { identifier: email, token: hashed } },
+  });
+
+  if (!record || record.type !== type || record.expires < new Date()) {
+    return null;
+  }
+
+  await prisma.verificationToken.delete({ where: { id: record.id } });
+  return record;
+}

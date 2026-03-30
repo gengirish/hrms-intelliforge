@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendAttendanceNudge } from "@/lib/agentmail";
+import { notify } from "@/lib/notifications";
 
 function getISTStartOfDay() {
   const now = new Date();
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
       if (!hasAttendance) {
         try {
-          await sendAttendanceNudge(intern.email, intern.name);
+          await notify(intern.id, "ATTENDANCE_NUDGE");
           sent++;
         } catch (err) {
           console.error(`Attendance nudge failed for ${intern.email}:`, err);

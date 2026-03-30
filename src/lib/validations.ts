@@ -1,5 +1,31 @@
 import { z } from "zod";
 
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+  name: z.string().min(1).max(200),
+  accountType: z.enum(["admin", "intern"]),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export const magicLinkSchema = z.object({
+  email: z.string().email(),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  token: z.string().min(1),
+  password: z.string().min(8).max(128),
+});
+
 export const actionSchema = z.object({
   internId: z.string().min(1),
   action: z.enum(["update_stipend", "send_offer", "send_reminder", "mark_complete"]),
@@ -29,4 +55,5 @@ export const onboardSchema = z.object({
   role: z.enum(["AI Intern", "Dev Intern", "Research Intern"]),
   startDate: z.string().refine((d) => !isNaN(Date.parse(d)), "Invalid date"),
   durationWeeks: z.coerce.number().int().min(4).max(52),
+  whatsappOptIn: z.coerce.boolean().default(false),
 });

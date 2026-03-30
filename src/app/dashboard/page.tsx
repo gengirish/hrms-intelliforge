@@ -15,6 +15,7 @@ import {
   IndianRupee,
   Save,
   Send,
+  MessageSquare,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -40,6 +41,7 @@ interface Intern {
   photoUrl: string | null;
   agentmailInboxId?: string | null;
   agentmailAddress?: string | null;
+  whatsappOptIn?: boolean;
   status: string;
   acceptedAt: string | null;
   createdAt: string;
@@ -73,6 +75,19 @@ interface EmailMessage {
   text: string;
 }
 
+interface NotificationRecord {
+  id: string;
+  channel: "EMAIL" | "WHATSAPP";
+  type: string;
+  subject: string | null;
+  body: string;
+  status: string;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export default function DashboardPage() {
   const [bootState, setBootState] = useState<
     "loading" | "forbidden" | "error" | "ready"
@@ -82,7 +97,11 @@ export default function DashboardPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks" | "emails">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "attendance" | "tasks" | "emails" | "notifications"
+  >("overview");
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,6 +146,20 @@ export default function DashboardPage() {
       toast.error("Failed to load intern details");
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  async function loadNotifications(internId: string) {
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch(`/api/notifications?internId=${internId}`);
+      if (!res.ok) throw new Error("Failed to load");
+      const data = await res.json();
+      setNotifications(data.notifications);
+    } catch {
+      toast.error("Failed to load notifications");
+    } finally {
+      setNotificationsLoading(false);
     }
   }
 
@@ -362,6 +395,7 @@ export default function DashboardPage() {
                     { key: "attendance", label: "Attendance" },
                     { key: "tasks", label: "Tasks" },
                     { key: "emails", label: "Emails" },
+                    { key: "notifications", label: "Notifications" },
                   ] as const
                 ).map((tab) => (
                   <button
@@ -369,7 +403,12 @@ export default function DashboardPage() {
                     type="button"
                     role="tab"
                     aria-selected={activeTab === tab.key}
-                    onClick={() => setActiveTab(tab.key)}
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      if (tab.key === "notifications" && selectedIntern) {
+                        loadNotifications(selectedIntern.id);
+                      }
+                    }}
                     className={cn(
                       "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
                       activeTab === tab.key
@@ -609,6 +648,93 @@ export default function DashboardPage() {
                               {msg.text}
                             </p>
                           )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "notifications" && (
+                <div className="glass-card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-white">
+                      Notification History
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {selectedIntern?.whatsappOptIn && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-900/50 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                          <MessageSquare className="h-3 w-3" />
+                          WhatsApp enabled
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {notificationsLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <p className="text-sm text-slate-400 text-center py-6">
+                      No notifications sent yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className="flex items-start gap-3 p-3 rounded-lg bg-slate-900/50"
+                        >
+                          <div
+                            className={cn(
+                              "mt-0.5 h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                              notif.channel === "WHATSAPP"
+                                ? "bg-emerald-900/50 text-emerald-400"
+                                : "bg-indigo-900/50 text-indigo-400"
+                            )}
+                          >
+                            {notif.channel === "WHATSAPP" ? (
+                              <MessageSquare className="h-4 w-4" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium text-white truncate">
+                                {notif.type.replace(/_/g, " ")}
+                              </span>
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-xs font-medium shrink-0",
+                                  notif.status === "READ"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : notif.status === "DELIVERED"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : notif.status === "SENT"
+                                        ? "bg-slate-100 text-slate-800"
+                                        : notif.status === "FAILED"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-yellow-100 text-yellow-800"
+                                )}
+                              >
+                                {notif.status}
+                              </span>
+                            </div>
+                            {notif.subject && (
+                              <p className="text-xs text-slate-400 truncate">{notif.subject}</p>
+                            )}
+                            <p className="text-xs text-slate-500 mt-1">
+                              {notif.sentAt
+                                ? formatDateIST(notif.sentAt)
+                                : formatDateIST(notif.createdAt)}
+                              {notif.readAt && (
+                                <span className="ml-2 text-emerald-500">
+                                  Read {formatDateIST(notif.readAt)}
+                                </span>
+                              )}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>

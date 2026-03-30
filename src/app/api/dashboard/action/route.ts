@@ -5,11 +5,7 @@ import { serverError } from "@/lib/api-utils";
 import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
-import {
-  sendOfferLetter,
-  sendTaskReminder,
-  sendCompletionEmail,
-} from "@/lib/agentmail";
+import { notify } from "@/lib/notifications";
 import { formatINR, formatDateIST } from "@/lib/utils";
 import React, { type ReactElement } from "react";
 
@@ -76,10 +72,7 @@ export async function POST(req: NextRequest) {
       const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
       const pdfBase64 = pdfBuffer.toString("base64");
 
-      await sendOfferLetter({
-        internEmail: intern.email,
-        internName: intern.name,
-        role: intern.role,
+      await notify(internId, "OFFER_LETTER", {
         stipendPaise: intern.stipendPaise,
         startDate: startDateStr,
         pdfBase64,
@@ -94,7 +87,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "send_reminder") {
-      await sendTaskReminder(intern.email, intern.name);
+      await notify(internId, "TASK_REMINDER");
       return NextResponse.json({ ok: true });
     }
 
@@ -111,7 +104,7 @@ export async function POST(req: NextRequest) {
       const pdfBuffer = await renderToBuffer(certElement as unknown as ReactElement);
       const pdfBase64 = pdfBuffer.toString("base64");
 
-      await sendCompletionEmail(intern.email, intern.name, pdfBase64);
+      await notify(internId, "COMPLETION_CERT", { pdfBase64 });
 
       await prisma.intern.update({
         where: { id: internId },

@@ -25,9 +25,40 @@ enum AttendanceMode {
   Office
 }
 
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  BOUNCED
+}
+
+enum NotificationType {
+  WELCOME
+  OFFER_LETTER
+  OFFER_ACCEPTED
+  TASK_REMINDER
+  ATTENDANCE_NUDGE
+  COMPLETION_CERT
+  CUSTOM
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  MAGIC_LINK
+}
+
 model Intern {
   id               String       @id @default(cuid())
-  clerkId          String?      @unique
+  passwordHash     String?
+  emailVerified    Boolean      @default(false)
   name             String
   email            String       @unique
   phone            String
@@ -44,12 +75,15 @@ model Intern {
   photoUrl         String?
   agentmailInboxId String?
   agentmailAddress String?
+  whatsappOptIn    Boolean      @default(false)
   status           InternStatus @default(PENDING)
   acceptedAt       DateTime?
   createdAt        DateTime     @default(now())
 
-  attendance Attendance[]
-  tasks      Task[]
+  attendance       Attendance[]
+  tasks            Task[]
+  notifications    NotificationLog[]
+  notificationPref NotificationPreference?
 
   @@map("interns")
 }
@@ -84,10 +118,57 @@ model Task {
 }
 
 model Admin {
-  id      String  @id @default(cuid())
-  clerkId String? @unique
-  email   String  @unique
-  role    String  @default("ADMIN")
+  id            String  @id @default(cuid())
+  passwordHash  String
+  emailVerified Boolean @default(false)
+  email         String  @unique
+  role          String  @default("ADMIN")
 
   @@map("admins")
+}
+
+model VerificationToken {
+  id         String    @id @default(cuid())
+  identifier String
+  token      String
+  type       TokenType
+  expires    DateTime
+  createdAt  DateTime  @default(now())
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model NotificationLog {
+  id          String              @id @default(cuid())
+  internId    String
+  channel     NotificationChannel
+  type        NotificationType
+  subject     String?
+  body        String
+  status      NotificationStatus  @default(PENDING)
+  externalId  String?
+  errorDetail String?
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@index([internId, createdAt])
+  @@index([channel, status])
+  @@index([externalId])
+  @@map("notification_logs")
+}
+
+model NotificationPreference {
+  id       String  @id @default(cuid())
+  internId String  @unique
+  email    Boolean @default(true)
+  whatsapp Boolean @default(true)
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }

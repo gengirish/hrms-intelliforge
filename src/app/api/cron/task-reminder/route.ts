@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendTaskReminder } from "@/lib/agentmail";
+import { notify } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   if (!process.env.CRON_SECRET) {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     let sent = 0;
     for (const intern of activeInterns) {
       try {
-        await sendTaskReminder(intern.email, intern.name);
+        await notify(intern.id, "TASK_REMINDER");
         sent++;
       } catch (err) {
         console.error(`Task reminder failed for ${intern.email}:`, err);

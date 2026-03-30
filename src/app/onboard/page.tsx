@@ -23,6 +23,7 @@ const schema = z.object({
   }),
   startDate: z.string().min(1, "Start date required"),
   durationWeeks: z.coerce.number().min(4, "Minimum 4 weeks").max(52, "Maximum 52 weeks"),
+  whatsappOptIn: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -279,6 +280,26 @@ export default function OnboardPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="glass-card p-6 space-y-5">
+            <h2 className="text-lg font-semibold text-white">Communication Preferences</h2>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                {...register("whatsappOptIn")}
+                className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900/50 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-300">
+                  Receive WhatsApp notifications
+                </span>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Get interview updates, reminders, and important notifications via WhatsApp
+                  on the phone number provided above. You can opt out anytime.
+                </p>
+              </div>
+            </label>
           </div>
 
           <div className="glass-card p-6 space-y-5">

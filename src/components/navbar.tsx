@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, LogOut, User } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -19,7 +19,28 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isSignedIn } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, isSignedIn, signOut } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() || "?";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl navbar-standalone">
@@ -51,19 +72,60 @@ export function Navbar() {
             ))}
             <div className="ml-3 flex items-center">
               {isSignedIn ? (
-                <UserButton afterSignOutUrl="/" />
-              ) : (
-                <SignInButton mode="modal">
-                  <button className="px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors">
-                    Sign In
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition-colors"
+                    aria-label="User menu"
+                  >
+                    {initials}
                   </button>
-                </SignInButton>
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg bg-slate-900 border border-slate-700 shadow-xl py-1 z-50">
+                      <div className="px-4 py-3 border-b border-slate-700">
+                        <p className="text-sm font-medium text-slate-200 truncate">
+                          {user?.name || user?.email}
+                        </p>
+                        <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                        <span className="inline-block mt-1 text-[10px] uppercase tracking-wider font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                          {user?.accountType}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          signOut();
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/sign-in"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  Sign In
+                </Link>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            {isSignedIn && <UserButton afterSignOutUrl="/" />}
+            {isSignedIn && (
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-xs font-bold"
+                aria-label="User menu"
+              >
+                {initials}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -101,12 +163,25 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {!isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors">
-                  Sign In
-                </button>
-              </SignInButton>
+            {isSignedIn ? (
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  signOut();
+                }}
+                className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            ) : (
+              <Link
+                href="/sign-in"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+              >
+                Sign In
+              </Link>
             )}
           </div>
         </div>
