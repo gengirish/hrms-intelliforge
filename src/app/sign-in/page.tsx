@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignInPage() {
   return (
@@ -19,6 +20,7 @@ function SignInForm() {
   const redirect = searchParams.get("redirect") || "/";
   const verified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
+  const { refresh } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +42,7 @@ function SignInForm() {
         return;
       }
       toast.success("Signed in successfully");
+      await refresh();
       router.push(redirect);
       router.refresh();
     } catch {

@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { refresh } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -51,6 +53,7 @@ export default function SignUpPage() {
         return;
       }
       toast.success("Account created! Check your email to verify.");
+      await refresh();
       router.push("/");
       router.refresh();
     } catch {
