@@ -155,9 +155,7 @@ export default function OnboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Full Name
-                </label>
+                <p className="block text-sm font-medium text-slate-300 mb-1">Full Name</p>
                 <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
                   {user.name || "—"}
                 </div>
@@ -165,9 +163,7 @@ export default function OnboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Email
-                </label>
+                <p className="block text-sm font-medium text-slate-300 mb-1">Email</p>
                 <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
                   {user.email}
                 </div>
