@@ -30,6 +30,11 @@
    - 7.11 [PWA & Mobile Experience](#711-pwa--mobile-experience)
    - 7.12 [Security & Access Control](#712-security--access-control)
    - 7.13 [Edge Cases & Error Handling](#713-edge-cases--error-handling)
+   - 7.14 [WhatsApp HR Bot](#714-whatsapp-hr-bot)
+   - 7.15 [AI Performance Intelligence](#715-ai-performance-intelligence)
+   - 7.16 [Multi-Tenant & Organization Management](#716-multi-tenant--organization-management)
+   - 7.17 [Hiring Pipeline & Interview Bot](#717-hiring-pipeline--interview-bot)
+   - 7.18 [Smart Document Verification](#718-smart-document-verification)
 8. [API Endpoint Test Matrix](#8-api-endpoint-test-matrix)
 9. [Bug Reporting Process](#9-bug-reporting-process)
 10. [Beta Timeline](#10-beta-timeline)
@@ -58,8 +63,13 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | Task Management | Weekly task logging with hours, status tracking, CRUD operations |
 | Email Automation | AgentMail-powered welcome, offer, reminder, nudge, and completion emails |
 | PDF Generation | Offer letters and completion certificates via @react-pdf/renderer |
-| Cron Automation | Weekly task reminders (Monday 9 AM IST) and daily attendance nudges (10:30 AM IST) |
+| Cron Automation | Weekly task reminders (Monday 9 AM IST), daily attendance nudges (10:30 AM IST), daily performance scoring (midnight IST) |
 | PWA Support | Installable app with offline-capable service worker |
+| WhatsApp HR Bot | AI-powered conversational bot for punch in/out, task logging, and queries via WhatsApp |
+| AI Performance Intelligence | Weekly scoring engine, AI review generation, attrition risk prediction, analytics dashboard |
+| Multi-Tenant SaaS | Organization model, tenant isolation, Stripe billing (free/starter/growth/enterprise plans) |
+| Hiring Pipeline | Job posting management, Interview Bot integration, candidate tracking, convert-to-intern flow |
+| Smart Document Verification | OpenAI Vision OCR for Aadhaar/PAN, cross-validation, admin review workflow |
 
 ---
 
@@ -84,7 +94,7 @@ This Beta Testing Plan defines the structured approach for validating the portal
 
 | Area | Details |
 |------|---------|
-| Functional Testing | All 8 pages, 20 API endpoints, 6 email flows, 2 PDF templates, 2 cron jobs |
+| Functional Testing | All 13 pages, 39 API endpoints, 6 email flows, 2 PDF templates, 3 cron jobs, WhatsApp bot, AI analytics, billing |
 | UI/UX Testing | Responsive layout, mobile navigation, form validation, toast notifications, loading states |
 | Integration Testing | AgentMail email delivery + webhook, Vercel Blob uploads, Neon PostgreSQL, Vercel Cron |
 | Browser Compatibility | Chrome 120+, Firefox 120+, Safari 17+, Edge 120+, Samsung Internet |
@@ -152,6 +162,18 @@ This Beta Testing Plan defines the structured approach for validating the portal
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob file upload token |
 | `AGENTMAIL_API_KEY` | AgentMail API key for email automation |
 | `CRON_SECRET` | Bearer token for cron endpoint authentication |
+| `OPENAI_API_KEY` | OpenAI API key for AI features (WhatsApp bot, reviews, OCR) |
+| `WHATSAPP_PHONE_NUMBER_ID` | Meta WhatsApp Business API phone number ID |
+| `WHATSAPP_ACCESS_TOKEN` | Meta WhatsApp Business API access token |
+| `WHATSAPP_VERIFY_TOKEN` | WhatsApp webhook verification token |
+| `STRIPE_SECRET_KEY` | Stripe API secret key for billing |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `STRIPE_STARTER_PRICE_ID` | Stripe price ID for Starter plan |
+| `STRIPE_GROWTH_PRICE_ID` | Stripe price ID for Growth plan |
+| `STRIPE_ENTERPRISE_PRICE_ID` | Stripe price ID for Enterprise plan |
+| `INTERVIEW_BOT_API_URL` | External Interview Bot FastAPI service URL |
+| `INTERVIEW_BOT_API_KEY` | Interview Bot API authentication key |
+| `INTERVIEW_BOT_WEBHOOK_SECRET` | Interview Bot webhook signing secret |
 
 ### 5.2 Pre-Beta Setup Checklist
 
@@ -409,6 +431,79 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | EG-09 | Multiple tabs — same action | Open two dashboard tabs, click Send Offer on both | Only one succeeds, second gets appropriate error | P2 |
 | EG-10 | Timezone edge — midnight IST | Perform attendance at 11:59 PM IST → verify date attribution | Record attributed to correct IST date | P1 |
 
+### 7.14 WhatsApp HR Bot
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| WA-01 | Punch in via WhatsApp | Send "punch in" to the WhatsApp bot | Bot responds with confirmation, attendance record created | P0 |
+| WA-02 | Punch out via WhatsApp | Send "punch out" to the WhatsApp bot | Bot responds with confirmation, punchOut timestamp set | P0 |
+| WA-03 | Log task via WhatsApp | Send "log task: Build API, 3 hours" | Bot creates task record, responds with confirmation | P0 |
+| WA-04 | Query attendance | Send "my attendance" or "attendance status" | Bot responds with today's attendance status | P1 |
+| WA-05 | Query tasks | Send "my tasks" or "task summary" | Bot responds with current week's tasks and hours | P1 |
+| WA-06 | Help command | Send "help" or "menu" | Bot responds with available commands list | P1 |
+| WA-07 | Unknown intent | Send random/gibberish message | Bot responds with a helpful fallback message | P1 |
+| WA-08 | Unregistered phone | Send message from unregistered phone number | Bot responds with "not found" message, no crash | P1 |
+| WA-09 | Intent classification accuracy | Send variations: "check in", "I'm here", "start work" | All correctly parsed as PUNCH_IN intent | P2 |
+| WA-10 | Bot interaction logging | Send several messages | All interactions logged in BotInteractionLog table | P1 |
+
+### 7.15 AI Performance Intelligence
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| PI-01 | Performance scores computed | Trigger `/api/cron/performance-scores` with CRON_SECRET | Scores computed for all active interns, stored in DB | P0 |
+| PI-02 | Score breakdown accuracy | View analytics for intern with known attendance/task data | Attendance (40%), Task (40%), Consistency (20%) scores match expected values | P0 |
+| PI-03 | Analytics tab display | Open intern detail, click "Analytics" tab | Line chart shows score trends, bar chart shows breakdown, risk badge visible | P0 |
+| PI-04 | AI review generation | Click "Regenerate Review" in analytics tab | OpenAI generates a natural-language performance summary | P1 |
+| PI-05 | Risk level assignment | View analytics for interns with different patterns | Risk levels (LOW/MEDIUM/HIGH/CRITICAL) assigned correctly based on heuristics | P1 |
+| PI-06 | Analytics overview API | Call `/api/analytics/overview` as admin | Returns total interns, avg scores, risk distribution, top performers | P1 |
+| PI-07 | Score cron — no active interns | Run cron with no ACTIVE interns | Returns success with 0 scores computed | P2 |
+| PI-08 | Insufficient data fallback | Generate review for intern with < 2 weeks data | Review created with "insufficient data" note, not an error | P2 |
+
+### 7.16 Multi-Tenant & Organization Management
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| MT-01 | Create organization | Fill org name, slug, admin details on `/create-org`, submit | Organization created, admin account created, auto-logged in | P0 |
+| MT-02 | Duplicate slug rejection | Create org with slug that already exists | 409 error, "slug already taken" | P0 |
+| MT-03 | Tenant data isolation | Log in as admin of Org A, view dashboard | Only Org A's interns visible, not Org B's | P0 |
+| MT-04 | Org settings — general | Navigate to `/dashboard/settings`, update org name | Name saved, reflected on reload | P1 |
+| MT-05 | Org settings — billing tab | Click Billing tab in settings | Shows current plan, upgrade options, intern limit | P1 |
+| MT-06 | Org settings — integrations tab | Click Integrations tab | Shows WhatsApp and AgentMail config fields | P1 |
+| MT-07 | Plan enforcement — free tier | On free plan, try to onboard 6th intern (limit: 5) | 403 error, "Intern limit reached for your plan" | P0 |
+| MT-08 | Plan upgrade via Stripe | Click "Upgrade" on Starter plan | Redirected to Stripe Checkout, after payment plan updates | P1 |
+| MT-09 | Stripe customer portal | Click "Manage Subscription" link | Redirected to Stripe Customer Portal | P1 |
+| MT-10 | Stripe webhook — subscription updated | Upgrade plan in Stripe portal | Webhook processes event, org plan and maxInterns updated in DB | P1 |
+| MT-11 | Stripe webhook — subscription cancelled | Cancel subscription | Org plan reverts to "free", maxInterns reset to 5 | P1 |
+
+### 7.17 Hiring Pipeline & Interview Bot
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| HP-01 | Create job posting | Navigate to `/dashboard/hiring`, fill title/description/skills, submit | Job posting created, interview config created in Interview Bot | P0 |
+| HP-02 | Job listing display | View hiring page with multiple jobs | All org's job postings listed with candidate counts | P0 |
+| HP-03 | View candidates | Click on a job posting | Candidate list loads, sorted by interview score | P0 |
+| HP-04 | Interview completion webhook | Interview Bot sends completion webhook | Candidate record updated with score, status, report URL | P0 |
+| HP-05 | Convert candidate to intern | Click "Convert to Intern" for a completed candidate | Intern record created, candidate marked as converted | P0 |
+| HP-06 | Duplicate conversion blocked | Try to convert an already-converted candidate | Button disabled or error "already converted" | P1 |
+| HP-07 | Interview link display | Create job posting | Interview link displayed and copyable | P1 |
+| HP-08 | Job posting — no Interview Bot | Create job when INTERVIEW_BOT_API_URL is not set | Job created without bot integration, graceful handling | P2 |
+
+### 7.18 Smart Document Verification
+
+| ID | Scenario | Steps | Expected Result | Priority |
+|----|----------|-------|-----------------|----------|
+| DV-01 | Auto-verify on onboard | Onboard intern with Aadhaar and PAN uploads | Verification triggered asynchronously after creation | P0 |
+| DV-02 | OCR extraction accuracy | Upload clear Aadhaar card image | Name and number extracted correctly via OpenAI Vision | P0 |
+| DV-03 | Name match validation | Intern name matches extracted document name | Fuzzy match succeeds (Levenshtein distance within threshold) | P1 |
+| DV-04 | Aadhaar format validation | Upload valid Aadhaar (12 digits) | Format validated as correct | P1 |
+| DV-05 | PAN format validation | Upload valid PAN (ABCDE1234F pattern) | Format validated as correct | P1 |
+| DV-06 | Verification badge display | View intern detail with verified documents | Green "Verified" badge next to document | P0 |
+| DV-07 | Mismatch badge display | Upload document with name mismatch | Orange "Mismatch" badge with details | P0 |
+| DV-08 | Admin approve document | Click "Approve" on a MISMATCH document | Status changes to VERIFIED | P0 |
+| DV-09 | Admin reject document | Click "Reject" on a MISMATCH document | Status changes to REJECTED with review note | P0 |
+| DV-10 | Manual verify trigger | Click "Verify" button on an unverified document | Verification process triggered, status updates | P1 |
+| DV-11 | No OPENAI_API_KEY | Trigger verification without OpenAI key set | Graceful failure, document stays PENDING, error logged | P2 |
+
 ---
 
 ## 8. API Endpoint Test Matrix
@@ -435,6 +530,25 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | 18 | GET | `/api/cron/task-reminder` | CR-01 | — | CR-04 | — | — | — |
 | 19 | GET | `/api/cron/attendance-nudge` | CR-02 | — | CR-04 | — | — | — |
 | 20 | POST | `/api/webhooks/agentmail` | EM-06 | — | — | — | — | — |
+| 21 | POST | `/api/webhooks/whatsapp` | WA-01 | — | — | WA-08 | — | — |
+| 22 | GET | `/api/analytics/overview` | PI-06 | — | PI-06* | — | — | — |
+| 23 | GET | `/api/analytics/scores` | PI-02 | — | PI-02* | — | — | — |
+| 24 | GET | `/api/analytics/review` | PI-04 | — | PI-04* | — | — | — |
+| 25 | GET | `/api/cron/performance-scores` | PI-01 | — | PI-01* | — | — | — |
+| 26 | POST | `/api/org` | MT-01 | MT-01* | — | — | MT-02 | — |
+| 27 | GET | `/api/org` | MT-04 | — | MT-04* | — | — | — |
+| 28 | PUT | `/api/org` | MT-04 | — | MT-04* | — | — | — |
+| 29 | POST | `/api/billing/checkout` | MT-08 | — | MT-08* | — | — | — |
+| 30 | POST | `/api/billing/portal` | MT-09 | — | MT-09* | — | — | — |
+| 31 | POST | `/api/webhooks/stripe` | MT-10 | — | — | — | — | — |
+| 32 | GET | `/api/jobs` | HP-02 | — | HP-02* | — | — | — |
+| 33 | POST | `/api/jobs` | HP-01 | HP-01* | HP-01* | — | — | — |
+| 34 | GET | `/api/jobs/[id]/candidates` | HP-03 | — | HP-03* | — | — | — |
+| 35 | POST | `/api/jobs/[id]/convert` | HP-05 | HP-06 | HP-05* | — | — | — |
+| 36 | POST | `/api/webhooks/interview-bot` | HP-04 | — | — | — | — | — |
+| 37 | POST | `/api/documents/verify` | DV-01 | — | DV-01* | — | — | DV-11 |
+| 38 | GET | `/api/documents/verify` | DV-06 | — | DV-06* | — | — | — |
+| 39 | POST | `/api/documents/review` | DV-08 | — | DV-08* | — | — | — |
 
 ---
 
@@ -552,7 +666,7 @@ Published every Friday covering:
 | Email delivery success | ≥ 95% | AgentMail delivery reports |
 | Page load time (LCP) | < 2.5s on 4G | Lighthouse / WebPageTest |
 | Uptime during beta period | ≥ 99.5% | Vercel status monitoring |
-| Playwright E2E pass rate | 38/38 (0 failures) | `npx playwright test` output |
+| Playwright E2E pass rate | 59/59 (0 failures) | `npx playwright test` output |
 | Node E2E integration pass rate | 100% (0 failures) | `node e2e-test.js` output |
 
 ### 12.2 Qualitative Metrics
@@ -636,6 +750,25 @@ Published every Friday covering:
 | GET | `/api/cron/task-reminder` | Bearer CRON_SECRET | Trigger task reminders |
 | GET | `/api/cron/attendance-nudge` | Bearer CRON_SECRET | Trigger attendance nudges |
 | POST | `/api/webhooks/agentmail` | None* | AgentMail inbound webhook |
+| POST | `/api/webhooks/whatsapp` | None* | WhatsApp inbound webhook |
+| POST | `/api/webhooks/stripe` | Stripe signature | Stripe event webhook |
+| POST | `/api/webhooks/interview-bot` | Webhook secret | Interview completion webhook |
+| GET | `/api/analytics/overview` | JWT cookie | Org-wide performance analytics |
+| GET | `/api/analytics/scores` | JWT cookie | Intern performance scores |
+| GET | `/api/analytics/review` | JWT cookie | AI performance review |
+| GET | `/api/cron/performance-scores` | Bearer CRON_SECRET | Compute weekly performance scores |
+| POST | `/api/org` | None | Create organization + admin |
+| GET | `/api/org` | JWT cookie | Get org details |
+| PUT | `/api/org` | JWT cookie | Update org settings |
+| POST | `/api/billing/checkout` | JWT cookie | Create Stripe checkout session |
+| POST | `/api/billing/portal` | JWT cookie | Create Stripe customer portal session |
+| GET | `/api/jobs` | JWT cookie | List job postings |
+| POST | `/api/jobs` | JWT cookie | Create job posting |
+| GET | `/api/jobs/[id]/candidates` | JWT cookie | List candidates for a job |
+| POST | `/api/jobs/[id]/convert` | JWT cookie | Convert candidate to intern |
+| POST | `/api/documents/verify` | JWT cookie | Trigger document verification |
+| GET | `/api/documents/verify` | JWT cookie | Get verification status |
+| POST | `/api/documents/review` | JWT cookie | Admin approve/reject document |
 
 *Flagged as security concern — lacks server-side auth validation
 
@@ -646,7 +779,7 @@ Published every Friday covering:
 Run the Playwright E2E suite before and after each beta phase:
 
 ```bash
-# Run all 38 tests against production (default baseURL in playwright.config.ts)
+# Run all 59 tests against production (default baseURL in playwright.config.ts)
 npx playwright test
 
 # Run with visible browser
@@ -656,7 +789,7 @@ npx playwright test --headed
 npx playwright show-report
 ```
 
-The suite covers 6 spec files: `homepage`, `auth`, `navigation`, `api`, `responsive`, `security-headers` — 38 tests total.
+The suite covers 6 spec files: `homepage`, `auth`, `navigation`, `api`, `responsive`, `security-headers` — 59 tests total.
 
 #### Node integration tests
 
@@ -682,4 +815,4 @@ DELETE FROM interns WHERE email LIKE 'e2e.%@test.intelliforge.tech';
 
 ---
 
-*Document Version: 1.1 | Last Updated: 30 March 2026 | IntelliForge AI*
+*Document Version: 2.0 | Last Updated: 30 March 2026 | IntelliForge AI*
