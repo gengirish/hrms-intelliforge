@@ -45,8 +45,6 @@ export const taskSchema = z.object({
 });
 
 export const onboardSchema = z.object({
-  name: z.string().min(1).max(200),
-  email: z.string().email(),
   phone: z.string().min(10).max(15),
   college: z.string().min(1).max(300),
   branch: z.string().min(1).max(200),

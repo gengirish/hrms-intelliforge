@@ -10,10 +10,9 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
+import { useAuth } from "@/lib/auth-context";
 
 const schema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Valid email required"),
   phone: z.string().min(10, "Valid phone number required"),
   college: z.string().min(2, "College name required"),
   branch: z.string().min(2, "Branch required"),
@@ -29,6 +28,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function OnboardPage() {
+  const { user, isLoading } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [files, setFiles] = useState<{
     aadhar?: File;
@@ -77,6 +77,43 @@ export default function OnboardPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="glass-card p-8 max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">Sign In Required</h2>
+            <p className="text-slate-400">
+              Please{" "}
+              <a href="/sign-in" className="text-indigo-400 hover:text-indigo-300 font-medium">
+                sign in
+              </a>{" "}
+              or{" "}
+              <a href="/sign-up" className="text-indigo-400 hover:text-indigo-300 font-medium">
+                create an account
+              </a>{" "}
+              first, then return here to complete onboarding.
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -118,34 +155,23 @@ export default function OnboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="onboard-name" className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Full Name
                 </label>
-                <input
-                  id="onboard-name"
-                  {...register("name")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                  placeholder="Priya Sharma"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>
-                )}
+                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
+                  {user.name || "—"}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">From your account</p>
               </div>
 
               <div>
-                <label htmlFor="onboard-email" className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Email
                 </label>
-                <input
-                  id="onboard-email"
-                  {...register("email")}
-                  type="email"
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                  placeholder="priya@example.com"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
-                )}
+                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
+                  {user.email}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">From your account</p>
               </div>
 
               <div>

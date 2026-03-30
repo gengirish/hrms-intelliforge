@@ -53,8 +53,6 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     const parsed = onboardSchema.safeParse({
-      name: formData.get("name"),
-      email: formData.get("email"),
       phone: formData.get("phone"),
       college: formData.get("college"),
       branch: formData.get("branch"),
@@ -72,8 +70,6 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      name,
-      email,
       phone,
       college,
       branch,
@@ -84,10 +80,15 @@ export async function POST(req: NextRequest) {
       whatsappOptIn,
     } = parsed.data;
 
-    const existingEmail = await prisma.intern.findUnique({ where: { email } });
-    if (existingEmail) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    const existingIntern = await prisma.intern.findUnique({ where: { id: session.sub } });
+    if (!existingIntern) {
+      return NextResponse.json({ error: "Intern account not found" }, { status: 404 });
     }
+    if (existingIntern.college && existingIntern.college.length > 0) {
+      return NextResponse.json({ error: "Onboarding already completed" }, { status: 409 });
+    }
+
+    const email = existingIntern.email;
 
     let aadharUrl: string | null = null;
     let panUrl: string | null = null;
@@ -132,10 +133,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const intern = await prisma.intern.create({
+    const intern = await prisma.intern.update({
+      where: { id: session.sub },
       data: {
-        name,
-        email,
         phone,
         college,
         branch,
