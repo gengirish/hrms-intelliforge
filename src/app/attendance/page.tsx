@@ -24,6 +24,7 @@ interface AttendanceRecord {
   punchIn: string | null;
   punchOut: string | null;
   mode: string;
+  dailyStatus: string | null;
 }
 
 export default function AttendancePage() {
@@ -35,6 +36,8 @@ export default function AttendancePage() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   const [punching, setPunching] = useState(false);
+  const [statusText, setStatusText] = useState("");
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const now = new Date();
   const istDate = now.toLocaleDateString("en-IN", {
@@ -77,6 +80,7 @@ export default function AttendancePage() {
           setInternName(data.internName);
           setTodayRecord(data.today);
           setWeekRecords(data.week);
+          if (data.today?.dailyStatus) setStatusText(data.today.dailyStatus);
         }
       } catch (err: unknown) {
         const message =
@@ -97,6 +101,29 @@ export default function AttendancePage() {
       const weekData = await weekRes.json();
       setWeekRecords(weekData.week);
       setTodayRecord(weekData.today);
+    }
+  }
+
+  async function handleSaveStatus() {
+    setSavingStatus(true);
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "status", dailyStatus: statusText }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save status");
+      }
+      const data = await res.json();
+      setTodayRecord(data.record);
+      toast.success("Daily status saved!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save status";
+      toast.error(message);
+    } finally {
+      setSavingStatus(false);
     }
   }
 
@@ -278,6 +305,46 @@ export default function AttendancePage() {
           </div>
         </div>
 
+        {/* Daily Status */}
+        {todayRecord?.punchIn && (
+          <div className="glass-card p-6 mb-6">
+            <h2 className="text-lg font-semibold text-white mb-3">
+              Daily Status Update
+            </h2>
+            <p className="text-xs text-slate-400 mb-3">
+              What are you working on today? This is visible to your admin.
+            </p>
+            <textarea
+              value={statusText}
+              onChange={(e) => setStatusText(e.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="e.g. Working on API integration, reviewing docs, attending team meeting..."
+              className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors text-sm resize-none"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-slate-500">
+                {statusText.length}/500
+                {todayRecord.dailyStatus && (
+                  <span className="ml-2 text-emerald-500">Saved</span>
+                )}
+              </span>
+              <button
+                onClick={handleSaveStatus}
+                disabled={savingStatus || !statusText.trim()}
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-1.5 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+              >
+                {savingStatus ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                )}
+                Save Status
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="glass-card p-6">
           <h2 className="text-lg font-semibold text-white mb-4">
             This Week&apos;s Attendance
@@ -306,6 +373,9 @@ export default function AttendancePage() {
                     </th>
                     <th className="text-left py-3 px-2 text-slate-400 font-medium">
                       Hours
+                    </th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-medium">
+                      Status
                     </th>
                   </tr>
                 </thead>
@@ -351,6 +421,9 @@ export default function AttendancePage() {
                           </span>
                         </td>
                         <td className="py-3 px-2 text-slate-300">{hours}h</td>
+                        <td className="py-3 px-2 text-slate-400 text-xs max-w-48 truncate" title={rec.dailyStatus || ""}>
+                          {rec.dailyStatus || "—"}
+                        </td>
                       </tr>
                     );
                   })}

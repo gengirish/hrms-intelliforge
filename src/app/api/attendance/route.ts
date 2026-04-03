@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 
-    const { type, mode } = parsed.data;
+    const { type, mode, dailyStatus } = parsed.data;
     const internId = intern.id;
 
     const todayStart = getISTStartOfDay();
@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
           date: todayStart,
           punchIn: now,
           mode,
+          dailyStatus: dailyStatus || null,
         },
       });
 
@@ -148,6 +149,26 @@ export async function POST(req: NextRequest) {
       const record = await prisma.attendance.update({
         where: { id: existing.id },
         data: { punchOut: now },
+      });
+
+      return NextResponse.json({ record });
+    }
+
+    if (type === "status") {
+      const existing = await prisma.attendance.findFirst({
+        where: {
+          internId,
+          date: { gte: todayStart, lt: todayEnd },
+        },
+      });
+
+      if (!existing) {
+        return NextResponse.json({ error: "Punch in first before adding a status update" }, { status: 400 });
+      }
+
+      const record = await prisma.attendance.update({
+        where: { id: existing.id },
+        data: { dailyStatus: dailyStatus || null },
       });
 
       return NextResponse.json({ record });

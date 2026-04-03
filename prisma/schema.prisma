@@ -123,12 +123,13 @@ model Intern {
 }
 
 model Attendance {
-  id       String    @id @default(cuid())
-  internId String
-  date     DateTime
-  punchIn  DateTime?
-  punchOut DateTime?
-  mode     AttendanceMode
+  id          String    @id @default(cuid())
+  internId    String
+  date        DateTime
+  punchIn     DateTime?
+  punchOut    DateTime?
+  mode        AttendanceMode
+  dailyStatus String?
 
   intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
 

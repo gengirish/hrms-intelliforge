@@ -26,6 +26,8 @@ import {
   UserX,
   UserCheck,
   ShieldQuestion,
+  CalendarDays,
+  FileText,
 } from "lucide-react";
 import {
   LineChart,
@@ -131,6 +133,21 @@ interface PerformanceReviewRecord {
   generatedAt: string;
 }
 
+interface AttendanceOverview {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  today: {
+    id: string;
+    punchIn: string | null;
+    punchOut: string | null;
+    mode: string;
+    dailyStatus: string | null;
+  } | null;
+}
+
 interface DocVerification {
   id: string;
   documentType: string;
@@ -155,6 +172,11 @@ export default function DashboardPage() {
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
   const [isSavingStipend, setIsSavingStipend] = useState(false);
   const [showDeactivated, setShowDeactivated] = useState(false);
+  const [attendanceOverview, setAttendanceOverview] = useState<AttendanceOverview[]>([]);
+  const [attendanceSummary, setAttendanceSummary] = useState<{
+    total: number; present: number; absent: number; punchedOut: number; withStatus: number;
+  } | null>(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "attendance" | "tasks" | "emails" | "notifications" | "analytics"
   >("overview");
@@ -165,6 +187,22 @@ export default function DashboardPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [docVerifications, setDocVerifications] = useState<DocVerification[]>([]);
+
+  async function loadAttendanceOverview() {
+    setAttendanceLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/attendance");
+      if (res.ok) {
+        const data = await res.json();
+        setAttendanceOverview(data.overview);
+        setAttendanceSummary(data.summary);
+      }
+    } catch {
+      /* non-critical */
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +222,7 @@ export default function DashboardPage() {
         const data = await res.json();
         setInterns(data.interns);
         setBootState("ready");
+        loadAttendanceOverview();
       } catch {
         if (!cancelled) {
           toast.error("Failed to load dashboard");
@@ -840,10 +879,13 @@ export default function DashboardPage() {
                             <th className="text-left py-3 px-2 text-slate-400 font-medium">
                               Mode
                             </th>
+                            <th className="text-left py-3 px-2 text-slate-400 font-medium">
+                              Daily Status
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {selectedIntern.attendance.map((rec) => (
+                          {selectedIntern.attendance.map((rec: AttendanceRecord & { dailyStatus?: string | null }) => (
                             <tr
                               key={rec.id}
                               className="border-b border-slate-800 last:border-0"
@@ -863,6 +905,9 @@ export default function DashboardPage() {
                               </td>
                               <td className="py-2 px-2 text-slate-300">
                                 {rec.mode}
+                              </td>
+                              <td className="py-2 px-2 text-slate-400 text-xs max-w-48 truncate" title={rec.dailyStatus || ""}>
+                                {rec.dailyStatus || "—"}
                               </td>
                             </tr>
                           ))}
@@ -1234,6 +1279,106 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-white">{stat.value}</p>
             </div>
           ))}
+        </div>
+
+        {/* Today's Attendance Overview */}
+        <div className="glass-card overflow-hidden mb-8">
+          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-indigo-400" />
+              Today&apos;s Attendance
+            </h2>
+            {attendanceSummary && (
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-emerald-400 font-medium">{attendanceSummary.present} present</span>
+                <span className="text-red-400 font-medium">{attendanceSummary.absent} absent</span>
+                <span className="text-slate-400">{attendanceSummary.withStatus} status updates</span>
+              </div>
+            )}
+          </div>
+          {attendanceLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+            </div>
+          ) : attendanceOverview.length === 0 ? (
+            <div className="py-8 text-center text-sm text-slate-400">
+              No active/offered interns to track attendance for.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-800/50">
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Intern</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Punch In</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Punch Out</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Mode</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Daily Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendanceOverview.map((entry) => (
+                    <tr key={entry.id} className="border-b border-slate-800 last:border-0">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-xs font-bold text-white">
+                            {entry.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white text-xs">{entry.name}</p>
+                            <p className="text-xs text-slate-500">{entry.role}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {entry.today ? (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-900/50 text-emerald-400">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Present
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-red-900/50 text-red-400">
+                            Absent
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300 text-xs">
+                        {entry.today?.punchIn ? formatTimeIST(entry.today.punchIn) : "—"}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300 text-xs">
+                        {entry.today?.punchOut ? formatTimeIST(entry.today.punchOut) : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {entry.today ? (
+                          <span className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                            entry.today.mode === "WFH"
+                              ? "bg-indigo-500/10 text-indigo-400"
+                              : "bg-purple-500/10 text-purple-400"
+                          )}>
+                            {entry.today.mode}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="py-3 px-4 text-xs max-w-64">
+                        {entry.today?.dailyStatus ? (
+                          <div className="flex items-start gap-1.5">
+                            <FileText className="h-3 w-3 text-indigo-400 mt-0.5 shrink-0" />
+                            <span className="text-slate-300 line-clamp-2" title={entry.today.dailyStatus}>
+                              {entry.today.dailyStatus}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Intern Table */}

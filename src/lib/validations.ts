@@ -32,8 +32,9 @@ export const actionSchema = z.object({
 });
 
 export const attendanceSchema = z.object({
-  type: z.enum(["in", "out"]),
+  type: z.enum(["in", "out", "status"]),
   mode: z.enum(["WFH", "Office"]).optional().default("WFH"),
+  dailyStatus: z.string().max(500).optional(),
 });
 
 export const taskSchema = z.object({
