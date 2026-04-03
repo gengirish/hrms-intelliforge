@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthIntern } from "@/lib/auth";
+import { getAuthIntern, getAuthAdmin, getSession } from "@/lib/auth";
 import { attendanceSchema } from "@/lib/validations";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-utils";
@@ -28,6 +28,99 @@ export async function GET(req: NextRequest) {
   try {
     if (!rateLimit(getClientIp(req), 20)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const session = await getSession();
+    if (!session?.sub) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session.role === "admin") {
+      const admin = await getAuthAdmin();
+      if (!admin) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const todayStart = getISTStartOfDay();
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+      const weekStart = getISTStartOfWeek();
+
+      const activeInterns = await prisma.intern.findMany({
+        where: {
+          orgId: admin.orgId,
+          status: { in: ["ACTIVE", "OFFERED"] },
+          deactivated: { not: true },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+        },
+        orderBy: { name: "asc" },
+      });
+
+      const internIds = activeInterns.map((i) => i.id);
+
+      const todayRecords = await prisma.attendance.findMany({
+        where: {
+          internId: { in: internIds },
+          date: { gte: todayStart, lt: todayEnd },
+        },
+      });
+
+      const weekRecords = await prisma.attendance.findMany({
+        where: {
+          internId: { in: internIds },
+          date: { gte: weekStart },
+        },
+        include: { intern: { select: { name: true } } },
+        orderBy: { date: "desc" },
+      });
+
+      const todayMap = new Map(todayRecords.map((r) => [r.internId, r]));
+
+      const overview = activeInterns.map((intern) => {
+        const record = todayMap.get(intern.id);
+        return {
+          ...intern,
+          today: record
+            ? {
+                id: record.id,
+                punchIn: record.punchIn,
+                punchOut: record.punchOut,
+                mode: record.mode,
+                dailyStatus: record.dailyStatus,
+              }
+            : null,
+        };
+      });
+
+      const summary = {
+        total: activeInterns.length,
+        present: todayRecords.length,
+        absent: activeInterns.length - todayRecords.length,
+        punchedOut: todayRecords.filter((r) => r.punchOut).length,
+        withStatus: todayRecords.filter((r) => r.dailyStatus).length,
+      };
+
+      return NextResponse.json({
+        role: "admin",
+        adminName: admin.name,
+        overview,
+        summary,
+        weekRecords: weekRecords.map((r) => ({
+          id: r.id,
+          internId: r.internId,
+          internName: r.intern.name,
+          date: r.date,
+          punchIn: r.punchIn,
+          punchOut: r.punchOut,
+          mode: r.mode,
+          dailyStatus: r.dailyStatus,
+        })),
+      });
     }
 
     const intern = await getAuthIntern();
@@ -62,6 +155,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
+      role: "intern",
       internId: intern.id,
       internName: intern.name,
       today,
