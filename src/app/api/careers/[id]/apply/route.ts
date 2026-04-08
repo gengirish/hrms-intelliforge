@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serverError } from "@/lib/api-utils";
+import { sendNewApplicationAlert } from "@/lib/agentmail";
 import { z } from "zod";
 
 const applySchema = z.object({
@@ -21,7 +22,7 @@ export async function POST(
 
     const job = await prisma.jobPosting.findUnique({
       where: { id, isActive: true },
-      select: { id: true, interviewLink: true },
+      select: { id: true, title: true, interviewLink: true },
     });
 
     if (!job) {
@@ -59,6 +60,16 @@ export async function POST(
         interviewStatus: "APPLIED",
       },
     });
+
+    sendNewApplicationAlert({
+      jobTitle: job.title,
+      candidateName: parsed.data.name,
+      candidateEmail: parsed.data.email,
+      candidatePhone: parsed.data.phone,
+      githubUrl: parsed.data.githubUrl,
+      portfolioUrl: parsed.data.portfolioUrl,
+      coverNote: parsed.data.coverNote,
+    }).catch((err) => console.warn("Application alert email failed:", err));
 
     return NextResponse.json({
       success: true,

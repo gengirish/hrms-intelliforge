@@ -164,4 +164,48 @@ export async function sendCompletionEmail(
   });
 }
 
+export async function sendNewApplicationAlert({
+  jobTitle,
+  candidateName,
+  candidateEmail,
+  candidatePhone,
+  githubUrl,
+  portfolioUrl,
+  coverNote,
+}: {
+  jobTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone?: string | null;
+  githubUrl?: string | null;
+  portfolioUrl?: string | null;
+  coverNote?: string | null;
+}) {
+  const inboxId = await getHRInboxId();
+  const links = [
+    githubUrl ? `<a href="${escapeHtml(githubUrl)}">GitHub</a>` : null,
+    portfolioUrl ? `<a href="${escapeHtml(portfolioUrl)}">Portfolio</a>` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: "hr@intelliforge.tech",
+    subject: `New Application: ${candidateName} — ${jobTitle}`,
+    html: `
+      <h2>New Application Received</h2>
+      <p><strong>Role:</strong> ${escapeHtml(jobTitle)}</p>
+      <hr/>
+      <p><strong>Name:</strong> ${escapeHtml(candidateName)}</p>
+      <p><strong>Email:</strong> <a href="mailto:${escapeHtml(candidateEmail)}">${escapeHtml(candidateEmail)}</a></p>
+      ${candidatePhone ? `<p><strong>Phone:</strong> ${escapeHtml(candidatePhone)}</p>` : ""}
+      ${links ? `<p><strong>Links:</strong> ${links}</p>` : ""}
+      ${coverNote ? `<p><strong>Cover Note:</strong></p><blockquote>${escapeHtml(coverNote)}</blockquote>` : ""}
+      <br/>
+      <p><a href="${APP_URL}/dashboard/hiring">→ View in Hiring Dashboard</a></p>
+      <p>— IntelliForge HRMS</p>
+    `,
+  });
+}
+
 export { getHRInboxId };
