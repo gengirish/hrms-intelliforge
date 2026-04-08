@@ -12,6 +12,9 @@ import {
   UserCheck,
   ChevronRight,
   X,
+  MapPin,
+  Clock,
+  Link2,
 } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
@@ -24,6 +27,9 @@ interface JobPosting {
   title: string;
   description: string;
   skills: string[];
+  location: string | null;
+  employmentType: string;
+  duration: string | null;
   interviewLink: string | null;
   isActive: boolean;
   createdAt: string;
@@ -36,6 +42,9 @@ interface Candidate {
   name: string;
   email: string;
   phone: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  coverNote: string | null;
   interviewScore: number | null;
   interviewStatus: string;
   reportUrl: string | null;
@@ -57,6 +66,11 @@ export default function HiringPage() {
     title: "",
     description: "",
     skills: "",
+    location: "",
+    employmentType: "FULL_TIME",
+    duration: "",
+    salaryInfo: "",
+    applicationEmail: "",
   });
 
   const loadJobs = useCallback(async () => {
@@ -106,7 +120,16 @@ export default function HiringPage() {
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newJob, skills }),
+        body: JSON.stringify({
+          title: newJob.title,
+          description: newJob.description,
+          skills,
+          location: newJob.location || undefined,
+          employmentType: newJob.employmentType,
+          duration: newJob.duration || undefined,
+          salaryInfo: newJob.salaryInfo || undefined,
+          applicationEmail: newJob.applicationEmail || undefined,
+        }),
       });
 
       if (!res.ok) {
@@ -117,7 +140,7 @@ export default function HiringPage() {
 
       toast.success("Job posting created");
       setShowCreateForm(false);
-      setNewJob({ title: "", description: "", skills: "" });
+      setNewJob({ title: "", description: "", skills: "", location: "", employmentType: "FULL_TIME", duration: "", salaryInfo: "", applicationEmail: "" });
       await loadJobs();
     } catch {
       toast.error("Failed to create job posting");
@@ -266,6 +289,16 @@ export default function HiringPage() {
                           <div>
                             <p className="font-medium text-white">{c.name}</p>
                             <p className="text-xs text-slate-500">{c.email}</p>
+                            {(c.githubUrl || c.portfolioUrl) && (
+                              <div className="flex gap-2 mt-1">
+                                {c.githubUrl && (
+                                  <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
+                                )}
+                                {c.portfolioUrl && (
+                                  <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className={cn("py-3 px-4 font-bold", getScoreColor(c.interviewScore))}>
@@ -388,6 +421,48 @@ export default function HiringPage() {
                 onChange={(e) => setNewJob((p) => ({ ...p, skills: e.target.value }))}
                 className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
               />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Location (e.g. Hyderabad / Remote)"
+                  value={newJob.location}
+                  onChange={(e) => setNewJob((p) => ({ ...p, location: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+                <select
+                  value={newJob.employmentType}
+                  onChange={(e) => setNewJob((p) => ({ ...p, employmentType: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white focus:border-indigo-500 outline-none transition-colors text-sm"
+                >
+                  <option value="FULL_TIME">Full-Time</option>
+                  <option value="PART_TIME">Part-Time</option>
+                  <option value="INTERNSHIP">Internship</option>
+                  <option value="CONTRACT">Contract</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="Duration (e.g. 3–6 Months)"
+                  value={newJob.duration}
+                  onChange={(e) => setNewJob((p) => ({ ...p, duration: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Salary / Stipend Info"
+                  value={newJob.salaryInfo}
+                  onChange={(e) => setNewJob((p) => ({ ...p, salaryInfo: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+                <input
+                  type="email"
+                  placeholder="Application Email"
+                  value={newJob.applicationEmail}
+                  onChange={(e) => setNewJob((p) => ({ ...p, applicationEmail: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+              </div>
               <button
                 onClick={createJob}
                 disabled={creating}
@@ -416,7 +491,7 @@ export default function HiringPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="text-sm font-semibold text-white truncate">{job.title}</h3>
                       <span className={cn(
                         "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold shrink-0",
@@ -424,9 +499,26 @@ export default function HiringPage() {
                       )}>
                         {job.isActive ? "Active" : "Closed"}
                       </span>
+                      {job.employmentType && job.employmentType !== "FULL_TIME" && (
+                        <span className="inline-flex rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-[10px] font-medium text-indigo-400">
+                          {job.employmentType === "INTERNSHIP" ? "Internship" : job.employmentType === "PART_TIME" ? "Part-Time" : "Contract"}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-slate-400 truncate">{job.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-500">
+                      {job.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {job.location}
+                        </span>
+                      )}
+                      {job.duration && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {job.duration}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {job.candidateCount} candidates
@@ -437,7 +529,17 @@ export default function HiringPage() {
                       <span>{formatDateIST(job.createdAt)}</span>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-slate-600 shrink-0 ml-4" />
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    <Link
+                      href={`/careers/${job.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-slate-500 hover:text-indigo-400 transition-colors p-1"
+                      title="View public page"
+                    >
+                      <Link2 className="h-4 w-4" />
+                    </Link>
+                    <ChevronRight className="h-4 w-4 text-slate-600" />
+                  </div>
                 </div>
               </button>
             ))}

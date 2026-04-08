@@ -11,14 +11,20 @@ const PUBLIC_PATHS = [
   "/create-org",
 ];
 
+const PUBLIC_PATH_PREFIXES = [
+  "/careers",
+];
+
 const PUBLIC_API_PREFIXES = [
   "/api/auth/",
   "/api/webhooks/",
   "/api/cron/",
+  "/api/careers",
 ];
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
+  if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true;
   return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Native Software Engineer Intern — IntelliForge AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1520;
+    --surface2: #111c2b;
+    --border: #1e3348;
+    --cyan: #00d4ff;
+    --cyan-dim: #0099c4;
+    --green: #00ff9d;
+    --orange: #ff6b35;
+    --text: #e8f0f8;
+    --muted: #6b8ca8;
+    --tag-bg: #0d2035;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: -10%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgba(0, 212, 255, 0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    right: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse, rgba(0, 255, 157, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.3px;
+  }
+  .logo span { color: var(--cyan); }
+  .apply-btn-header {
+    background: var(--cyan);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+  }
+  .apply-btn-header:hover { background: #00b8e0; }
+
+  /* Hero section */
+  .hero {
+    padding: 64px 0 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    padding: 5px 12px;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--cyan);
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 28px;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .meta-item svg { color: var(--cyan); flex-shrink: 0; }
+  .meta-item strong { color: var(--text); font-weight: 500; }
+
+  /* Main content */
+  main { padding: 48px 0; }
+
+  .section {
+    margin-bottom: 48px;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  p { color: #b0c8dc; margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* Highlight box */
+  .highlight-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: #b8d4e8;
+    line-height: 1.75;
+  }
+  .highlight-box strong { color: var(--cyan); font-weight: 600; }
+
+  /* Role list */
+  .role-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .role-list li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-size: 14px;
+    color: #b0c8dc;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .role-list li:hover { border-color: rgba(0,212,255,0.3); }
+  .role-list li .num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    margin-top: 3px;
+    min-width: 22px;
+  }
+
+  /* Two-col grid */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .skill-card .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .skill-card .desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Tags */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--cyan);
+    letter-spacing: 0.3px;
+  }
+  .tag.green { color: var(--green); border-color: rgba(0,255,157,0.2); background: rgba(0,255,157,0.04); }
+  .tag.orange { color: var(--orange); border-color: rgba(255,107,53,0.2); background: rgba(255,107,53,0.04); }
+
+  /* Perks grid */
+  .perks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 560px) { .perks { grid-template-columns: 1fr; } }
+  .perk {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .perk-icon {
+    font-size: 18px;
+    line-height: 1;
+    margin-top: 1px;
+  }
+  .perk-text .perk-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .perk-text .perk-desc { font-size: 12px; color: var(--muted); }
+
+  /* Apply CTA */
+  .apply-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--cyan);
+    padding: 36px 32px;
+    text-align: center;
+    margin-top: 56px;
+  }
+  .apply-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+  .apply-section p { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .apply-email {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--cyan);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(0,212,255,0.4);
+    padding-bottom: 2px;
+  }
+  .apply-cta {
+    display: inline-block;
+    background: var(--cyan);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 14px 36px;
+    text-decoration: none;
+    margin-top: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .apply-cta:hover { background: #00b8e0; transform: translateY(-1px); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    margin-top: 0;
+    text-align: center;
+  }
+  footer p { font-size: 12px; color: var(--muted); margin: 0; }
+  footer a { color: var(--cyan); text-decoration: none; }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <a href="https://www.intelliforge.tech" class="logo">Intelli<span>Forge</span> AI</a>
+      <a href="mailto:contact@intelliforge.tech?subject=Application: AI Native Intern" class="apply-btn-header">Apply Now →</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <section class="hero">
+    <div class="badge">Now Hiring · Internship</div>
+    <h1>AI Native Software<br/>Engineer <em>Intern</em></h1>
+    <p style="color:#7fa8c2; font-size:15px; max-width:540px; margin-top:12px;">
+      Build real AI agents, ship production-grade SaaS products, and learn what it means to engineer at the intersection of LLMs and full-stack systems — from day one.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <strong>Hyderabad / Remote</strong>
+      </div>
+      <div class="meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <strong>Internship · 3–6 Months</strong>
+      </div>
+      <div class="meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <strong>Immediate Joining</strong>
+      </div>
+      <div class="meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <strong>Stipend + PPO Potential</strong>
+      </div>
+    </div>
+  </section>
+
+  <main>
+
+    <!-- About -->
+    <section class="section">
+      <h2>About IntelliForge AI</h2>
+      <div class="highlight-box">
+        IntelliForge AI is a <strong>Hyderabad-based AI agent development and workflow automation company</strong> — backed by 13+ years of enterprise engineering across banking, pharma, telecom, and IoT. We build across all five levels of AI readiness: from foundations and prompt engineering to RAG pipelines, multi-agent systems, and full production AI applications. Aligned with the <strong>Bharat AI Mission</strong>.
+      </div>
+      <div class="tags">
+        <span class="tag">Next.js</span>
+        <span class="tag">LangGraph</span>
+        <span class="tag">RAG</span>
+        <span class="tag">Multi-Agent</span>
+        <span class="tag">Prisma</span>
+        <span class="tag">Supabase</span>
+        <span class="tag">n8n</span>
+        <span class="tag">FastAPI</span>
+        <span class="tag">Vercel</span>
+      </div>
+    </section>
+
+    <!-- Role -->
+    <section class="section">
+      <h2>The Role</h2>
+      <p>We're looking for an <strong style="color:var(--text)">AI Native Software Engineer Intern</strong> — someone who thinks in agents, ships with AI coding tools, and treats LLMs as first-class infrastructure, not a gimmick. This isn't a "write unit tests and watch" internship. You'll own features, build agents, and deploy to production.</p>
+      <ul class="role-list" style="margin-top:20px;">
+        <li><span class="num">01</span>Build and deploy AI agents (RAG pipelines, multi-agent workflows, tool-calling systems) on real client and product workloads</li>
+        <li><span class="num">02</span>Develop full-stack features across IntelliForge's SaaS product suite — GarageOS, KinderOS, MedForge, and others — using Next.js, Prisma, and Supabase</li>
+        <li><span class="num">03</span>Integrate LLM APIs (Claude, OpenAI, Gemini) into production applications with proper prompt engineering, context management, and evaluation</li>
+        <li><span class="num">04</span>Automate workflows using n8n, Zapier, and custom API tooling — connecting AI models to real business systems</li>
+        <li><span class="num">05</span>Use Cursor IDE (or equivalent AI coding assistants) as your primary development environment — not as a crutch, but as a force multiplier</li>
+        <li><span class="num">06</span>Contribute to architecture decisions, write clean Cursor-ready prompts, and document your work for async-first collaboration</li>
+      </ul>
+    </section>
+
+    <!-- What we're looking for -->
+    <section class="section">
+      <h2>What We're Looking For</h2>
+      <div class="two-col">
+        <div class="skill-card">
+          <div class="title">AI-First Mindset</div>
+          <div class="desc">You reach for an LLM before a for-loop when appropriate. You've built something with Claude, OpenAI, or an open-source model — not just called an API.</div>
+        </div>
+        <div class="skill-card">
+          <div class="title">Full-Stack Foundations</div>
+          <div class="desc">Comfortable with React/Next.js on the frontend, Node.js or Python on the backend, and at least one database (SQL preferred).</div>
+        </div>
+        <div class="skill-card">
+          <div class="title">Ships Fast, Iterates Faster</div>
+          <div class="desc">You get something live, gather feedback, and improve. You don't over-engineer. You've used Vercel, Railway, or similar for deployment.</div>
+        </div>
+        <div class="skill-card">
+          <div class="title">Agent & Automation Curiosity</div>
+          <div class="desc">You've tinkered with LangChain, LangGraph, AutoGen, CrewAI, or n8n — or you're deeply curious and can prove it through your projects.</div>
+        </div>
+        <div class="skill-card">
+          <div class="title">Cursor / AI Dev Tool Fluency</div>
+          <div class="desc">You work in Cursor, GitHub Copilot, or similar. You know how to write effective prompts for code generation, not just hit Tab.</div>
+        </div>
+        <div class="skill-card">
+          <div class="title">Ownership Mentality</div>
+          <div class="desc">You ask "what's the goal?" before writing code. You document your decisions. You care about the outcome, not just the output.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nice to have -->
+    <section class="section">
+      <h2>Bonus Points</h2>
+      <div class="tags">
+        <span class="tag green">LangGraph / CrewAI</span>
+        <span class="tag green">RAG + vector DBs</span>
+        <span class="tag green">Prompt engineering depth</span>
+        <span class="tag green">Clerk / multi-tenancy</span>
+        <span class="tag green">Razorpay integration</span>
+        <span class="tag green">India B2B SaaS context</span>
+        <span class="tag green">GST / Tally awareness</span>
+        <span class="tag green">n8n workflow design</span>
+        <span class="tag green">FastAPI / Python backend</span>
+        <span class="tag green">Supabase / Prisma ORM</span>
+      </div>
+    </section>
+
+    <!-- What you'll learn -->
+    <section class="section">
+      <h2>What You'll Build & Learn</h2>
+      <ul class="role-list">
+        <li><span class="num">→</span>Production multi-agent systems using LangGraph — not toy demos, real workflows handling real data</li>
+        <li><span class="num">→</span>Multi-tenant SaaS architecture patterns used across all IntelliForge products (auth, RBAC, billing, webhooks)</li>
+        <li><span class="num">→</span>RAG pipeline design: chunking strategies, embedding models, retrieval evaluation, and latency trade-offs</li>
+        <li><span class="num">→</span>AI product thinking — how to scope, spec, and ship AI features that users actually trust and rely on</li>
+        <li><span class="num">→</span>India-market SaaS specifics: GST compliance, WhatsApp-native UX, Razorpay, paise-denominated data models</li>
+      </ul>
+    </section>
+
+    <!-- Perks -->
+    <section class="section">
+      <h2>What's In It For You</h2>
+      <div class="perks">
+        <div class="perk">
+          <div class="perk-icon">💰</div>
+          <div class="perk-text">
+            <div class="perk-title">Competitive Stipend</div>
+            <div class="perk-desc">Performance-linked. Discussed based on skills and engagement.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">🚀</div>
+          <div class="perk-text">
+            <div class="perk-title">Real Production Work</div>
+            <div class="perk-desc">Your code ships to real users, not a staging environment that no one looks at.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">🤖</div>
+          <div class="perk-text">
+            <div class="perk-title">AI-First Culture</div>
+            <div class="perk-desc">Access to all major LLM APIs, AI coding tools, and automation platforms.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">🎓</div>
+          <div class="perk-text">
+            <div class="perk-title">Direct Mentorship</div>
+            <div class="perk-desc">Work directly with a 14-year enterprise engineer and M.Tech DSAI student.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">📄</div>
+          <div class="perk-text">
+            <div class="perk-title">Certificate + LOR</div>
+            <div class="perk-desc">Detailed letter of recommendation and project certificates on completion.</div>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">🌐</div>
+          <div class="perk-text">
+            <div class="perk-title">PPO Potential</div>
+            <div class="perk-desc">Top performers will be considered for a full-time role as IntelliForge scales.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process -->
+    <section class="section">
+      <h2>Interview Process</h2>
+      <ul class="role-list">
+        <li><span class="num">01</span><strong style="color:var(--text)">Portfolio Review</strong> — Share GitHub, deployed projects, or anything you've built with AI. No AI-generated portfolios with zero code behind them.</li>
+        <li><span class="num">02</span><strong style="color:var(--text)">Async Technical Task</strong> — A short, focused build task (4–6 hrs). We respect your time; this isn't a free project disguised as an assignment.</li>
+        <li><span class="num">03</span><strong style="color:var(--text)">Culture & Vision Call</strong> — 30 min with the founder. We're checking for alignment, not grilling on algorithms.</li>
+      </ul>
+    </section>
+
+    <!-- CTA -->
+    <div class="apply-section">
+      <h3>Ready to Build the Future of AI in Bharat?</h3>
+      <p>Send your GitHub profile, a deployed project link, and 3 sentences on why AI-native engineering matters to you.</p>
+      <a href="mailto:contact@intelliforge.tech?subject=Application: AI Native Software Engineer Intern" class="apply-email">contact@intelliforge.tech</a><br/>
+      <a href="mailto:contact@intelliforge.tech?subject=Application: AI Native Software Engineer Intern" class="apply-cta">Apply Now →</a>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>© 2026 <a href="https://www.intelliforge.tech">IntelliForge AI</a> · Hyderabad, Telangana, India · Aligned with <a href="https://bharataimission.org">Bharat AI Mission</a></p>
+  </footer>
+</div>
+
+</body>
+</html>

@@ -289,6 +289,16 @@ model JobPosting {
   title             String
   description       String
   skills            String[]
+  location          String?
+  employmentType    String   @default("FULL_TIME")
+  duration          String?
+  responsibilities  String[]
+  requirements      Json?
+  bonusSkills       String[]
+  perks             Json?
+  interviewSteps    Json?
+  applicationEmail  String?
+  salaryInfo        String?
   interviewBotJobId String?
   interviewLink     String?
   isActive          Boolean  @default(true)
@@ -307,6 +317,10 @@ model Candidate {
   name              String
   email             String
   phone             String?
+  resumeUrl         String?
+  githubUrl         String?
+  portfolioUrl      String?
+  coverNote         String?
   interviewScore    Float?
   interviewStatus   String   @default("PENDING")
   reportUrl         String?

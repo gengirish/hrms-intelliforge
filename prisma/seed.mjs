@@ -200,6 +200,186 @@ async function main() {
   }
   console.log(`Tasks: ${rahulTasks.length} for ${rahul.name}`);
 
+  // 5. Organization (for job postings)
+  const org = await prisma.organization.upsert({
+    where: { slug: "intelliforge-ai" },
+    update: {},
+    create: {
+      name: "IntelliForge AI",
+      slug: "intelliforge-ai",
+      domain: "intelliforge.tech",
+      plan: "growth",
+      maxInterns: 20,
+    },
+  });
+  console.log("Organization:", org.name);
+
+  // Link admin to org if not already linked
+  if (!admin.orgId) {
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: { orgId: org.id },
+    });
+    console.log("Linked admin to org");
+  }
+
+  // Link interns to org
+  for (const intern of interns) {
+    if (!intern.orgId) {
+      await prisma.intern.update({
+        where: { id: intern.id },
+        data: { orgId: org.id },
+      });
+    }
+  }
+  console.log("Linked interns to org");
+
+  // 6. AI Native Software Engineer Intern — Job Posting
+  const existingJob = await prisma.jobPosting.findFirst({
+    where: { orgId: org.id, title: "AI Native Software Engineer Intern" },
+  });
+
+  if (!existingJob) {
+    await prisma.jobPosting.create({
+      data: {
+        orgId: org.id,
+        title: "AI Native Software Engineer Intern",
+        description:
+          "Build real AI agents, ship production-grade SaaS products, and learn what it means to engineer at the intersection of LLMs and full-stack systems — from day one.",
+        skills: [
+          "Next.js",
+          "LangGraph",
+          "RAG",
+          "Multi-Agent",
+          "Prisma",
+          "Supabase",
+          "n8n",
+          "FastAPI",
+          "Vercel",
+        ],
+        location: "Hyderabad / Remote",
+        employmentType: "INTERNSHIP",
+        duration: "3–6 Months",
+        salaryInfo: "Stipend + PPO Potential",
+        applicationEmail: "contact@intelliforge.tech",
+        responsibilities: [
+          "Build and deploy AI agents (RAG pipelines, multi-agent workflows, tool-calling systems) on real client and product workloads",
+          "Develop full-stack features across IntelliForge's SaaS product suite — GarageOS, KinderOS, MedForge, and others — using Next.js, Prisma, and Supabase",
+          "Integrate LLM APIs (Claude, OpenAI, Gemini) into production applications with proper prompt engineering, context management, and evaluation",
+          "Automate workflows using n8n, Zapier, and custom API tooling — connecting AI models to real business systems",
+          "Use Cursor IDE (or equivalent AI coding assistants) as your primary development environment — not as a crutch, but as a force multiplier",
+          "Contribute to architecture decisions, write clean Cursor-ready prompts, and document your work for async-first collaboration",
+        ],
+        requirements: [
+          {
+            title: "AI-First Mindset",
+            description:
+              "You reach for an LLM before a for-loop when appropriate. You've built something with Claude, OpenAI, or an open-source model — not just called an API.",
+          },
+          {
+            title: "Full-Stack Foundations",
+            description:
+              "Comfortable with React/Next.js on the frontend, Node.js or Python on the backend, and at least one database (SQL preferred).",
+          },
+          {
+            title: "Ships Fast, Iterates Faster",
+            description:
+              "You get something live, gather feedback, and improve. You don't over-engineer. You've used Vercel, Railway, or similar for deployment.",
+          },
+          {
+            title: "Agent & Automation Curiosity",
+            description:
+              "You've tinkered with LangChain, LangGraph, AutoGen, CrewAI, or n8n — or you're deeply curious and can prove it through your projects.",
+          },
+          {
+            title: "Cursor / AI Dev Tool Fluency",
+            description:
+              "You work in Cursor, GitHub Copilot, or similar. You know how to write effective prompts for code generation, not just hit Tab.",
+          },
+          {
+            title: "Ownership Mentality",
+            description:
+              "You ask \"what's the goal?\" before writing code. You document your decisions. You care about the outcome, not just the output.",
+          },
+        ],
+        bonusSkills: [
+          "LangGraph / CrewAI",
+          "RAG + vector DBs",
+          "Prompt engineering depth",
+          "Clerk / multi-tenancy",
+          "Razorpay integration",
+          "India B2B SaaS context",
+          "GST / Tally awareness",
+          "n8n workflow design",
+          "FastAPI / Python backend",
+          "Supabase / Prisma ORM",
+        ],
+        perks: [
+          {
+            icon: "💰",
+            title: "Competitive Stipend",
+            description:
+              "Performance-linked. Discussed based on skills and engagement.",
+          },
+          {
+            icon: "🚀",
+            title: "Real Production Work",
+            description:
+              "Your code ships to real users, not a staging environment that no one looks at.",
+          },
+          {
+            icon: "🤖",
+            title: "AI-First Culture",
+            description:
+              "Access to all major LLM APIs, AI coding tools, and automation platforms.",
+          },
+          {
+            icon: "🎓",
+            title: "Direct Mentorship",
+            description:
+              "Work directly with a 14-year enterprise engineer and M.Tech DSAI student.",
+          },
+          {
+            icon: "📄",
+            title: "Certificate + LOR",
+            description:
+              "Detailed letter of recommendation and project certificates on completion.",
+          },
+          {
+            icon: "🌐",
+            title: "PPO Potential",
+            description:
+              "Top performers will be considered for a full-time role as IntelliForge scales.",
+          },
+        ],
+        interviewSteps: [
+          {
+            step: "01",
+            title: "Portfolio Review",
+            description:
+              "Share GitHub, deployed projects, or anything you've built with AI. No AI-generated portfolios with zero code behind them.",
+          },
+          {
+            step: "02",
+            title: "Async Technical Task",
+            description:
+              "A short, focused build task (4–6 hrs). We respect your time; this isn't a free project disguised as an assignment.",
+          },
+          {
+            step: "03",
+            title: "Culture & Vision Call",
+            description:
+              "30 min with the founder. We're checking for alignment, not grilling on algorithms.",
+          },
+        ],
+        isActive: true,
+      },
+    });
+    console.log("Job Posting: AI Native Software Engineer Intern created");
+  } else {
+    console.log("Job Posting: AI Native Software Engineer Intern already exists");
+  }
+
   console.log("\nSeed completed successfully!");
   console.log("Default password for all accounts: Test1234!");
 }
