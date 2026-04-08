@@ -22,7 +22,6 @@ test.describe("Careers Page", () => {
 
   test("displays job listing cards or empty state", async ({ page }) => {
     await page.goto("/careers");
-    await page.waitForTimeout(2000);
     const hasJobs = await page.getByText(/open position/i).isVisible();
     const hasEmpty = await page
       .getByText(/No open positions|No positions match/i)

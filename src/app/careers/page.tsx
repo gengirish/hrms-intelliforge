@@ -1,17 +1,11 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Briefcase,
-  MapPin,
-  Clock,
-  ArrowRight,
-  Loader2,
-  Search,
-} from "lucide-react";
+import { Briefcase, MapPin, Clock, ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { prisma } from "@/lib/prisma";
+import { CareersSearch } from "./search";
+
+export const dynamic = "force-dynamic";
 
 interface JobListing {
   id: string;
@@ -22,7 +16,6 @@ interface JobListing {
   employmentType: string;
   duration: string | null;
   salaryInfo: string | null;
-  createdAt: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -32,24 +25,30 @@ const TYPE_LABELS: Record<string, string> = {
   CONTRACT: "Contract",
 };
 
-export default function CareersPage() {
-  const [jobs, setJobs] = useState<JobListing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+async function getJobs(): Promise<JobListing[]> {
+  try {
+    const jobs = await prisma.jobPosting.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        skills: true,
+        location: true,
+        employmentType: true,
+        duration: true,
+        salaryInfo: true,
+      },
+    });
+    return jobs;
+  } catch {
+    return [];
+  }
+}
 
-  useEffect(() => {
-    fetch("/api/careers")
-      .then((r) => r.json())
-      .then((data) => setJobs(data.jobs ?? []))
-      .catch(() => setJobs([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = jobs.filter(
-    (j) =>
-      j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()))
-  );
+export default async function CareersPage() {
+  const jobs = await getJobs();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -77,44 +76,31 @@ export default function CareersPage() {
               workflows, and full-stack SaaS products.
             </p>
 
-            <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search by role or skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg bg-slate-900/80 border border-slate-700 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
-              />
-            </div>
+            <CareersSearch />
           </div>
         </section>
 
         <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pb-24">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-            </div>
-          ) : filtered.length === 0 ? (
+          {jobs.length === 0 ? (
             <div className="glass-card p-16 text-center">
               <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />
               <p className="text-slate-400">
-                {search
-                  ? "No positions match your search."
-                  : "No open positions right now. Check back soon!"}
+                No open positions right now. Check back soon!
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-slate-500 mb-2">
-                {filtered.length} open{" "}
-                {filtered.length === 1 ? "position" : "positions"}
+                {jobs.length} open{" "}
+                {jobs.length === 1 ? "position" : "positions"}
               </p>
-              {filtered.map((job) => (
+              {jobs.map((job) => (
                 <Link
                   key={job.id}
                   href={`/careers/${job.id}`}
-                  className="glass-card p-6 block hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group"
+                  className="glass-card p-6 block hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group careers-job-card"
+                  data-title={job.title.toLowerCase()}
+                  data-skills={job.skills.map((s) => s.toLowerCase()).join(",")}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

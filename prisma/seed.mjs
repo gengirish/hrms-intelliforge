@@ -261,7 +261,7 @@ async function main() {
         employmentType: "INTERNSHIP",
         duration: "3–6 Months",
         salaryInfo: "Stipend + PPO Potential",
-        applicationEmail: "contact@intelliforge.tech",
+        applicationEmail: "hr@intelliforge.tech",
         responsibilities: [
           "Build and deploy AI agents (RAG pipelines, multi-agent workflows, tool-calling systems) on real client and product workloads",
           "Develop full-stack features across IntelliForge's SaaS product suite — GarageOS, KinderOS, MedForge, and others — using Next.js, Prisma, and Supabase",
