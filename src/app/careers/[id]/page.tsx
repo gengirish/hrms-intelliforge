@@ -395,10 +395,11 @@ export default function CareerDetailPage() {
                 </h2>
                 <div className="space-y-4 text-left">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label htmlFor="apply-name" className="block text-xs font-medium text-slate-400 mb-1">
                       Full Name *
                     </label>
                     <input
+                      id="apply-name"
                       type="text"
                       required
                       value={form.name}
@@ -410,10 +411,11 @@ export default function CareerDetailPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label htmlFor="apply-email" className="block text-xs font-medium text-slate-400 mb-1">
                       Email *
                     </label>
                     <input
+                      id="apply-email"
                       type="email"
                       required
                       value={form.email}
@@ -425,10 +427,11 @@ export default function CareerDetailPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label htmlFor="apply-phone" className="block text-xs font-medium text-slate-400 mb-1">
                       Phone
                     </label>
                     <input
+                      id="apply-phone"
                       type="tel"
                       value={form.phone}
                       onChange={(e) =>
@@ -440,10 +443,11 @@ export default function CareerDetailPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">
+                      <label htmlFor="apply-github" className="block text-xs font-medium text-slate-400 mb-1">
                         GitHub URL
                       </label>
                       <input
+                        id="apply-github"
                         type="url"
                         value={form.githubUrl}
                         onChange={(e) =>
@@ -457,10 +461,11 @@ export default function CareerDetailPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">
+                      <label htmlFor="apply-portfolio" className="block text-xs font-medium text-slate-400 mb-1">
                         Portfolio / Project URL
                       </label>
                       <input
+                        id="apply-portfolio"
                         type="url"
                         value={form.portfolioUrl}
                         onChange={(e) =>
@@ -475,10 +480,11 @@ export default function CareerDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label htmlFor="apply-cover" className="block text-xs font-medium text-slate-400 mb-1">
                       Why does AI-native engineering matter to you? (3 sentences)
                     </label>
                     <textarea
+                      id="apply-cover"
                       value={form.coverNote}
                       onChange={(e) =>
                         setForm((p) => ({
