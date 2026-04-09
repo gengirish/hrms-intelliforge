@@ -26,11 +26,17 @@ async function uploadFile(
   email: string
 ): Promise<string | null> {
   try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return null;
+    }
     const ext = file.name.split(".").pop();
     const pathname = `hrms-docs/${folder}/${email.replace(/[@.]/g, "_")}_${Date.now()}.${ext}`;
     const blob = await put(pathname, file, {
       access: "private",
       addRandomSuffix: true,
+      token,
     });
     return blob.url;
   } catch (err) {

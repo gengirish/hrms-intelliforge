@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { serverError } from "@/lib/api-utils";
+import { errorResponse, serverError } from "@/lib/api-utils";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = [
@@ -11,25 +11,25 @@ const ALLOWED_TYPES = [
 
 export async function POST(req: NextRequest) {
   try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return errorResponse("File storage is not configured", 503);
+    }
+
     const formData = await req.formData();
     const file = formData.get("resume") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return errorResponse("No file provided", 400);
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Only PDF and Word documents are accepted" },
-        { status: 400 }
-      );
+      return errorResponse("Only PDF and Word documents are accepted", 400);
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json(
-        { error: "File must be under 5 MB" },
-        { status: 400 }
-      );
+      return errorResponse("File must be under 5 MB", 400);
     }
 
     const timestamp = Date.now();
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     const blob = await put(pathname, file, {
       access: "public",
       addRandomSuffix: true,
+      token,
     });
 
     return NextResponse.json({ url: blob.url });
