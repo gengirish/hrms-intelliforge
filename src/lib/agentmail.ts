@@ -169,6 +169,7 @@ export async function sendNewApplicationAlert({
   candidateName,
   candidateEmail,
   candidatePhone,
+  resumeUrl,
   githubUrl,
   portfolioUrl,
   coverNote,
@@ -177,12 +178,14 @@ export async function sendNewApplicationAlert({
   candidateName: string;
   candidateEmail: string;
   candidatePhone?: string | null;
+  resumeUrl?: string | null;
   githubUrl?: string | null;
   portfolioUrl?: string | null;
   coverNote?: string | null;
 }) {
   const inboxId = await getHRInboxId();
   const links = [
+    resumeUrl ? `<a href="${escapeHtml(resumeUrl)}">Resume</a>` : null,
     githubUrl ? `<a href="${escapeHtml(githubUrl)}">GitHub</a>` : null,
     portfolioUrl ? `<a href="${escapeHtml(portfolioUrl)}">Portfolio</a>` : null,
   ]

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Send,
   ExternalLink,
+  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "@/components/navbar";
@@ -71,10 +72,13 @@ export default function CareerDetailPage() {
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
+    resumeUrl: "",
     githubUrl: "",
     portfolioUrl: "",
     coverNote: "",
@@ -110,10 +114,31 @@ export default function CareerDetailPage() {
 
     setSubmitting(true);
     try {
+      let resumeUrl = form.resumeUrl;
+
+      if (resumeFile && !resumeUrl) {
+        setUploadingResume(true);
+        const fd = new FormData();
+        fd.append("resume", resumeFile);
+        const uploadRes = await fetch("/api/careers/upload-resume", {
+          method: "POST",
+          body: fd,
+        });
+        setUploadingResume(false);
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          toast.error(err.error || "Resume upload failed");
+          setSubmitting(false);
+          return;
+        }
+        const uploadData = await uploadRes.json();
+        resumeUrl = uploadData.url;
+      }
+
       const res = await fetch(`/api/careers/${id}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, resumeUrl }),
       });
 
       const data = await res.json();
@@ -441,6 +466,30 @@ export default function CareerDetailPage() {
                       placeholder="+91 98765 43210"
                     />
                   </div>
+                  <div>
+                    <label htmlFor="apply-resume" className="block text-xs font-medium text-slate-400 mb-1">
+                      Resume (PDF or Word, max 5 MB)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="apply-resume"
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          setResumeFile(f);
+                          if (f) setForm((p) => ({ ...p, resumeUrl: "" }));
+                        }}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-500 file:cursor-pointer focus:border-indigo-500 outline-none transition-colors"
+                      />
+                      {resumeFile && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-indigo-400">
+                          <Paperclip className="h-3 w-3" />
+                          {resumeFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="apply-github" className="block text-xs font-medium text-slate-400 mb-1">
@@ -516,7 +565,7 @@ export default function CareerDetailPage() {
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    Submit Application
+                    {uploadingResume ? "Uploading resume…" : "Submit Application"}
                   </button>
                 </div>
               </form>

@@ -42,6 +42,7 @@ interface Candidate {
   name: string;
   email: string;
   phone: string | null;
+  resumeUrl: string | null;
   githubUrl: string | null;
   portfolioUrl: string | null;
   coverNote: string | null;
@@ -289,8 +290,11 @@ export default function HiringPage() {
                           <div>
                             <p className="font-medium text-white">{c.name}</p>
                             <p className="text-xs text-slate-500">{c.email}</p>
-                            {(c.githubUrl || c.portfolioUrl) && (
+                            {(c.resumeUrl || c.githubUrl || c.portfolioUrl) && (
                               <div className="flex gap-2 mt-1">
+                                {c.resumeUrl && (
+                                  <a href={c.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">Resume</a>
+                                )}
                                 {c.githubUrl && (
                                   <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
                                 )}
