@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 interface JobListing {
   id: string;
+  slug: string;
   title: string;
   description: string;
   skills: string[];
@@ -32,6 +33,7 @@ async function getJobs(): Promise<JobListing[]> {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        slug: true,
         title: true,
         description: true,
         skills: true,
@@ -97,7 +99,7 @@ export default async function CareersPage() {
               {jobs.map((job) => (
                 <Link
                   key={job.id}
-                  href={`/careers/${job.id}`}
+                  href={`/careers/${job.slug}`}
                   className="glass-card p-6 block hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group careers-job-card"
                   data-title={job.title.toLowerCase()}
                   data-skills={job.skills.map((s) => s.toLowerCase()).join(",")}

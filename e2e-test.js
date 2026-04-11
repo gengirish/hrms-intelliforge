@@ -75,7 +75,7 @@ async function testPageLoads() {
   console.log("\n┌─ 1. Page Loads ──────────────────────────────────────");
   for (const [path, label] of [
     ["/", "Home"],
-    ["/onboard", "Onboard"],
+    ["/intern-onboarding", "Intern Onboarding"],
     ["/offer", "Offer"],
     ["/attendance", "Attendance"],
     ["/tasks", "Tasks"],
@@ -94,16 +94,16 @@ async function testPageLoads() {
 // ─── 2. Onboarding ──────────────────────────────────────────────
 
 async function testOnboarding() {
-  console.log("\n┌─ 2. Onboarding (POST /api/onboard) ──────────────────");
+  console.log("\n┌─ 2. Onboarding (POST /api/intern-onboarding) ────────");
 
   await test("Reject missing fields (400)", async () => {
-    const { status, data } = await api("POST", "/api/onboard", { name: "Test" }, "form");
+    const { status, data } = await api("POST", "/api/intern-onboarding", { name: "Test" }, "form");
     assert(status === 400, `Expected 400, got ${status}`);
     return data;
   });
 
   await test("Create intern via formData", async () => {
-    const { status, data } = await api("POST", "/api/onboard", {
+    const { status, data } = await api("POST", "/api/intern-onboarding", {
       name: "Priya Sharma",
       email: TEST_EMAIL,
       phone: "+919876543210",
@@ -123,7 +123,7 @@ async function testOnboarding() {
   });
 
   await test("Block duplicate email (409)", async () => {
-    const { status, data } = await api("POST", "/api/onboard", {
+    const { status, data } = await api("POST", "/api/intern-onboarding", {
       name: "Priya Sharma",
       email: TEST_EMAIL,
       phone: "+919876543210",

@@ -4,15 +4,16 @@ import { serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
     const job = await prisma.jobPosting.findUnique({
-      where: { id, isActive: true },
+      where: { slug, isActive: true },
       select: {
         id: true,
+        slug: true,
         title: true,
         description: true,
         skills: true,

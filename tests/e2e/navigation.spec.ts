@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Navigation", () => {
-  test("clicking Onboard card navigates to /onboard", async ({ page }) => {
+  test("clicking Onboard card navigates to /intern-onboarding", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: /Get started/i }).click();
-    await expect(page).toHaveURL(/\/onboard/);
+    await expect(page).toHaveURL(/\/intern-onboarding/);
   });
 
   test("clicking Attendance card navigates to /attendance", async ({ page }) => {
@@ -20,15 +20,15 @@ test.describe("Navigation", () => {
   });
 
   test("navbar brand links to homepage", async ({ page }) => {
-    await page.goto("/onboard");
+    await page.goto("/intern-onboarding");
     await page.locator("nav").getByRole("link", { name: /IntelliForge/i }).click();
     await expect(page).toHaveURL("/");
   });
 });
 
 test.describe("Page Load", () => {
-  test("/onboard page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/onboard");
+  test("/intern-onboarding page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/intern-onboarding");
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
   });

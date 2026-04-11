@@ -24,6 +24,7 @@ import { cn, formatDateIST } from "@/lib/utils";
 
 interface JobPosting {
   id: string;
+  slug: string;
   title: string;
   description: string;
   skills: string[];
@@ -535,7 +536,7 @@ export default function HiringPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     <Link
-                      href={`/careers/${job.id}`}
+                      href={`/careers/${job.slug}`}
                       onClick={(e) => e.stopPropagation()}
                       className="text-slate-500 hover:text-indigo-400 transition-colors p-1"
                       title="View public page"

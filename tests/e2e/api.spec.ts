@@ -58,8 +58,8 @@ test.describe("API Endpoints (unauthenticated)", () => {
     expect([401, 403, 500]).toContain(response.status());
   });
 
-  test("POST /api/onboard blocks unauthenticated access", async ({ request }) => {
-    const response = await request.post("/api/onboard", {
+  test("POST /api/intern-onboarding blocks unauthenticated access", async ({ request }) => {
+    const response = await request.post("/api/intern-onboarding", {
       data: { name: "Test" },
     });
     expect([401, 403, 429, 500]).toContain(response.status());

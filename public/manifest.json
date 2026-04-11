@@ -47,8 +47,8 @@
       "description": "Submit weekly tasks"
     },
     {
-      "name": "Onboard",
-      "url": "/onboard",
+      "name": "Intern Onboarding",
+      "url": "/intern-onboarding",
       "description": "Intern onboarding"
     }
   ]

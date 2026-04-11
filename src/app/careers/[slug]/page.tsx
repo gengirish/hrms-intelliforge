@@ -38,6 +38,7 @@ interface InterviewStep {
 
 interface JobDetail {
   id: string;
+  slug: string;
   title: string;
   description: string;
   skills: string[];
@@ -64,7 +65,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function CareerDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -86,7 +87,7 @@ export default function CareerDetailPage() {
 
   const loadJob = useCallback(async () => {
     try {
-      const res = await fetch(`/api/careers/${id}`);
+      const res = await fetch(`/api/careers/${slug}`);
       if (res.status === 404) {
         setNotFound(true);
         return;
@@ -99,7 +100,7 @@ export default function CareerDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [slug]);
 
   useEffect(() => {
     loadJob();
@@ -135,7 +136,7 @@ export default function CareerDetailPage() {
         resumeUrl = uploadData.url;
       }
 
-      const res = await fetch(`/api/careers/${id}/apply`, {
+      const res = await fetch(`/api/careers/${slug}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, resumeUrl }),

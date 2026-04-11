@@ -16,13 +16,13 @@ const applySchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
     const job = await prisma.jobPosting.findUnique({
-      where: { id, isActive: true },
+      where: { slug, isActive: true },
       select: { id: true, title: true, interviewLink: true },
     });
 

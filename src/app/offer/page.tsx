@@ -125,7 +125,7 @@ export default function OfferPage() {
               Please complete onboarding first to see your offer.
             </p>
             <Link
-              href="/onboard"
+              href="/intern-onboarding"
               className="mt-6 inline-flex rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 font-semibold text-white transition-all"
             >
               Go to onboarding

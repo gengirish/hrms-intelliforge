@@ -43,6 +43,17 @@ export function getISTDate(): Date {
   );
 }
 
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+}
+
 export function getStatusColor(status: string) {
   switch (status) {
     case "PENDING":

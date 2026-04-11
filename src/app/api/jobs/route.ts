@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { serverError } from "@/lib/api-utils";
 import { createInterviewConfig } from "@/lib/interview-bot-client";
+import { generateSlug } from "@/lib/utils";
 import { z } from "zod";
 
 const createJobSchema = z.object({
@@ -52,6 +53,7 @@ export async function GET() {
 
       return {
         id: job.id,
+        slug: job.slug,
         title: job.title,
         description: job.description,
         skills: job.skills,
@@ -103,9 +105,16 @@ export async function POST(req: NextRequest) {
       console.warn("Interview Bot integration skipped:", err);
     }
 
+    let slug = generateSlug(parsed.data.title);
+    const existingSlug = await prisma.jobPosting.findUnique({ where: { slug } });
+    if (existingSlug) {
+      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+    }
+
     const job = await prisma.jobPosting.create({
       data: {
         orgId: session.orgId,
+        slug,
         title: parsed.data.title,
         description: parsed.data.description,
         skills: parsed.data.skills,

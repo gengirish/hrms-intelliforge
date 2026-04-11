@@ -286,6 +286,7 @@ model DocumentVerification {
 model JobPosting {
   id                String   @id @default(cuid())
   orgId             String
+  slug              String   @unique
   title             String
   description       String
   skills            String[]

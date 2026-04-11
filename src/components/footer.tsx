@@ -24,7 +24,7 @@ export function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/careers", label: "Careers" },
-                { href: "/onboard", label: "Onboard" },
+                { href: "/intern-onboarding", label: "Intern Onboarding" },
                 { href: "/attendance", label: "Attendance" },
                 { href: "/tasks", label: "Tasks" },
                 { href: "/offer", label: "Offer Letter" },

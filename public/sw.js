@@ -1,7 +1,7 @@
 const CACHE_NAME = "hrms-v1";
 const STATIC_ASSETS = [
   "/",
-  "/onboard",
+  "/intern-onboarding",
   "/attendance",
   "/tasks",
   "/offer",

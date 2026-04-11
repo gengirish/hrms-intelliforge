@@ -59,7 +59,7 @@ export default function OnboardPage() {
       if (files.pan) formData.append("pan", files.pan);
       if (files.photo) formData.append("photo", files.photo);
 
-      const res = await fetch("/api/onboard", {
+      const res = await fetch("/api/intern-onboarding", {
         method: "POST",
         body: formData,
       });

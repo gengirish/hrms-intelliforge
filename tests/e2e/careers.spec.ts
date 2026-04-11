@@ -99,8 +99,8 @@ test.describe("Careers API (public)", () => {
     const careersRes = await request.get("/api/careers");
     const careersBody = await careersRes.json();
     if (careersBody.jobs?.length > 0) {
-      const jobId = careersBody.jobs[0].id;
-      const response = await request.post(`/api/careers/${jobId}/apply`, {
+      const jobSlug = careersBody.jobs[0].slug;
+      const response = await request.post(`/api/careers/${jobSlug}/apply`, {
         data: {},
       });
       expect([400, 404]).toContain(response.status());
@@ -113,8 +113,8 @@ test.describe("Careers API (public)", () => {
     const careersRes = await request.get("/api/careers");
     const careersBody = await careersRes.json();
     if (careersBody.jobs?.length > 0) {
-      const jobId = careersBody.jobs[0].id;
-      const response = await request.post(`/api/careers/${jobId}/apply`, {
+      const jobSlug = careersBody.jobs[0].slug;
+      const response = await request.post(`/api/careers/${jobSlug}/apply`, {
         data: {
           name: "Test User",
           email: "not-an-email",
@@ -160,7 +160,7 @@ test.describe("Careers Job Detail with Seeded Data", () => {
     );
 
     if (internJob) {
-      await page.goto(`/careers/${internJob.id}`);
+      await page.goto(`/careers/${internJob.slug}`);
       await page.waitForTimeout(2000);
       await expect(page.locator("h1")).toContainText(internJob.title);
       await expect(page.getByText(/Now Hiring/i)).toBeVisible();
@@ -183,7 +183,7 @@ test.describe("Careers Job Detail with Seeded Data", () => {
     );
 
     if (internJob) {
-      await page.goto(`/careers/${internJob.id}`);
+      await page.goto(`/careers/${internJob.slug}`);
       await page.waitForTimeout(2000);
       await page.getByRole("button", { name: /Apply Now/i }).click();
       await expect(page.getByLabel(/Full Name/i)).toBeVisible();
@@ -201,8 +201,8 @@ test.describe("Careers Job Detail with Seeded Data", () => {
     const careersBody = await careersRes.json();
 
     if (careersBody.jobs?.length > 0) {
-      const jobId = careersBody.jobs[0].id;
-      const detailRes = await request.get(`/api/careers/${jobId}`);
+      const jobSlug = careersBody.jobs[0].slug;
+      const detailRes = await request.get(`/api/careers/${jobSlug}`);
       expect(detailRes.status()).toBe(200);
       const detailBody = await detailRes.json();
       expect(detailBody.job).toHaveProperty("title");

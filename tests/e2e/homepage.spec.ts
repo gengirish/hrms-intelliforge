@@ -19,7 +19,7 @@ test.describe("Homepage", () => {
     await page.goto("/");
     const topNav = page.locator("nav").first();
     await expect(topNav.getByText("Home", { exact: true })).toBeVisible();
-    await expect(topNav.getByText("Onboard", { exact: true })).toBeVisible();
+    await expect(topNav.getByText("Intern Onboarding", { exact: true })).toBeVisible();
     await expect(topNav.getByText("Dashboard", { exact: true })).toBeVisible();
   });
 
@@ -27,7 +27,7 @@ test.describe("Homepage", () => {
     await page.goto("/");
     const cta = page.getByRole("link", { name: "Start Onboarding" });
     await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", "/onboard");
+    await expect(cta).toHaveAttribute("href", "/intern-onboarding");
   });
 
   test("should have Admin Dashboard CTA link", async ({ page }) => {

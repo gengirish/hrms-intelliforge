@@ -22,7 +22,7 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 | `/` | Home — hero + action cards |
 | `/sign-in` | Email + password login, magic link (passwordless) sign-in |
 | `/sign-up` | Intern account registration with email verification |
-| `/onboard` | Intern self-onboarding form with doc uploads + WhatsApp opt-in |
+| `/intern-onboarding` | Intern self-onboarding form with doc uploads + WhatsApp opt-in |
 | `/offer` | Offer letter view + PDF download, accept offer |
 | `/attendance` | Daily punch in/out with WFH/Office toggle |
 | `/tasks` | Weekly task log with hours tracking |

@@ -7,9 +7,9 @@ import { InstallPrompt } from "@/components/install-prompt";
 
 const actions = [
   {
-    href: "/onboard",
+    href: "/intern-onboarding",
     icon: UserPlus,
-    title: "Onboard",
+    title: "Intern Onboarding",
     description: "Self-onboarding for new interns — submit your details and documents.",
     cta: "Get started",
   },
@@ -53,7 +53,7 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/onboard"
+                href="/intern-onboarding"
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
               >
                 Start Onboarding

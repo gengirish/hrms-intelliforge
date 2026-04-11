@@ -404,7 +404,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | PW-05 | Service worker registration | Check DevTools → Application → Service Workers | `sw.js` registered and active | P2 |
 | PW-06 | Manifest validation | Check DevTools → Application → Manifest | Name, icons, start_url, display, theme_color all correct | P2 |
 | PW-07 | iOS Safari — Add to Home Screen | Use Safari share → "Add to Home Screen" | App icon appears, opens in standalone mode | P1 |
-| PW-08 | Mobile responsive — onboarding form | Open `/onboard` on mobile | Form fields stack vertically, inputs full-width, submit button accessible | P0 |
+| PW-08 | Mobile responsive — onboarding form | Open `/intern-onboarding` on mobile | Form fields stack vertically, inputs full-width, submit button accessible | P0 |
 | PW-09 | Mobile responsive — dashboard | Open `/dashboard` on mobile | Table scrollable or cards stack, all actions accessible | P1 |
 | PW-10 | Mobile responsive — attendance | Open `/attendance` on mobile | Mode toggle and punch buttons accessible, weekly table scrollable | P1 |
 | PW-11 | PWA shortcuts | Long-press PWA icon (Android) | Shortcuts available: Attendance, Tasks, Onboard | P2 |
@@ -524,7 +524,7 @@ Setup reference (webhook URL, optional IMAP/SMTP for mobile clients): [docs/AGEN
 | 4 | POST | `/api/auth/logout` | AU-15 | — | — | — | — | — |
 | 5 | POST | `/api/auth/magic-link` | AU-09 | — | — | — | — | — |
 | 6 | GET | `/api/auth/verify` | AU-11 | AU-10 | — | — | — | — |
-| 7 | POST | `/api/onboard` | OB-01 | OB-03 | — | — | OB-04 | EG-07 |
+| 7 | POST | `/api/intern-onboarding` | OB-01 | OB-03 | — | — | OB-04 | EG-07 |
 | 8 | GET | `/api/dashboard` | AD-01 | AD-03 | AD-02 | — | — | EG-08 |
 | 9 | GET | `/api/dashboard/intern` | AD-07 | SC-03 | — | AD-07* | — | EG-08 |
 | 10 | POST | `/api/dashboard/action` | AD-10 | AD-09 | SC-04 | AD-10* | — | EG-08 |
@@ -748,7 +748,7 @@ Published every Friday covering:
 | GET | `/api/auth/verify` | None | Verify email or consume magic link token |
 | POST | `/api/auth/forgot-password` | None | Send password reset email |
 | POST | `/api/auth/reset-password` | None | Reset password with token |
-| POST | `/api/onboard` | None | Register new intern |
+| POST | `/api/intern-onboarding` | None | Register new intern |
 | GET | `/api/dashboard` | Admin email | List all interns |
 | GET | `/api/dashboard/intern` | None* | Get intern detail |
 | POST | `/api/dashboard/action` | None* | Admin actions: `update_stipend`, `send_offer`, `approve_offer`, `send_reminder`, `mark_complete`, `deactivate`, `reactivate` |
