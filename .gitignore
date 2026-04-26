@@ -39,3 +39,7 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# python bytecode (from .cursor skills)
+__pycache__/
+*.pyc

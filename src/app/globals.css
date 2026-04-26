@@ -3,44 +3,140 @@
 @tailwind utilities;
 
 :root {
-  --navy-950: #0a0f1e;
-  --navy-900: #0f172a;
-  --navy-800: #1e293b;
-  --navy-700: #334155;
-  --navy-600: #475569;
-  --slate-400: #94a3b8;
-  --slate-300: #cbd5e1;
-  --brand-blue: #3b82f6;
-  --brand-cyan: #22d3ee;
-}
+  /* Trust & Authority palette (UI/UX Pro Max) */
+  --brand-600: #2563eb;
+  --brand-500: #3b82f6;
+  --brand-400: #60a5fa;
+  --accent-500: #f97316;
+  --accent-400: #fb923c;
 
-body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
+  --surface-950: #0a0f1e;
+  --surface-900: #0f172a;
+  --surface-800: #1e293b;
+  --surface-700: #334155;
+  --surface-600: #475569;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  /* Tailwind tokens */
+  --background: var(--surface-950);
+  --foreground: var(--text-primary);
 }
 
 @layer base {
-  * {
-    @apply border-slate-700/50;
-  }
-
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
-  input, select, textarea, button {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Avoid 16px iOS zoom on focus, but only on form controls */
+  input,
+  select,
+  textarea,
+  button {
     font-size: 16px;
+  }
+
+  /* Universal focus-visible ring for keyboard users */
+  :focus-visible {
+    outline: 2px solid theme("colors.brand.500");
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Honor reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-xl;
+  }
+
+  .trust-card {
+    @apply rounded-xl border border-slate-800 bg-slate-900/70 backdrop-blur-sm
+           shadow-trust-card transition-all duration-200 ease-out-expo
+           hover:border-brand-500/40 hover:shadow-brand-glow;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white
+           shadow-brand-glow ring-1 ring-inset ring-white/10
+           hover:bg-brand-500 active:bg-brand-700
+           transition-colors duration-200 ease-out
+           disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  }
+
+  .btn-cta {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white
+           shadow-accent-glow ring-1 ring-inset ring-white/10
+           hover:bg-accent-400 active:bg-accent-600
+           transition-colors duration-200 ease-out
+           disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           border border-slate-700 bg-slate-800/60 px-5 py-2.5
+           text-sm font-semibold text-slate-200
+           hover:bg-slate-800 hover:border-slate-600
+           transition-colors duration-200 ease-out cursor-pointer;
+  }
+
+  .input-base {
+    @apply w-full rounded-lg bg-slate-900/60 border border-slate-700
+           px-4 py-2.5 text-slate-100 placeholder-slate-500
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30
+           outline-none transition-colors duration-150;
+  }
+
+  .badge-trust {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           bg-brand-500/10 border border-brand-500/30
+           px-3 py-1 text-xs font-medium text-brand-300;
   }
 }
 
 @layer utilities {
-  .glass-card {
-    @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl;
-  }
   .gradient-text {
-    @apply bg-gradient-to-r from-indigo-400 to-indigo-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-400 via-brand-300 to-accent-400
+           bg-clip-text text-transparent;
+  }
+  .gradient-brand {
+    @apply bg-gradient-to-br from-brand-600 to-brand-400;
+  }
+  .gradient-hero {
+    background: radial-gradient(
+        ellipse at top,
+        rgba(37, 99, 235, 0.18) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at bottom right,
+        rgba(249, 115, 22, 0.08) 0%,
+        transparent 50%
+      );
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);

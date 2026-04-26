@@ -4,11 +4,12 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
-    <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+    <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
   </div>
 );
 
@@ -89,109 +90,189 @@ function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            IntelliForge HRMS
-          </h1>
-          <p className="text-slate-400 mt-2">Sign in to your account</p>
-        </div>
+    <div className="min-h-screen flex flex-col">
+      <div
+        className="absolute inset-0 gradient-hero pointer-events-none"
+        aria-hidden="true"
+      />
 
-        {verified && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center">
-            Email verified successfully. You can now sign in.
+      <main className="relative flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 mb-6 text-sm text-slate-400 hover:text-brand-300 transition-colors"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-brand font-bold text-white text-xs shadow-brand-glow">
+                IF
+              </span>
+              <span className="font-semibold text-white">
+                IntelliForge{" "}
+                <span className="text-slate-400 font-normal">AI</span>
+              </span>
+            </Link>
+            <h1 className="text-3xl font-bold text-white">Welcome back</h1>
+            <p className="text-slate-400 mt-2 text-sm">
+              Sign in to your IntelliForge HRMS account
+            </p>
           </div>
-        )}
-        {errorParam === "expired_link" && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-            That link has expired. Please try again.
-          </div>
-        )}
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setLoginError(null);
-                }}
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                placeholder="you@example.com"
+          {verified && (
+            <div
+              role="status"
+              className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-start gap-2"
+            >
+              <CheckCircle2
+                className="h-4 w-4 mt-0.5 shrink-0"
+                aria-hidden="true"
               />
+              <span>Email verified successfully. You can now sign in.</span>
             </div>
+          )}
+          {errorParam === "expired_link" && (
+            <div
+              role="alert"
+              className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-start gap-2"
+            >
+              <AlertCircle
+                className="h-4 w-4 mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span>That link has expired. Please try again.</span>
+            </div>
+          )}
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300">
-                  Password
-                </label>
-                <Link
-                  href="/reset-password"
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md p-7 sm:p-8 shadow-trust-card">
+            <form onSubmit={handleLogin} className="space-y-5" noValidate>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
                 >
-                  Forgot password?
-                </Link>
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setLoginError(null);
+                  }}
+                  className="input-base"
+                  placeholder="you@example.com"
+                  aria-invalid={!!loginError}
+                />
               </div>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setLoginError(null);
-                }}
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                placeholder="Enter your password"
-              />
-            </div>
 
-            {loginError && (
-              <p className="text-sm text-red-400 mt-1" role="alert">
-                {loginError}
-              </p>
-            )}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-200"
+                  >
+                    Password
+                  </label>
+                  <Link
+                    href="/reset-password"
+                    className="text-xs text-brand-300 hover:text-brand-200 transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setLoginError(null);
+                  }}
+                  className="input-base"
+                  placeholder="Enter your password"
+                  aria-invalid={!!loginError}
+                  aria-describedby={loginError ? "login-error" : undefined}
+                />
+              </div>
+
+              {loginError && (
+                <p
+                  id="login-error"
+                  className="flex items-start gap-2 text-sm text-red-300"
+                  role="alert"
+                >
+                  <AlertCircle
+                    className="h-4 w-4 mt-0.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{loginError}</span>
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-2.5"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    Signing in…
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </button>
+            </form>
+
+            <div
+              className="mt-6 flex items-center gap-3"
+              aria-hidden="true"
+            >
+              <div className="flex-1 h-px bg-slate-700" />
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                or
+              </span>
+              <div className="flex-1 h-px bg-slate-700" />
+            </div>
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              onClick={handleMagicLink}
+              disabled={magicLoading}
+              className="btn-secondary mt-5 w-full py-2.5"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {magicLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  Send Magic Link
+                </>
+              )}
             </button>
-          </form>
-
-          <div className="mt-5 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-700" />
-            <span className="text-xs text-slate-500 uppercase">or</span>
-            <div className="flex-1 h-px bg-slate-700" />
           </div>
 
-          <button
-            onClick={handleMagicLink}
-            disabled={magicLoading}
-            className="mt-5 w-full py-2.5 rounded-lg border border-slate-700 hover:border-indigo-500/50 hover:bg-slate-800 text-slate-300 font-medium transition-all disabled:opacity-50"
-          >
-            {magicLoading ? "Sending..." : "Send Magic Link"}
-          </button>
+          <p className="text-center text-sm text-slate-400 mt-6">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/sign-up"
+              className="text-brand-300 hover:text-brand-200 font-medium transition-colors"
+            >
+              Sign up
+            </Link>
+          </p>
         </div>
-
-        <p className="text-center text-sm text-slate-500 mt-6">
-          Don&apos;t have an account?{" "}
-          <Link href="/sign-up" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-            Sign up
-          </Link>
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

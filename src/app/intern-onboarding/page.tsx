@@ -5,7 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Upload, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Upload,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  GraduationCap,
+  Briefcase,
+  Bell,
+  FileText,
+  User,
+} from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
@@ -21,11 +31,22 @@ const schema = z.object({
     required_error: "Select a role",
   }),
   startDate: z.string().min(1, "Start date required"),
-  durationWeeks: z.coerce.number().min(4, "Minimum 4 weeks").max(52, "Maximum 52 weeks"),
+  durationWeeks: z.coerce
+    .number()
+    .min(4, "Minimum 4 weeks")
+    .max(52, "Maximum 52 weeks"),
   whatsappOptIn: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof schema>;
+
+const sectionSteps = [
+  { id: 1, label: "Personal", icon: User },
+  { id: 2, label: "Academic", icon: GraduationCap },
+  { id: 3, label: "Internship", icon: Briefcase },
+  { id: 4, label: "Comms", icon: Bell },
+  { id: 5, label: "Documents", icon: FileText },
+];
 
 export default function OnboardPage() {
   const { user, isLoading } = useAuth();
@@ -42,12 +63,12 @@ export default function OnboardPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const handleFileChange = (field: "aadhar" | "pan" | "photo") => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) setFiles((prev) => ({ ...prev, [field]: file }));
-  };
+  const handleFileChange =
+    (field: "aadhar" | "pan" | "photo") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) setFiles((prev) => ({ ...prev, [field]: file }));
+    };
 
   async function onSubmit(data: FormData) {
     try {
@@ -82,7 +103,10 @@ export default function OnboardPage() {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+          <Loader2
+            className="h-8 w-8 animate-spin text-brand-400"
+            aria-label="Loading"
+          />
         </main>
         <Footer />
       </div>
@@ -94,15 +118,29 @@ export default function OnboardPage() {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Sign In Required</h2>
-            <p className="text-slate-400">
+          <div className="trust-card p-8 max-w-md w-full text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-inset ring-brand-500/30">
+              <ShieldCheck
+                className="h-6 w-6 text-brand-300"
+                aria-hidden="true"
+              />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Sign In Required
+            </h2>
+            <p className="text-slate-400 text-sm">
               Please{" "}
-              <a href="/sign-in" className="text-indigo-400 hover:text-indigo-300 font-medium">
+              <a
+                href="/sign-in"
+                className="text-brand-300 hover:text-brand-200 font-medium"
+              >
                 sign in
               </a>{" "}
               or{" "}
-              <a href="/sign-up" className="text-indigo-400 hover:text-indigo-300 font-medium">
+              <a
+                href="/sign-up"
+                className="text-brand-300 hover:text-brand-200 font-medium"
+              >
                 create an account
               </a>{" "}
               first, then return here to complete onboarding.
@@ -119,12 +157,17 @@ export default function OnboardPage() {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <CheckCircle2 className="h-16 w-16 text-emerald-400 mx-auto mb-4" />
+          <div className="trust-card p-8 max-w-md w-full text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/30 animate-stat-reveal">
+              <CheckCircle2
+                className="h-7 w-7 text-emerald-400"
+                aria-hidden="true"
+              />
+            </div>
             <h2 className="text-2xl font-bold text-white mb-2">
-              Onboarding Submitted!
+              Onboarding Submitted
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-sm">
               Your details have been received. An admin will review your
               application and send you an offer letter shortly.
             </p>
@@ -141,58 +184,100 @@ export default function OnboardPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-2xl w-full px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Intern Onboarding</h1>
+      <main className="flex-1 mx-auto max-w-2xl w-full px-4 py-10 sm:py-12">
+        <header className="mb-8">
+          <span className="badge-trust mb-3">
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            Secure intake · documents encrypted
+          </span>
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            Intern Onboarding
+          </h1>
           <p className="mt-2 text-slate-400">
             Fill in your details to begin your internship journey at IntelliForge AI.
           </p>
-        </div>
+        </header>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="glass-card p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">Personal Information</h2>
+        <ol
+          aria-label="Onboarding sections"
+          className="mb-8 hidden sm:flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm p-3"
+        >
+          {sectionSteps.map((step) => (
+            <li key={step.id} className="flex items-center gap-2 text-xs">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500/10 text-brand-300 ring-1 ring-inset ring-brand-500/30">
+                <step.icon className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+              <span className="font-medium text-slate-300">{step.label}</span>
+            </li>
+          ))}
+        </ol>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          <fieldset className="trust-card p-6 space-y-5">
+            <legend className="flex items-center gap-2 text-lg font-semibold text-white px-1">
+              <User className="h-5 w-5 text-brand-400" aria-hidden="true" />
+              Personal Information
+            </legend>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="block text-sm font-medium text-slate-300 mb-1">Full Name</p>
-                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
+                <span className="block text-sm font-medium text-slate-200 mb-1.5">
+                  Full Name
+                </span>
+                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700 px-4 py-2.5 text-slate-200">
                   {user.name || "—"}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">From your account</p>
               </div>
 
               <div>
-                <p className="block text-sm font-medium text-slate-300 mb-1">Email</p>
-                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 text-slate-300">
+                <span className="block text-sm font-medium text-slate-200 mb-1.5">
+                  Email
+                </span>
+                <div className="w-full rounded-lg bg-slate-800/60 border border-slate-700 px-4 py-2.5 text-slate-200 truncate">
                   {user.email}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">From your account</p>
               </div>
 
               <div>
-                <label htmlFor="onboard-phone" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-phone"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Phone
                 </label>
                 <input
                   id="onboard-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   {...register("phone")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
                   placeholder="+91 98765 43210"
+                  aria-invalid={!!errors.phone}
+                  aria-describedby={errors.phone ? "err-phone" : undefined}
                 />
                 {errors.phone && (
-                  <p className="mt-1 text-xs text-red-400">{errors.phone.message}</p>
+                  <p id="err-phone" className="mt-1 text-xs text-red-300">
+                    {errors.phone.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="onboard-role" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-role"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Role
                 </label>
                 <select
                   id="onboard-role"
                   {...register("role")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
+                  aria-invalid={!!errors.role}
+                  aria-describedby={errors.role ? "err-role" : undefined}
                 >
                   <option value="">Select role</option>
                   <option value="AI Intern">AI Intern</option>
@@ -200,54 +285,81 @@ export default function OnboardPage() {
                   <option value="Research Intern">Research Intern</option>
                 </select>
                 {errors.role && (
-                  <p className="mt-1 text-xs text-red-400">{errors.role.message}</p>
+                  <p id="err-role" className="mt-1 text-xs text-red-300">
+                    {errors.role.message}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="glass-card p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">Academic Information</h2>
+          <fieldset className="trust-card p-6 space-y-5">
+            <legend className="flex items-center gap-2 text-lg font-semibold text-white px-1">
+              <GraduationCap
+                className="h-5 w-5 text-brand-400"
+                aria-hidden="true"
+              />
+              Academic Information
+            </legend>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="onboard-college" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-college"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   College
                 </label>
                 <input
                   id="onboard-college"
                   {...register("college")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
                   placeholder="IIT Delhi"
+                  aria-invalid={!!errors.college}
+                  aria-describedby={errors.college ? "err-college" : undefined}
                 />
                 {errors.college && (
-                  <p className="mt-1 text-xs text-red-400">{errors.college.message}</p>
+                  <p id="err-college" className="mt-1 text-xs text-red-300">
+                    {errors.college.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="onboard-branch" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-branch"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Branch
                 </label>
                 <input
                   id="onboard-branch"
                   {...register("branch")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
                   placeholder="Computer Science"
+                  aria-invalid={!!errors.branch}
+                  aria-describedby={errors.branch ? "err-branch" : undefined}
                 />
                 {errors.branch && (
-                  <p className="mt-1 text-xs text-red-400">{errors.branch.message}</p>
+                  <p id="err-branch" className="mt-1 text-xs text-red-300">
+                    {errors.branch.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="onboard-year" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-year"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Year of Study
                 </label>
                 <select
                   id="onboard-year"
                   {...register("year")}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
+                  aria-invalid={!!errors.year}
+                  aria-describedby={errors.year ? "err-year" : undefined}
                 >
                   <option value="">Select year</option>
                   <option value="1st Year">1st Year</option>
@@ -257,112 +369,184 @@ export default function OnboardPage() {
                   <option value="Graduated">Graduated</option>
                 </select>
                 {errors.year && (
-                  <p className="mt-1 text-xs text-red-400">{errors.year.message}</p>
+                  <p id="err-year" className="mt-1 text-xs text-red-300">
+                    {errors.year.message}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="glass-card p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">Internship Details</h2>
+          <fieldset className="trust-card p-6 space-y-5">
+            <legend className="flex items-center gap-2 text-lg font-semibold text-white px-1">
+              <Briefcase
+                className="h-5 w-5 text-brand-400"
+                aria-hidden="true"
+              />
+              Internship Details
+            </legend>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="onboard-startDate" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-startDate"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Start Date
                 </label>
                 <input
                   id="onboard-startDate"
                   {...register("startDate")}
                   type="date"
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
+                  aria-invalid={!!errors.startDate}
+                  aria-describedby={
+                    errors.startDate ? "err-startDate" : undefined
+                  }
                 />
                 {errors.startDate && (
-                  <p className="mt-1 text-xs text-red-400">{errors.startDate.message}</p>
+                  <p
+                    id="err-startDate"
+                    className="mt-1 text-xs text-red-300"
+                  >
+                    {errors.startDate.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="onboard-durationWeeks" className="block text-sm font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="onboard-durationWeeks"
+                  className="block text-sm font-medium text-slate-200 mb-1.5"
+                >
                   Duration (weeks)
                 </label>
                 <input
                   id="onboard-durationWeeks"
                   {...register("durationWeeks")}
                   type="number"
+                  inputMode="numeric"
                   min={4}
                   max={52}
-                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  className="input-base"
                   placeholder="12"
+                  aria-invalid={!!errors.durationWeeks}
+                  aria-describedby={
+                    errors.durationWeeks ? "err-durationWeeks" : undefined
+                  }
                 />
                 {errors.durationWeeks && (
-                  <p className="mt-1 text-xs text-red-400">
+                  <p
+                    id="err-durationWeeks"
+                    className="mt-1 text-xs text-red-300"
+                  >
                     {errors.durationWeeks.message}
                   </p>
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="glass-card p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">Communication Preferences</h2>
-            <label className="flex items-start gap-3 cursor-pointer">
+          <fieldset className="trust-card p-6 space-y-4">
+            <legend className="flex items-center gap-2 text-lg font-semibold text-white px-1">
+              <Bell className="h-5 w-5 text-brand-400" aria-hidden="true" />
+              Communication Preferences
+            </legend>
+            <label className="flex items-start gap-3 cursor-pointer rounded-lg p-2 -m-2 hover:bg-slate-800/40 transition-colors">
               <input
                 type="checkbox"
                 {...register("whatsappOptIn")}
-                className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900/50 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900/50 text-brand-600 focus:ring-brand-500 focus:ring-offset-0"
               />
-              <div>
-                <span className="text-sm font-medium text-slate-300">
+              <span>
+                <span className="block text-sm font-medium text-slate-200">
                   Receive WhatsApp notifications
                 </span>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Get interview updates, reminders, and important notifications via WhatsApp
-                  on the phone number provided above. You can opt out anytime.
-                </p>
-              </div>
+                <span className="block text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Get interview updates, reminders, and important notifications
+                  via WhatsApp on the phone number provided above. You can opt
+                  out anytime.
+                </span>
+              </span>
             </label>
-          </div>
+          </fieldset>
 
-          <div className="glass-card p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">Document Uploads</h2>
+          <fieldset className="trust-card p-6 space-y-5">
+            <legend className="flex items-center gap-2 text-lg font-semibold text-white px-1">
+              <FileText
+                className="h-5 w-5 text-brand-400"
+                aria-hidden="true"
+              />
+              Document Uploads
+            </legend>
             <p className="text-sm text-slate-400">
-              Upload your Aadhaar, PAN card, and a passport-size photo.
+              Upload your Aadhaar, PAN card, and a passport-size photo. PDFs and
+              image files are accepted.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {(["aadhar", "pan", "photo"] as const).map((field) => (
-                <label
-                  key={field}
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 p-6 cursor-pointer hover:border-indigo-500/50 transition-colors"
-                >
-                  <Upload className="h-6 w-6 text-slate-500" />
-                  <span className="text-sm text-slate-400 capitalize">{field === "aadhar" ? "Aadhaar" : field === "pan" ? "PAN Card" : "Photo"}</span>
-                  {files[field] && (
-                    <span className="text-xs text-emerald-400 truncate max-w-full">
-                      {files[field]!.name}
+              {(["aadhar", "pan", "photo"] as const).map((field) => {
+                const labelText =
+                  field === "aadhar"
+                    ? "Aadhaar"
+                    : field === "pan"
+                    ? "PAN Card"
+                    : "Photo";
+                const hasFile = !!files[field];
+                return (
+                  <label
+                    key={field}
+                    className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors text-center ${
+                      hasFile
+                        ? "border-emerald-500/50 bg-emerald-500/5"
+                        : "border-slate-700 hover:border-brand-500/50 hover:bg-slate-800/40"
+                    }`}
+                  >
+                    {hasFile ? (
+                      <CheckCircle2
+                        className="h-6 w-6 text-emerald-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Upload
+                        className="h-6 w-6 text-slate-500"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="text-sm font-medium text-slate-300">
+                      {labelText}
                     </span>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={handleFileChange(field)}
-                  />
-                </label>
-              ))}
+                    {hasFile ? (
+                      <span className="text-xs text-emerald-300 truncate max-w-full">
+                        {files[field]!.name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-500">
+                        Click to upload
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="sr-only"
+                      onChange={handleFileChange(field)}
+                      aria-label={`Upload ${labelText}`}
+                    />
+                  </label>
+                );
+              })}
             </div>
-          </div>
+          </fieldset>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-500 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="btn-cta w-full px-6 py-3 text-base"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Submitting...
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Submitting…
               </>
             ) : (
               "Submit Onboarding"
