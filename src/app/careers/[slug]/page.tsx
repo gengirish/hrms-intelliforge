@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 interface Requirement {
   title: string;
@@ -168,7 +169,7 @@ export default function CareerDetailPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main id="main-content" className="flex-1 flex items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
         </main>
         <Footer />
@@ -180,7 +181,7 @@ export default function CareerDetailPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main id="main-content" className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Briefcase className="h-16 w-16 text-slate-600 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white mb-2">
@@ -207,11 +208,19 @@ export default function CareerDetailPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-slate-800">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-slate-950 to-emerald-600/5" />
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
+            <Breadcrumbs
+              className="mb-6"
+              items={[
+                { label: "Home", href: "/" },
+                { label: "Careers", href: "/careers" },
+                { label: job?.title ?? "Position" },
+              ]}
+            />
             <Link
               href="/careers"
               className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-8"

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { cn } from "@/lib/utils";
 
 interface OrgData {
@@ -121,7 +122,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main id="main-content" className="flex-1 flex items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
         </main>
         <Footer />
@@ -133,7 +134,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full text-center">
             <Building2 className="h-12 w-12 text-slate-500 mx-auto mb-3" />
             <h1 className="text-xl font-bold text-white">No Organization</h1>
@@ -153,9 +154,14 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
+      <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
+        <Breadcrumbs className="mb-4" />
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/dashboard" className="text-slate-400 hover:text-white transition-colors">
+          <Link
+            href="/dashboard"
+            aria-label="Back to dashboard"
+            className="text-slate-400 hover:text-white transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>

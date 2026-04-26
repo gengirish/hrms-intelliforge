@@ -4,7 +4,14 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const signInSuspenseFallback = (
@@ -96,7 +103,7 @@ function SignInForm() {
         aria-hidden="true"
       />
 
-      <main className="relative flex-1 flex items-center justify-center px-4 py-12">
+      <main id="main-content" className="relative flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link
@@ -271,6 +278,53 @@ function SignInForm() {
               Sign up
             </Link>
           </p>
+
+          <aside
+            aria-label="Site attribution"
+            className="mt-6 text-center text-[11px] text-slate-500"
+          >
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <span>
+                A product of{" "}
+                <a
+                  href="https://www.intelliforge.tech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-300 transition-colors font-medium focus-visible:underline focus-visible:outline-none rounded"
+                >
+                  IntelliForge AI
+                  <ExternalLink
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                </a>
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                Built by{" "}
+                <a
+                  href="https://girishbhiremath.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-300 transition-colors font-medium focus-visible:underline focus-visible:outline-none rounded"
+                >
+                  Girish Hiremath
+                  <ExternalLink
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                </a>
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck
+                  className="h-3.5 w-3.5 text-brand-400"
+                  aria-hidden="true"
+                />
+                Aligned with Bharat AI Mission
+              </span>
+            </div>
+          </aside>
         </div>
       </main>
     </div>

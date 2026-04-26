@@ -139,7 +139,7 @@ export default function TasksPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 text-indigo-400 animate-spin" />
             <p className="text-sm text-slate-400">Loading tasks…</p>
@@ -156,7 +156,7 @@ export default function TasksPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full text-center">
             <ClipboardList className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
             <h1 className="text-2xl font-bold text-white">Weekly Tasks</h1>
@@ -182,7 +182,7 @@ export default function TasksPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-3xl w-full px-4 py-12">
+      <main id="main-content" className="flex-1 mx-auto max-w-3xl w-full px-4 py-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Weekly Tasks</h1>

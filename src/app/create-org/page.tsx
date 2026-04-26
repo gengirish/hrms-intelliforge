@@ -63,7 +63,7 @@ export default function CreateOrgPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main id="main-content" className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="glass-card p-8 max-w-lg w-full">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 mb-4">

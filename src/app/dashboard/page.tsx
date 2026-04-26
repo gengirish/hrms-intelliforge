@@ -426,7 +426,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
         </main>
         <Footer />
@@ -440,7 +440,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full text-center">
             <Users className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
             <h1 className="text-2xl font-bold text-white">Admin access required</h1>
@@ -460,7 +460,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="glass-card p-8 max-w-md w-full text-center">
             <Users className="h-12 w-12 text-slate-500 mx-auto mb-3" />
             <h1 className="text-2xl font-bold text-white">Unable to load dashboard</h1>
@@ -481,7 +481,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
+        <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
           <button
             onClick={() => setSelectedIntern(null)}
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-6 transition-colors"
@@ -1227,7 +1227,7 @@ export default function DashboardPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-6xl w-full px-4 py-8">
+      <main id="main-content" className="flex-1 mx-auto max-w-6xl w-full px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
           <p className="mt-1 text-slate-400">

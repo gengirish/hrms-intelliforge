@@ -102,7 +102,7 @@ export default function OnboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main id="main-content" className="flex-1 flex items-center justify-center">
           <Loader2
             className="h-8 w-8 animate-spin text-brand-400"
             aria-label="Loading"
@@ -117,7 +117,7 @@ export default function OnboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="trust-card p-8 max-w-md w-full text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-inset ring-brand-500/30">
               <ShieldCheck
@@ -156,7 +156,7 @@ export default function OnboardPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
           <div className="trust-card p-8 max-w-md w-full text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/30 animate-stat-reveal">
               <CheckCircle2
@@ -184,7 +184,7 @@ export default function OnboardPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-2xl w-full px-4 py-10 sm:py-12">
+      <main id="main-content" className="flex-1 mx-auto max-w-2xl w-full px-4 py-10 sm:py-12">
         <header className="mb-8">
           <span className="badge-trust mb-3">
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
