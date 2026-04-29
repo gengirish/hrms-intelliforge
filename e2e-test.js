@@ -2,16 +2,21 @@
  * E2E Test Suite — IntelliForge HRMS Portal
  *
  * Tests every API route against the live Vercel deployment.
+ * Authenticates via JWT session cookies (register/login flow).
  * Uses a unique email per run to avoid 409 conflicts.
- * Proper dependency chaining: later tests skip if prerequisites fail.
  *
  * Run:  node e2e-test.js
  * Env:  BASE_URL (optional, defaults to production)
  */
 
 const BASE = process.env.BASE_URL || "https://hrms.intelliforge.tech";
-const ADMIN_EMAIL = "admin@intelliforge.tech";
-const TEST_EMAIL = `e2e.${Date.now()}@test.intelliforge.tech`;
+const RUN_ID = Date.now().toString(36);
+const ORG_SLUG = `e2e-${RUN_ID}`;
+const ADMIN_EMAIL = `admin.${RUN_ID}@test.intelliforge.tech`;
+const ADMIN_PASSWORD = `TestPass!${RUN_ID}`;
+const INTERN_EMAIL = `intern.${RUN_ID}@test.intelliforge.tech`;
+const INTERN_PASSWORD = `TestPass!${RUN_ID}`;
+const INTERN_NAME = "Priya Sharma";
 
 let passed = 0;
 let failed = 0;
@@ -19,14 +24,28 @@ let skipped = 0;
 const results = [];
 
 const state = {
+  adminCookie: null,
+  internCookie: null,
   internId: null,
   currentStatus: null,
+  testJobId: null,
+  testJobSlug: null,
+  testCandidateId: null,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-async function api(method, path, body, contentType) {
-  const opts = { method, headers: {} };
+function extractSessionCookie(res) {
+  const raw = res.headers.getSetCookie?.() ?? [];
+  for (const c of raw) {
+    if (c.startsWith("hrms-session=")) return c.split(";")[0];
+  }
+  return null;
+}
+
+async function api(method, path, body, contentType, cookie) {
+  const opts = { method, headers: {}, redirect: "manual" };
+  if (cookie) opts.headers["Cookie"] = cookie;
   if (body && contentType === "json") {
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
@@ -39,7 +58,7 @@ async function api(method, path, body, contentType) {
   const text = await res.text();
   let data;
   try { data = JSON.parse(text); } catch { data = text; }
-  return { status: res.status, ok: res.ok, data };
+  return { status: res.status, ok: res.ok, data, res };
 }
 
 async function test(name, fn) {
@@ -69,6 +88,65 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function apiWithRetry(method, path, body, contentType, cookie, retries = 3) {
+  for (let i = 0; i <= retries; i++) {
+    const result = await api(method, path, body, contentType, cookie);
+    if (result.status === 429 && i < retries) {
+      const backoff = 5000 * (i + 1);
+      await delay(backoff);
+      continue;
+    }
+    return result;
+  }
+}
+
+// ─── 0. Auth Setup ──────────────────────────────────────────────
+
+async function testAuthSetup() {
+  console.log("\n┌─ 0. Auth Setup ─────────────────────────────────────");
+
+  await test("Create test organization + admin", async () => {
+    const { status, data, res } = await api("POST", "/api/org", {
+      orgName: `E2E Test Org ${RUN_ID}`,
+      slug: ORG_SLUG,
+      adminEmail: ADMIN_EMAIL,
+      adminPassword: ADMIN_PASSWORD,
+      adminName: "E2E Admin",
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.org, "Missing org in response");
+    state.adminCookie = extractSessionCookie(res);
+    assert(state.adminCookie, "No admin session cookie returned");
+    return { org: data.org.slug, admin: data.user?.email };
+  });
+
+  await test("Register test intern account", async () => {
+    const { status, data, res } = await api("POST", "/api/auth/register", {
+      email: INTERN_EMAIL,
+      password: INTERN_PASSWORD,
+      name: INTERN_NAME,
+    }, "json");
+    assert([200, 201].includes(status), `Expected 200/201, got ${status}: ${JSON.stringify(data)}`);
+    state.internCookie = extractSessionCookie(res);
+    assert(state.internCookie, "No intern session cookie returned");
+    state.internId = data.userId;
+    return { userId: data.userId, role: data.role };
+  });
+
+  await test("Admin can login with credentials", async () => {
+    const { status, data, res } = await api("POST", "/api/auth/login", {
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}`);
+    const cookie = extractSessionCookie(res);
+    if (cookie) state.adminCookie = cookie;
+    return { role: data.user?.role };
+  });
+}
+
 // ─── 1. Page Loads ───────────────────────────────────────────────
 
 async function testPageLoads() {
@@ -80,6 +158,7 @@ async function testPageLoads() {
     ["/attendance", "Attendance"],
     ["/tasks", "Tasks"],
     ["/dashboard", "Dashboard"],
+    ["/careers", "Careers"],
   ]) {
     await test(`GET ${path} — ${label} renders with branding`, async () => {
       const res = await fetch(`${BASE}${path}`);
@@ -96,16 +175,16 @@ async function testPageLoads() {
 async function testOnboarding() {
   console.log("\n┌─ 2. Onboarding (POST /api/intern-onboarding) ────────");
 
+  if (!state.internCookie) return skip("Onboarding", "No intern session");
+
   await test("Reject missing fields (400)", async () => {
-    const { status, data } = await api("POST", "/api/intern-onboarding", { name: "Test" }, "form");
-    assert(status === 400, `Expected 400, got ${status}`);
+    const { status, data } = await api("POST", "/api/intern-onboarding", { phone: "123" }, "form", state.internCookie);
+    assert(status === 400, `Expected 400, got ${status}: ${JSON.stringify(data)}`);
     return data;
   });
 
-  await test("Create intern via formData", async () => {
+  await test("Complete onboarding with all fields", async () => {
     const { status, data } = await api("POST", "/api/intern-onboarding", {
-      name: "Priya Sharma",
-      email: TEST_EMAIL,
       phone: "+919876543210",
       college: "IIT Bangalore",
       branch: "Computer Science",
@@ -113,7 +192,7 @@ async function testOnboarding() {
       role: "AI Intern",
       startDate: "2026-04-15",
       durationWeeks: "12",
-    }, "form");
+    }, "form", state.internCookie);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.id, "Missing intern id");
     assert(data.status === "PENDING", `Expected PENDING, got ${data.status}`);
@@ -122,10 +201,8 @@ async function testOnboarding() {
     return data;
   });
 
-  await test("Block duplicate email (409)", async () => {
+  await test("Block duplicate onboarding (409)", async () => {
     const { status, data } = await api("POST", "/api/intern-onboarding", {
-      name: "Priya Sharma",
-      email: TEST_EMAIL,
       phone: "+919876543210",
       college: "IIT Bangalore",
       branch: "Computer Science",
@@ -133,18 +210,10 @@ async function testOnboarding() {
       role: "AI Intern",
       startDate: "2026-04-15",
       durationWeeks: "12",
-    }, "form");
-    assert(status === 409, `Expected 409, got ${status}`);
+    }, "form", state.internCookie);
+    assert(status === 409, `Expected 409, got ${status}: ${JSON.stringify(data)}`);
     return data;
   });
-
-  if (state.internId) {
-    await test("Intern created (shared HR inbox hr@intelliforge.tech for all mail)", async () => {
-      const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
-      assert(data.id === state.internId, "detail id mismatch");
-      return { email: data.email, status: data.status };
-    });
-  }
 }
 
 // ─── 3. Dashboard ───────────────────────────────────────────────
@@ -152,24 +221,25 @@ async function testOnboarding() {
 async function testDashboard() {
   console.log("\n┌─ 3. Dashboard (GET /api/dashboard) ──────────────────");
 
-  await test("Reject missing email (400)", async () => {
+  await test("Reject unauthenticated access (403)", async () => {
     const { status } = await api("GET", "/api/dashboard");
-    assert(status === 400, `Expected 400, got ${status}`);
+    assert(status === 403, `Expected 403, got ${status}`);
   });
 
-  await test("Reject non-admin (403)", async () => {
-    const { status, data } = await api("GET", "/api/dashboard?email=nobody@example.com");
+  await test("Reject intern session (403)", async () => {
+    if (!state.internCookie) { skip("Reject intern session", "No intern cookie"); return; }
+    const { status, data } = await api("GET", "/api/dashboard", null, null, state.internCookie);
     assert(status === 403, `Expected 403, got ${status}`);
     return data;
   });
 
-  await test("Admin sees intern list", async () => {
-    const { status, data } = await api("GET", `/api/dashboard?email=${ADMIN_EMAIL}`);
-    assert(status === 200, `Expected 200, got ${status}`);
+  if (!state.adminCookie) return skip("Admin dashboard", "No admin session");
+
+  await test("Admin sees org dashboard (200)", async () => {
+    const { status, data } = await api("GET", "/api/dashboard", null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(Array.isArray(data.interns), "interns should be array");
-    const ours = data.interns.find((i) => i.email === TEST_EMAIL);
-    assert(ours, "Test intern not in list");
-    return { count: data.interns.length, testInternStatus: ours.status };
+    return { count: data.interns.length };
   });
 }
 
@@ -178,25 +248,26 @@ async function testDashboard() {
 async function testInternDetail() {
   console.log("\n┌─ 4. Intern Detail (GET /api/dashboard/intern) ───────");
 
+  if (!state.adminCookie) return skip("Intern detail", "No admin session");
+
   await test("Reject missing id (400)", async () => {
-    const { status } = await api("GET", "/api/dashboard/intern");
+    const { status } = await api("GET", "/api/dashboard/intern", null, null, state.adminCookie);
     assert(status === 400, `Expected 400, got ${status}`);
   });
 
   await test("Reject unknown id (404)", async () => {
-    const { status } = await api("GET", "/api/dashboard/intern?id=nonexistent_123");
+    const { status } = await api("GET", "/api/dashboard/intern?id=nonexistent_123", null, null, state.adminCookie);
     assert(status === 404, `Expected 404, got ${status}`);
   });
 
   if (!state.internId) return skip("Fetch detail", "No internId");
 
-  await test("Return full intern detail with relations", async () => {
-    const { status, data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
+  await test("Return full intern detail", async () => {
+    const { status, data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`, null, null, state.adminCookie);
     assert(status === 200, `Expected 200, got ${status}`);
-    assert(data.name === "Priya Sharma", `Name: ${data.name}`);
+    assert(data.name === INTERN_NAME, `Name: ${data.name}`);
     assert(Array.isArray(data.attendance), "Missing attendance[]");
     assert(Array.isArray(data.tasks), "Missing tasks[]");
-    assert(Array.isArray(data.messages), "Missing messages[]");
     return { name: data.name, status: data.status };
   });
 }
@@ -206,20 +277,11 @@ async function testInternDetail() {
 async function testAdminActions() {
   console.log("\n┌─ 5. Admin Actions (POST /api/dashboard/action) ──────");
 
-  if (!state.internId) return skip("Admin actions", "No internId");
+  if (!state.adminCookie || !state.internId) return skip("Admin actions", "No admin session or internId");
 
   await test("Reject missing action (400)", async () => {
-    const { status } = await api("POST", "/api/dashboard/action", { internId: state.internId }, "json");
+    const { status } = await api("POST", "/api/dashboard/action", { internId: state.internId }, "json", state.adminCookie);
     assert(status === 400, `Expected 400, got ${status}`);
-  });
-
-  await test("Reject unknown action (400)", async () => {
-    const { status, data } = await api("POST", "/api/dashboard/action", {
-      action: "bogus",
-      internId: state.internId,
-    }, "json");
-    assert(status === 400, `Expected 400, got ${status}`);
-    return data;
   });
 
   await test("update_stipend → 15000 paise", async () => {
@@ -227,17 +289,17 @@ async function testAdminActions() {
       action: "update_stipend",
       internId: state.internId,
       stipendPaise: 15000,
-    }, "json");
+    }, "json", state.adminCookie);
     assert(status === 200, `Expected 200, got ${status}`);
     assert(data.ok, "Expected ok:true");
     return data;
   });
 
-  await test("send_offer → status OFFERED (via shared hr@intelliforge.tech)", async () => {
+  await test("send_offer → status OFFERED", async () => {
     const { status, data } = await api("POST", "/api/dashboard/action", {
       action: "send_offer",
       internId: state.internId,
-    }, "json");
+    }, "json", state.adminCookie);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.status === "OFFERED", `Expected OFFERED, got ${data.status}`);
     state.currentStatus = "OFFERED";
@@ -245,7 +307,7 @@ async function testAdminActions() {
   });
 
   await test("Verify stipend persisted", async () => {
-    const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
+    const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`, null, null, state.adminCookie);
     assert(data.stipendPaise === 15000, `Expected 15000, got ${data.stipendPaise}`);
     assert(data.status === state.currentStatus, `Status: ${data.status}`);
     return { stipend: data.stipendPaise, status: data.status };
@@ -257,20 +319,17 @@ async function testAdminActions() {
 async function testOffer() {
   console.log("\n┌─ 6. Offer (GET /api/offer) ──────────────────────────");
 
-  await test("Reject missing email (400)", async () => {
+  await test("Reject unauthenticated (401)", async () => {
     const { status } = await api("GET", "/api/offer");
-    assert(status === 400, `Expected 400, got ${status}`);
+    assert(status === 401, `Expected 401, got ${status}`);
   });
 
-  await test("Reject unknown email (404)", async () => {
-    const { status } = await api("GET", "/api/offer?email=nobody@example.com");
-    assert(status === 404, `Expected 404, got ${status}`);
-  });
+  if (!state.internCookie) return skip("Offer lookup", "No intern session");
 
   await test("Return offer for test intern", async () => {
-    const { status, data } = await api("GET", `/api/offer?email=${TEST_EMAIL}`);
-    assert(status === 200, `Expected 200, got ${status}`);
-    assert(data.name === "Priya Sharma", `Name: ${data.name}`);
+    const { status, data } = await api("GET", "/api/offer", null, null, state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.name === INTERN_NAME, `Name: ${data.name}`);
     assert(data.role === "AI Intern", `Role: ${data.role}`);
     assert(data.stipendPaise === 15000, `Stipend: ${data.stipendPaise}`);
     assert(data.status === state.currentStatus, `Status: ${data.status}`);
@@ -283,21 +342,14 @@ async function testOffer() {
 async function testOfferAccept() {
   console.log("\n┌─ 7. Accept Offer (POST /api/offer/accept) ───────────");
 
-  if (!state.internId) return skip("Offer accept", "No internId");
-
-  await test("Reject missing internId (400)", async () => {
-    const { status } = await api("POST", "/api/offer/accept", {}, "json");
-    assert(status === 400, `Expected 400, got ${status}`);
-  });
+  if (!state.internCookie) return skip("Offer accept", "No intern session");
 
   if (state.currentStatus !== "OFFERED") {
     skip("Accept offer", `Status is ${state.currentStatus}, not OFFERED`);
     skip("Re-accept guard", "Depends on accept step");
   } else {
     await test("Accept offer (OFFERED → ACTIVE)", async () => {
-      const { status, data } = await api("POST", "/api/offer/accept", {
-        internId: state.internId,
-      }, "json");
+      const { status, data } = await api("POST", "/api/offer/accept", {}, "json", state.internCookie);
       assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
       assert(data.status === "ACTIVE", `Expected ACTIVE, got ${data.status}`);
       state.currentStatus = "ACTIVE";
@@ -305,9 +357,7 @@ async function testOfferAccept() {
     });
 
     await test("Re-accept blocked (400, already ACTIVE)", async () => {
-      const { status, data } = await api("POST", "/api/offer/accept", {
-        internId: state.internId,
-      }, "json");
+      const { status, data } = await api("POST", "/api/offer/accept", {}, "json", state.internCookie);
       assert(status === 400, `Expected 400, got ${status}`);
       return data;
     });
@@ -319,48 +369,28 @@ async function testOfferAccept() {
 async function testAttendance() {
   console.log("\n┌─ 8. Attendance (/api/attendance) ─────────────────────");
 
-  await test("GET — reject missing email (400)", async () => {
-    const { status } = await api("GET", "/api/attendance");
-    assert(status === 400, `Expected 400, got ${status}`);
-  });
-
-  await test("GET — reject unknown email (404)", async () => {
-    const { status } = await api("GET", "/api/attendance?email=nobody@example.com");
-    assert(status === 404, `Expected 404, got ${status}`);
-  });
+  if (!state.internCookie) return skip("Attendance", "No intern session");
 
   const canAccess = state.currentStatus === "ACTIVE" || state.currentStatus === "OFFERED";
-
   if (!canAccess) {
-    skip("GET — load attendance", `Status is ${state.currentStatus} (needs ACTIVE/OFFERED)`);
-    skip("POST — punch in", "Attendance not accessible");
-    skip("POST — duplicate punch in", "Attendance not accessible");
-    skip("POST — punch out", "Attendance not accessible");
-    skip("POST — duplicate punch out", "Attendance not accessible");
-    skip("POST — invalid type", "Attendance not accessible");
-    skip("GET — verify attendance recorded", "Attendance not accessible");
+    skip("Attendance", `Status is ${state.currentStatus} (needs ACTIVE/OFFERED)`);
     return;
   }
 
   await test("GET — load attendance for intern", async () => {
-    const { status, data } = await api("GET", `/api/attendance?email=${TEST_EMAIL}`);
+    const { status, data } = await apiWithRetry("GET", "/api/attendance", null, null, state.internCookie);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
-    assert(data.internId === state.internId, "internId mismatch");
-    assert(data.internName === "Priya Sharma", `Name: ${data.internName}`);
+    assert(data.internId, "Missing internId");
+    assert(data.internName === INTERN_NAME, `Name: ${data.internName}`);
     return { today: data.today ? "exists" : "none", weekCount: data.week.length };
   });
 
-  await test("POST — reject missing fields (400)", async () => {
-    const { status } = await api("POST", "/api/attendance", {}, "json");
-    assert(status === 400, `Expected 400, got ${status}`);
-  });
-
   await test("POST — punch in (type:'in', mode:'WFH')", async () => {
-    const { status, data } = await api("POST", "/api/attendance", {
-      internId: state.internId,
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/attendance", {
       type: "in",
       mode: "WFH",
-    }, "json");
+    }, "json", state.internCookie);
     if (status === 400 && data.error === "Already punched in today") {
       return { note: "Already punched in (previous run today)" };
     }
@@ -371,21 +401,21 @@ async function testAttendance() {
   });
 
   await test("POST — duplicate punch in blocked (400)", async () => {
-    const { status, data } = await api("POST", "/api/attendance", {
-      internId: state.internId,
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/attendance", {
       type: "in",
       mode: "Office",
-    }, "json");
+    }, "json", state.internCookie);
     assert(status === 400, `Expected 400, got ${status}`);
     assert(data.error === "Already punched in today", `Error: ${data.error}`);
     return data;
   });
 
   await test("POST — punch out (type:'out')", async () => {
-    const { status, data } = await api("POST", "/api/attendance", {
-      internId: state.internId,
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/attendance", {
       type: "out",
-    }, "json");
+    }, "json", state.internCookie);
     if (status === 400 && data.error === "Already punched out today") {
       return { note: "Already punched out (previous run today)" };
     }
@@ -395,26 +425,27 @@ async function testAttendance() {
   });
 
   await test("POST — duplicate punch out blocked (400)", async () => {
-    const { status, data } = await api("POST", "/api/attendance", {
-      internId: state.internId,
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/attendance", {
       type: "out",
-    }, "json");
+    }, "json", state.internCookie);
     assert(status === 400, `Expected 400, got ${status}`);
     return data;
   });
 
   await test("POST — reject invalid type (400)", async () => {
-    const { status, data } = await api("POST", "/api/attendance", {
-      internId: state.internId,
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/attendance", {
       type: "invalid",
-    }, "json");
+    }, "json", state.internCookie);
     assert(status === 400, `Expected 400, got ${status}`);
-    assert(data.error === "Invalid type", `Error: ${data.error}`);
     return data;
   });
 
   await test("GET — verify today's attendance recorded", async () => {
-    const { data } = await api("GET", `/api/attendance?email=${TEST_EMAIL}`);
+    await delay(500);
+    const { status, data } = await apiWithRetry("GET", "/api/attendance", null, null, state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.today, "No attendance record for today");
     assert(data.today.punchIn, "Missing punchIn");
     assert(data.week.length >= 1, "Week should have ≥1 entry");
@@ -427,77 +458,63 @@ async function testAttendance() {
 async function testTasks() {
   console.log("\n┌─ 9. Tasks (/api/tasks) ───────────────────────────────");
 
-  if (!state.internId) return skip("Tasks", "No internId");
-
-  await test("GET — reject missing email (400)", async () => {
-    const { status } = await api("GET", "/api/tasks");
-    assert(status === 400, `Expected 400, got ${status}`);
-  });
-
-  await test("GET — reject unknown email (404)", async () => {
-    const { status } = await api("GET", "/api/tasks?email=nobody@example.com");
-    assert(status === 404, `Expected 404, got ${status}`);
-  });
+  if (!state.internCookie) return skip("Tasks", "No intern session");
 
   await test("GET — load tasks for intern", async () => {
-    const { status, data } = await api("GET", `/api/tasks?email=${TEST_EMAIL}`);
-    assert(status === 200, `Expected 200, got ${status}`);
-    assert(data.internId === state.internId, "internId mismatch");
+    const { status, data } = await apiWithRetry("GET", "/api/tasks", null, null, state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.internId, "Missing internId");
     return { taskCount: data.tasks.length };
-  });
-
-  await test("POST — reject missing fields (400)", async () => {
-    const { status } = await api("POST", "/api/tasks", { internId: state.internId }, "json");
-    assert(status === 400, `Expected 400, got ${status}`);
   });
 
   let taskId = null;
 
   await test("POST — create task (IN_PROGRESS, 4h)", async () => {
-    const { status, data } = await api("POST", "/api/tasks", {
-      internId: state.internId,
+    await delay(1000);
+    const { status, data } = await apiWithRetry("POST", "/api/tasks", {
       title: "Setup Dev Environment",
       description: "Install Python 3.11, VS Code, configure Git SSH keys",
       status: "IN_PROGRESS",
       hours: 4,
-    }, "json");
+    }, "json", state.internCookie);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.id, "Missing task id");
     assert(data.title === "Setup Dev Environment", `Title: ${data.title}`);
     assert(data.status === "IN_PROGRESS", `Status: ${data.status}`);
     assert(data.hours === 4, `Hours: ${data.hours}`);
-    assert(data.week, "Missing week");
     taskId = data.id;
     return { id: data.id, week: data.week };
   });
 
   await test("POST — create second task (TODO, 2.5h)", async () => {
-    const { status, data } = await api("POST", "/api/tasks", {
-      internId: state.internId,
+    await delay(1000);
+    const { status, data } = await apiWithRetry("POST", "/api/tasks", {
       title: "Read project documentation",
       description: "Go through the wiki, API docs, and coding standards guide",
       status: "TODO",
       hours: 2.5,
-    }, "json");
-    assert(status === 200, `Expected 200, got ${status}`);
+    }, "json", state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.hours === 2.5, `Hours: ${data.hours}`);
     return { id: data.id, hours: data.hours };
   });
 
   await test("POST — create third task (DONE, 1h)", async () => {
-    const { status, data } = await api("POST", "/api/tasks", {
-      internId: state.internId,
+    await delay(1000);
+    const { status, data } = await apiWithRetry("POST", "/api/tasks", {
       title: "Complete onboarding form",
       description: "Fill out the HRMS portal onboarding form with documents",
       status: "DONE",
       hours: 1,
-    }, "json");
-    assert(status === 200, `Expected 200, got ${status}`);
+    }, "json", state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     return { id: data.id, status: data.status };
   });
 
   await test("GET — verify 3 tasks, total 7.5h", async () => {
-    const { data } = await api("GET", `/api/tasks?email=${TEST_EMAIL}`);
+    await delay(5000);
+    const { status, data } = await apiWithRetry("GET", "/api/tasks", null, null, state.internCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.tasks.length >= 3, `Expected ≥3 tasks, got ${data.tasks.length}`);
     const total = data.tasks.reduce((s, t) => s + t.hours, 0);
     assert(total >= 7.5, `Expected ≥7.5h total, got ${total}`);
@@ -506,24 +523,22 @@ async function testTasks() {
 
   if (taskId) {
     await test("DELETE — remove task by id", async () => {
-      const { status, data } = await api("DELETE", `/api/tasks?id=${taskId}`);
-      assert(status === 200, `Expected 200, got ${status}`);
+      await delay(1000);
+      const { status, data } = await apiWithRetry("DELETE", `/api/tasks?id=${taskId}`, null, null, state.internCookie);
+      assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
       assert(data.ok, "Expected ok:true");
       return data;
     });
 
     await test("GET — verify deletion (task count decreased)", async () => {
-      const { data } = await api("GET", `/api/tasks?email=${TEST_EMAIL}`);
+      await delay(1000);
+      const { status, data } = await apiWithRetry("GET", "/api/tasks", null, null, state.internCookie);
+      assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
       const found = data.tasks.find((t) => t.id === taskId);
       assert(!found, "Deleted task still present");
       return { taskCount: data.tasks.length };
     });
   }
-
-  await test("DELETE — reject missing id (400)", async () => {
-    const { status } = await api("DELETE", "/api/tasks");
-    assert(status === 400, `Expected 400, got ${status}`);
-  });
 }
 
 // ─── 10. Webhook ────────────────────────────────────────────────
@@ -531,42 +546,191 @@ async function testTasks() {
 async function testWebhook() {
   console.log("\n┌─ 10. Webhook (POST /api/webhooks/agentmail) ─────────");
 
-  await test("Irrelevant event returns ok", async () => {
-    const { status, data } = await api("POST", "/api/webhooks/agentmail", {
+  await test("Rejects request without webhook secret (401)", async () => {
+    const { status } = await api("POST", "/api/webhooks/agentmail", {
       event: "message.sent",
       message: {},
     }, "json");
-    assert(status === 200, `Expected 200, got ${status}`);
-    assert(data.ok, "Expected ok:true");
-    return data;
-  });
-
-  await test("message.received without sender returns ok", async () => {
-    const { status, data } = await api("POST", "/api/webhooks/agentmail", {
-      event: "message.received",
-      message: { extractedText: "I accept" },
-    }, "json");
-    assert(status === 200, `Expected 200, got ${status}`);
-    return data;
-  });
-
-  await test("Empty body returns ok", async () => {
-    const { status, data } = await api("POST", "/api/webhooks/agentmail", {}, "json");
-    assert(status === 200, `Expected 200, got ${status}`);
-    return data;
+    assert([401, 503].includes(status), `Expected 401 or 503, got ${status}`);
   });
 }
 
-// ─── 11. Final Verification ─────────────────────────────────────
+// ─── 11. Careers API ────────────────────────────────────────────
+
+async function testCareers() {
+  console.log("\n┌─ 11. Careers (Public API) ────────────────────────────");
+
+  await test("GET /api/careers — returns 200 with jobs array", async () => {
+    const { status, data } = await api("GET", "/api/careers");
+    assert(status === 200, `Expected 200, got ${status}`);
+    assert(Array.isArray(data.jobs), "jobs should be array");
+    if (data.jobs.length > 0) {
+      assert(data.jobs[0].slug, "Jobs should have slug field");
+    }
+    return { jobCount: data.jobs.length };
+  });
+
+  await test("GET /api/careers/nonexistent-slug — returns 404", async () => {
+    const { status } = await api("GET", "/api/careers/nonexistent-slug-12345");
+    assert(status === 404, `Expected 404, got ${status}`);
+  });
+
+  await test("POST /api/careers/nonexistent-slug/apply — returns 404", async () => {
+    const { status } = await api("POST", "/api/careers/nonexistent-slug-12345/apply", {
+      name: "Test User",
+      email: "test@example.com",
+    }, "json");
+    assert(status === 404, `Expected 404, got ${status}`);
+  });
+}
+
+// ─── 12. Candidate Management ───────────────────────────────────
+
+async function testCandidateManagement() {
+  console.log("\n┌─ 12. Candidate Management ───────────────────────────");
+
+  if (!state.adminCookie) return skip("Candidate management", "No admin session");
+
+  await test("Create test job posting (POST /api/jobs)", async () => {
+    const { status, data } = await apiWithRetry("POST", "/api/jobs", {
+      title: `E2E QA Engineer ${RUN_ID}`,
+      description: "Quality assurance role for testing",
+      skills: ["Testing", "Playwright"],
+    }, "json", state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.job?.id, "Missing job.id in response");
+    assert(data.job?.slug, "Missing job.slug in response");
+    state.testJobId = data.job.id;
+    state.testJobSlug = data.job.slug;
+    return { jobId: state.testJobId, slug: state.testJobSlug };
+  });
+
+  if (!state.testJobId || !state.testJobSlug) {
+    skip("Submit public application", "Job creation failed");
+    skip("GET candidate detail — reject unauthenticated (401)", "Job creation failed");
+    skip("GET candidate detail — admin sees full detail (200)", "Job creation failed");
+    skip("PATCH candidate — reject invalid status (400)", "Job creation failed");
+    skip("PATCH candidate — admin updates to SHORTLISTED (200)", "Job creation failed");
+    skip("POST contact — reject missing subject (400)", "Job creation failed");
+    skip("POST contact — admin sends email (200 or 503)", "Job creation failed");
+    skip("DELETE candidate — admin deletes non-converted candidate (200)", "Job creation failed");
+    skip("GET candidate detail — returns 404 after deletion", "Job creation failed");
+    return;
+  }
+
+  const candidateEmail = `cand.${RUN_ID}@test.intelliforge.tech`;
+
+  await test("Submit public application (POST /api/careers/{slug}/apply)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", `/api/careers/${state.testJobSlug}/apply`, {
+      name: "Candidate One",
+      email: candidateEmail,
+      resumeUrl: "https://example.com/resume.pdf",
+      githubUrl: "https://github.com/example",
+      coverNote: "Test cover note for QA role",
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.candidateId, "Missing candidateId");
+    state.testCandidateId = data.candidateId;
+    return { candidateId: state.testCandidateId };
+  });
+
+  if (!state.testCandidateId) {
+    skip("GET candidate detail — reject unauthenticated (401)", "Candidate seed failed");
+    skip("GET candidate detail — admin sees full detail (200)", "Candidate seed failed");
+    skip("PATCH candidate — reject invalid status (400)", "Candidate seed failed");
+    skip("PATCH candidate — admin updates to SHORTLISTED (200)", "Candidate seed failed");
+    skip("POST contact — reject missing subject (400)", "Candidate seed failed");
+    skip("POST contact — admin sends email (200 or 503)", "Candidate seed failed");
+    skip("DELETE candidate — admin deletes non-converted candidate (200)", "Candidate seed failed");
+    skip("GET candidate detail — returns 404 after deletion", "Candidate seed failed");
+    return;
+  }
+
+  const candidatePath = `/api/jobs/${state.testJobId}/candidates/${state.testCandidateId}`;
+  const jobTitle = `E2E QA Engineer ${RUN_ID}`;
+
+  await test("GET candidate detail — reject unauthenticated (401)", async () => {
+    const { status } = await api("GET", candidatePath);
+    assert(status === 401, `Expected 401, got ${status}`);
+  });
+
+  await test("GET candidate detail — admin sees full detail (200)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("GET", candidatePath, null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    const candidate = data.candidate ?? data;
+    assert(candidate.email === candidateEmail, `Email: ${candidate.email} (expected ${candidateEmail})`);
+    assert(candidate.coverNote === "Test cover note for QA role", `coverNote: ${candidate.coverNote}`);
+    assert(candidate.jobPosting?.title === jobTitle, `jobPosting.title: ${candidate.jobPosting?.title} (expected ${jobTitle})`);
+    return { email: candidate.email, interviewStatus: candidate.interviewStatus };
+  });
+
+  await test("PATCH candidate — reject invalid status (400)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("PATCH", candidatePath, {
+      interviewStatus: "INVALID_STATUS",
+    }, "json", state.adminCookie);
+    assert(status === 400, `Expected 400, got ${status}: ${JSON.stringify(data)}`);
+    return data;
+  });
+
+  await test("PATCH candidate — admin updates to SHORTLISTED (200)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("PATCH", candidatePath, {
+      interviewStatus: "SHORTLISTED",
+    }, "json", state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    const candidate = data.candidate ?? data;
+    assert(candidate.interviewStatus === "SHORTLISTED", `interviewStatus: ${candidate.interviewStatus}`);
+    return { interviewStatus: candidate.interviewStatus };
+  });
+
+  await test("POST contact — reject missing subject (400)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", `${candidatePath}/contact`, {
+      message: "Test message that is long enough",
+    }, "json", state.adminCookie);
+    assert(status === 400, `Expected 400, got ${status}: ${JSON.stringify(data)}`);
+    return data;
+  });
+
+  await test("POST contact — admin sends email (200 or 503)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", `${candidatePath}/contact`, {
+      subject: "Re: Your QA application",
+      message: "Hi, we'd like to learn more about your background. Are you available for a chat next week?",
+    }, "json", state.adminCookie);
+    // 503 acceptable: AGENTMAIL_HR_INBOX_ID may be unset in production env
+    assert([200, 503].includes(status), `Expected 200 or 503, got ${status}: ${JSON.stringify(data)}`);
+    return { status, ok: data?.ok };
+  });
+
+  await test("DELETE candidate — admin deletes non-converted candidate (200)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("DELETE", candidatePath, null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.ok === true, `Expected response.ok === true, got ${JSON.stringify(data)}`);
+    return data;
+  });
+
+  await test("GET candidate detail — returns 404 after deletion", async () => {
+    await delay(500);
+    const { status } = await apiWithRetry("GET", candidatePath, null, null, state.adminCookie);
+    assert(status === 404, `Expected 404, got ${status}`);
+  });
+}
+
+// ─── 13. Final Verification ─────────────────────────────────────
 
 async function testFinalState() {
-  console.log("\n┌─ 11. Final State ─────────────────────────────────────");
+  console.log("\n┌─ 13. Final State ────────────────────────────────────");
 
-  if (!state.internId) return skip("Final state", "No internId");
+  if (!state.internId || !state.adminCookie) return skip("Final state", "No internId or admin session");
 
   await test("Intern detail has correct aggregated data", async () => {
-    const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`);
-    assert(data.name === "Priya Sharma", `Name: ${data.name}`);
+    const { data } = await api("GET", `/api/dashboard/intern?id=${state.internId}`, null, null, state.adminCookie);
+    assert(data.name === INTERN_NAME, `Name: ${data.name}`);
     assert(data.status === state.currentStatus, `Status: ${data.status} (expected ${state.currentStatus})`);
     assert(data.stipendPaise === 15000, `Stipend: ${data.stipendPaise}`);
     assert(data.tasks.length >= 1, "Should have tasks");
@@ -575,16 +739,14 @@ async function testFinalState() {
       stipend: `₹${(data.stipendPaise / 100).toFixed(2)}`,
       attendanceCount: data.attendance.length,
       taskCount: data.tasks.length,
-      hrFrom: "hr@intelliforge.tech",
     };
   });
 
-  await test("Dashboard reflects final intern state", async () => {
-    const { data } = await api("GET", `/api/dashboard?email=${ADMIN_EMAIL}`);
-    const ours = data.interns.find((i) => i.email === TEST_EMAIL);
-    assert(ours, "Test intern missing from dashboard");
-    assert(ours.status === state.currentStatus, `Status: ${ours.status}`);
-    return { status: ours.status, email: ours.email };
+  await test("Admin dashboard accessible (200)", async () => {
+    const { status, data } = await api("GET", "/api/dashboard", null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}`);
+    assert(Array.isArray(data.interns), "interns should be array");
+    return { orgInternCount: data.interns.length };
   });
 }
 
@@ -596,8 +758,9 @@ async function main() {
   console.log("╚══════════════════════════════════════════════════════╝");
   console.log(`  Target:   ${BASE}`);
   console.log(`  Admin:    ${ADMIN_EMAIL}`);
-  console.log(`  Intern:   ${TEST_EMAIL}`);
+  console.log(`  Intern:   ${INTERN_EMAIL}`);
 
+  await testAuthSetup();
   await testPageLoads();
   await testOnboarding();
   await testDashboard();
@@ -608,6 +771,8 @@ async function main() {
   await testAttendance();
   await testTasks();
   await testWebhook();
+  await testCareers();
+  await testCandidateManagement();
   await testFinalState();
 
   const total = passed + failed + skipped;

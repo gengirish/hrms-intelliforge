@@ -21,6 +21,8 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CandidateDetailPanel } from "@/components/hiring/candidate-detail-panel";
+import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge";
 import { cn, formatDateIST } from "@/lib/utils";
 
 interface JobPosting {
@@ -64,6 +66,13 @@ export default function HiringPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [panelBusy, setPanelBusy] = useState<{
+    status?: boolean;
+    convert?: boolean;
+    delete?: boolean;
+    contact?: boolean;
+  }>({});
 
   const [newJob, setNewJob] = useState({
     title: "",
@@ -186,6 +195,103 @@ export default function HiringPage() {
     loadCandidates(job.id);
   }
 
+  async function handleStatusChange(newStatus: string) {
+    if (!selectedCandidate || !selectedJob) return;
+    setPanelBusy((prev) => ({ ...prev, status: true }));
+    try {
+      const res = await fetch(
+        `/api/jobs/${selectedJob.id}/candidates/${selectedCandidate.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interviewStatus: newStatus }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to update status");
+        return;
+      }
+      const data = await res.json();
+      const updated = { ...selectedCandidate, ...data.candidate };
+      setSelectedCandidate(updated);
+      setCandidates((prev) =>
+        prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+      );
+      toast.success(`Status updated to ${newStatus.toLowerCase()}`);
+    } catch {
+      toast.error("Failed to update status");
+    } finally {
+      setPanelBusy((prev) => ({ ...prev, status: false }));
+    }
+  }
+
+  async function handlePanelConvert() {
+    if (!selectedCandidate || !selectedJob) return;
+    setPanelBusy((prev) => ({ ...prev, convert: true }));
+    try {
+      await convertToIntern(selectedCandidate, selectedJob.id);
+      setSelectedCandidate((prev) =>
+        prev ? { ...prev, convertedToIntern: true } : prev
+      );
+    } finally {
+      setPanelBusy((prev) => ({ ...prev, convert: false }));
+    }
+  }
+
+  async function handleDeleteCandidate() {
+    if (!selectedCandidate || !selectedJob) return;
+    setPanelBusy((prev) => ({ ...prev, delete: true }));
+    try {
+      const res = await fetch(
+        `/api/jobs/${selectedJob.id}/candidates/${selectedCandidate.id}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete candidate");
+        return;
+      }
+      const removedId = selectedCandidate.id;
+      setCandidates((prev) => prev.filter((c) => c.id !== removedId));
+      setSelectedCandidate(null);
+      toast.success("Candidate deleted");
+    } catch {
+      toast.error("Failed to delete candidate");
+    } finally {
+      setPanelBusy((prev) => ({ ...prev, delete: false }));
+    }
+  }
+
+  async function handleContactCandidate(subject: string, message: string) {
+    if (!selectedCandidate || !selectedJob) return;
+    setPanelBusy((prev) => ({ ...prev, contact: true }));
+    try {
+      const res = await fetch(
+        `/api/jobs/${selectedJob.id}/candidates/${selectedCandidate.id}/contact`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subject, message }),
+        }
+      );
+      if (res.status === 503) {
+        toast.error("Email service not configured. Contact your admin.");
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to send email");
+        return;
+      }
+      toast.success(`Email sent to ${selectedCandidate.name}`);
+    } catch {
+      toast.error("Failed to send email");
+    } finally {
+      setPanelBusy((prev) => ({ ...prev, contact: false }));
+    }
+  }
+
   function getScoreColor(score: number | null): string {
     if (score === null) return "text-slate-400";
     if (score >= 80) return "text-emerald-400";
@@ -296,7 +402,11 @@ export default function HiringPage() {
                   </thead>
                   <tbody>
                     {candidates.map((c) => (
-                      <tr key={c.id} className="border-b border-slate-800 last:border-0">
+                      <tr
+                        key={c.id}
+                        onClick={() => setSelectedCandidate(c)}
+                        className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-800/40 transition-colors"
+                      >
                         <td className="py-3 px-4">
                           <div>
                             <p className="font-medium text-white">{c.name}</p>
@@ -304,13 +414,13 @@ export default function HiringPage() {
                             {(c.resumeUrl || c.githubUrl || c.portfolioUrl) && (
                               <div className="flex gap-2 mt-1">
                                 {c.resumeUrl && (
-                                  <a href={c.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">Resume</a>
+                                  <a href={c.resumeUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">Resume</a>
                                 )}
                                 {c.githubUrl && (
-                                  <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
+                                  <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
                                 )}
                                 {c.portfolioUrl && (
-                                  <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
+                                  <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
                                 )}
                               </div>
                             )}
@@ -320,20 +430,13 @@ export default function HiringPage() {
                           {c.interviewScore !== null ? `${c.interviewScore}%` : "—"}
                         </td>
                         <td className="py-3 px-4">
-                          <span className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            c.interviewStatus === "COMPLETED" ? "bg-emerald-100 text-emerald-800" :
-                            c.interviewStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" :
-                            "bg-slate-100 text-slate-800"
-                          )}>
-                            {c.interviewStatus}
-                          </span>
+                          <CandidateStatusBadge status={c.interviewStatus} />
                         </td>
                         <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
                           {formatDateIST(c.createdAt)}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             {c.reportUrl && (
                               <a
                                 href={c.reportUrl}
@@ -364,6 +467,7 @@ export default function HiringPage() {
                                 Converted
                               </span>
                             )}
+                            <span className="text-xs text-slate-500 hidden sm:inline">View →</span>
                           </div>
                         </td>
                       </tr>
@@ -374,6 +478,20 @@ export default function HiringPage() {
             )}
           </div>
         </main>
+        {selectedCandidate && (
+          <CandidateDetailPanel
+            candidate={selectedCandidate}
+            jobId={selectedJob.id}
+            jobTitle={selectedJob.title}
+            open={true}
+            onClose={() => setSelectedCandidate(null)}
+            onStatusChange={handleStatusChange}
+            onConvert={handlePanelConvert}
+            onDelete={handleDeleteCandidate}
+            onContact={handleContactCandidate}
+            busy={panelBusy}
+          />
+        )}
         <Footer />
         <MobileBottomNav />
       </div>
