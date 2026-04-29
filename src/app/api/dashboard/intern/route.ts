@@ -9,6 +9,12 @@ export async function GET(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const id = req.nextUrl.searchParams.get("id");
     if (!id) {
@@ -23,7 +29,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!intern) {
+    if (!intern || intern.orgId !== admin.orgId) {
       return NextResponse.json({ error: "Intern not found" }, { status: 404 });
     }
 

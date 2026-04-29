@@ -22,12 +22,19 @@ export async function GET(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const todayStart = getISTStartOfDay();
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     const activeInterns = await prisma.intern.findMany({
       where: {
+        orgId: admin.orgId,
         status: { in: ["ACTIVE", "OFFERED"] },
         deactivated: { not: true },
       },

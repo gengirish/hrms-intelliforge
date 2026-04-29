@@ -25,6 +25,13 @@ export async function POST(req: Request) {
       const valid = await verifyPassword(password, admin.passwordHash);
       if (!valid) return errorResponse("Invalid email or password", 401);
 
+      if (!admin.orgId) {
+        return errorResponse(
+          "Your admin account isn't attached to an organization. Please create or join one at /create-org.",
+          403
+        );
+      }
+
       const token = await signJWT({ userId: admin.id, role: "admin", email, orgId: admin.orgId ?? undefined });
       const response = NextResponse.json({
         user: { id: admin.id, email: admin.email, role: "admin", orgId: admin.orgId },

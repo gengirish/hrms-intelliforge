@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function GET(
       select: { orgId: true },
     });
 
-    if (!job || (session.orgId && job.orgId !== session.orgId)) {
+    if (!job || job.orgId !== session.orgId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

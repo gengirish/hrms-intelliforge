@@ -12,9 +12,15 @@ export async function GET() {
   if (session.role === "admin") {
     const admin = await prisma.admin.findUnique({
       where: { id: session.sub },
-      select: { id: true, email: true, role: true },
+      select: { id: true, email: true, role: true, orgId: true },
     });
     if (!admin) return errorResponse("Account not found", 404);
+    if (!admin.orgId) {
+      return errorResponse(
+        "Your admin account isn't attached to an organization. Please create or join one at /create-org.",
+        403
+      );
+    }
     return NextResponse.json({ user: { ...admin, accountType: "admin" } });
   }
 

@@ -31,6 +31,8 @@ const state = {
   testJobId: null,
   testJobSlug: null,
   testCandidateId: null,
+  adminCookie2: null,
+  xorgCandidateId: null,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -721,10 +723,127 @@ async function testCandidateManagement() {
   });
 }
 
-// ─── 13. Final Verification ─────────────────────────────────────
+// ─── 13. Cross-Org Isolation ────────────────────────────────────
+
+async function testCrossOrgIsolation() {
+  console.log("\n┌─ 13. Cross-Org Isolation ────────────────────────────");
+
+  if (!state.adminCookie) return skip("Cross-org isolation", "No primary admin session");
+  if (!state.testJobId || !state.testJobSlug) return skip("Cross-org isolation", "No test job from section 12");
+
+  const xorgEmail = `xorg.${RUN_ID}@test.intelliforge.tech`;
+
+  await test("Setup — create fresh bait candidate in Org1 (POST /api/careers/{slug}/apply)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", `/api/careers/${state.testJobSlug}/apply`, {
+      name: "Cross Org Test",
+      email: xorgEmail,
+      coverNote: "Bait for cross-org test",
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.candidateId, "Missing candidateId");
+    state.xorgCandidateId = data.candidateId;
+    return { candidateId: state.xorgCandidateId };
+  });
+
+  if (!state.xorgCandidateId) {
+    skip("Create second org + admin (POST /api/org)", "Bait candidate seed failed");
+    skip("Org2 admin sees own dashboard (200)", "Bait candidate seed failed");
+    skip("Org2 admin GET Org1 candidate detail (404)", "Bait candidate seed failed");
+    skip("Org2 admin PATCH Org1 candidate status (404)", "Bait candidate seed failed");
+    skip("Org2 admin DELETE Org1 candidate (404)", "Bait candidate seed failed");
+    skip("Org2 admin POST contact to Org1 candidate (404)", "Bait candidate seed failed");
+    skip("Org2 admin GET /api/jobs returns 0 jobs (200)", "Bait candidate seed failed");
+    skip("Cleanup — Org1 admin deletes bait candidate (200)", "Bait candidate seed failed");
+    return;
+  }
+
+  await test("Create second org + admin (POST /api/org)", async () => {
+    await delay(500);
+    const { status, data, res } = await api("POST", "/api/org", {
+      orgName: `E2E Other Org ${RUN_ID}`,
+      slug: `e2e-other-${RUN_ID}`,
+      adminEmail: `admin2.${RUN_ID}@test.intelliforge.tech`,
+      adminPassword: ADMIN_PASSWORD,
+      adminName: "E2E Other Admin",
+    }, "json");
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.org, "Missing org in response");
+    state.adminCookie2 = extractSessionCookie(res);
+    assert(state.adminCookie2, "No second admin session cookie returned");
+    return { org: data.org?.slug, admin: data.user?.email };
+  });
+
+  const xorgPath = `/api/jobs/${state.testJobId}/candidates/${state.xorgCandidateId}`;
+
+  if (!state.adminCookie2) {
+    skip("Org2 admin sees own dashboard (200)", "No org2 admin session");
+    skip("Org2 admin GET Org1 candidate detail (404)", "No org2 admin session");
+    skip("Org2 admin PATCH Org1 candidate status (404)", "No org2 admin session");
+    skip("Org2 admin DELETE Org1 candidate (404)", "No org2 admin session");
+    skip("Org2 admin POST contact to Org1 candidate (404)", "No org2 admin session");
+    skip("Org2 admin GET /api/jobs returns 0 jobs (200)", "No org2 admin session");
+  } else {
+    await test("Org2 admin sees own dashboard (200)", async () => {
+      await delay(500);
+      const { status, data } = await api("GET", "/api/dashboard", null, null, state.adminCookie2);
+      assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+      assert(Array.isArray(data.interns), "interns should be array");
+      assert(data.interns.length === 0, `Expected 0 interns in fresh org, got ${data.interns.length}`);
+      return { internCount: data.interns.length };
+    });
+
+    await test("Org2 admin GET Org1 candidate detail (404)", async () => {
+      await delay(500);
+      const { status } = await api("GET", xorgPath, null, null, state.adminCookie2);
+      assert(status === 404, `Expected 404 (no existence leak), got ${status}`);
+    });
+
+    await test("Org2 admin PATCH Org1 candidate status (404)", async () => {
+      await delay(500);
+      const { status } = await api("PATCH", xorgPath, {
+        interviewStatus: "REJECTED",
+      }, "json", state.adminCookie2);
+      assert(status === 404, `Expected 404, got ${status}`);
+    });
+
+    await test("Org2 admin DELETE Org1 candidate (404)", async () => {
+      await delay(500);
+      const { status } = await api("DELETE", xorgPath, null, null, state.adminCookie2);
+      assert(status === 404, `Expected 404, got ${status}`);
+    });
+
+    await test("Org2 admin POST contact to Org1 candidate (404)", async () => {
+      await delay(500);
+      const { status } = await api("POST", `${xorgPath}/contact`, {
+        subject: "Trying cross-org",
+        message: "This should be blocked completely.",
+      }, "json", state.adminCookie2);
+      assert(status === 404, `Expected 404, got ${status}`);
+    });
+
+    await test("Org2 admin GET /api/jobs returns 0 jobs (200)", async () => {
+      await delay(500);
+      const { status, data } = await api("GET", "/api/jobs", null, null, state.adminCookie2);
+      assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+      assert(Array.isArray(data.jobs), "jobs should be array");
+      assert(data.jobs.length === 0, `Expected 0 jobs in fresh org, got ${data.jobs.length}`);
+      return { jobCount: data.jobs.length };
+    });
+  }
+
+  await test("Cleanup — Org1 admin deletes bait candidate (200)", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("DELETE", `/api/jobs/${state.testJobId}/candidates/${state.xorgCandidateId}`, null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    return data;
+  });
+}
+
+// ─── 14. Final Verification ─────────────────────────────────────
 
 async function testFinalState() {
-  console.log("\n┌─ 13. Final State ────────────────────────────────────");
+  console.log("\n┌─ 14. Final State ────────────────────────────────────");
 
   if (!state.internId || !state.adminCookie) return skip("Final state", "No internId or admin session");
 
@@ -773,6 +892,7 @@ async function main() {
   await testWebhook();
   await testCareers();
   await testCandidateManagement();
+  await testCrossOrgIsolation();
   await testFinalState();
 
   const total = passed + failed + skipped;

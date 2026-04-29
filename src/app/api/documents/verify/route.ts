@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { verifyDocument } from "@/lib/ai/document-verifier";
 import { serverError } from "@/lib/api-utils";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const verifySchema = z.object({
@@ -13,8 +14,12 @@ const verifySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!rateLimit(getClientIp(req), 10, 60_000)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -27,6 +32,14 @@ export async function POST(req: NextRequest) {
     }
 
     const { internId, documentType, documentUrl } = parsed.data;
+
+    const intern = await prisma.intern.findUnique({
+      where: { id: internId },
+      select: { orgId: true },
+    });
+    if (!intern || intern.orgId !== session.orgId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const { verificationId, result } = await verifyDocument(internId, documentType, documentUrl);
 
@@ -42,6 +55,12 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.role === "admin" && !session.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const internId = req.nextUrl.searchParams.get("internId");
     if (!internId) {
@@ -50,6 +69,16 @@ export async function GET(req: NextRequest) {
 
     if (session.role === "intern" && session.sub !== internId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (session.role === "admin") {
+      const intern = await prisma.intern.findUnique({
+        where: { id: internId },
+        select: { orgId: true },
+      });
+      if (!intern || intern.orgId !== session.orgId) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
     }
 
     const verifications = await prisma.documentVerification.findMany({

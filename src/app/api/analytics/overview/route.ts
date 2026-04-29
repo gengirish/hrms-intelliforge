@@ -7,14 +7,17 @@ import { getCurrentWeekLabel } from "@/lib/ai/performance-scorer";
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const currentWeek = getCurrentWeekLabel();
 
     const scores = await prisma.performanceScore.findMany({
-      where: { weekLabel: currentWeek },
+      where: {
+        weekLabel: currentWeek,
+        intern: { orgId: session.orgId },
+      },
       include: { intern: { select: { name: true, role: true, status: true } } },
     });
 

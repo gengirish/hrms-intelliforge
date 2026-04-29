@@ -17,6 +17,12 @@ export async function GET(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const internId = req.nextUrl.searchParams.get("internId");
     if (!internId) {
@@ -27,7 +33,7 @@ export async function GET(req: NextRequest) {
       where: { id: internId },
       include: { notificationPref: true },
     });
-    if (!intern) {
+    if (!intern || intern.orgId !== admin.orgId) {
       return errorResponse("Intern not found", 404);
     }
 
@@ -47,6 +53,12 @@ export async function PUT(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const json = await req.json();
     const parsed = putSchema.safeParse(json);
@@ -63,7 +75,7 @@ export async function PUT(req: NextRequest) {
     const { internId, email, whatsapp, whatsappOptIn } = parsed.data;
 
     const intern = await prisma.intern.findUnique({ where: { id: internId } });
-    if (!intern) {
+    if (!intern || intern.orgId !== admin.orgId) {
       return errorResponse("Intern not found", 404);
     }
 

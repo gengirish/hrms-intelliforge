@@ -9,6 +9,12 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.role === "admin" && !session.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
     const internId = req.nextUrl.searchParams.get("internId");
     if (!internId) {
@@ -17,6 +23,16 @@ export async function GET(req: NextRequest) {
 
     if (session.role === "intern" && session.sub !== internId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (session.role === "admin") {
+      const intern = await prisma.intern.findUnique({
+        where: { id: internId },
+        select: { orgId: true },
+      });
+      if (!intern || intern.orgId !== session.orgId) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
     }
 
     const scores = await prisma.performanceScore.findMany({

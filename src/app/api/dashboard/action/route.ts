@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthAdmin } from "@/lib/auth";
 import { serverError } from "@/lib/api-utils";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
@@ -11,9 +12,19 @@ import React, { type ReactElement } from "react";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!rateLimit(getClientIp(req), 30, 60_000)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const admin = await getAuthAdmin();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
@@ -38,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     const intern = await prisma.intern.findUnique({ where: { id: internId } });
-    if (!intern) {
+    if (!intern || intern.orgId !== admin.orgId) {
       return NextResponse.json({ error: "Intern not found" }, { status: 404 });
     }
 

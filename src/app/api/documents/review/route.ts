@@ -13,7 +13,7 @@ const reviewSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
 
     const verification = await prisma.documentVerification.findUnique({
       where: { id: verificationId },
+      include: { intern: { select: { orgId: true } } },
     });
 
-    if (!verification) {
+    if (!verification || verification.intern.orgId !== session.orgId) {
       return NextResponse.json({ error: "Verification not found" }, { status: 404 });
     }
 

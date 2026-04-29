@@ -25,11 +25,11 @@ const createJobSchema = z.object({
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const where = session.orgId ? { orgId: session.orgId } : {};
+    const where = { orgId: session.orgId };
 
     const jobs = await prisma.jobPosting.findMany({
       where,

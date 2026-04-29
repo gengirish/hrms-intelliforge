@@ -120,8 +120,7 @@ export async function POST(req: NextRequest) {
       photoUrl = await uploadFile(photoFile, "photos", email);
     }
 
-    const admin = await prisma.admin.findUnique({ where: { id: session.sub } });
-    const orgId = admin?.orgId ?? undefined;
+    const orgId = existingIntern.orgId ?? undefined;
 
     if (orgId) {
       const org = await prisma.organization.findUnique({
@@ -154,7 +153,6 @@ export async function POST(req: NextRequest) {
         photoUrl,
         status: "PENDING",
         whatsappOptIn: whatsappOptIn ?? false,
-        orgId,
       },
     });
 

@@ -12,8 +12,14 @@ export async function GET() {
         { status: 403 }
       );
     }
+    if (!admin.orgId) {
+      return NextResponse.json(
+        { error: "Your admin account isn't attached to an organization. Contact support." },
+        { status: 403 }
+      );
+    }
 
-    const where = admin.orgId ? { orgId: admin.orgId } : {};
+    const where = { orgId: admin.orgId };
 
     const interns = await prisma.intern.findMany({
       where,
