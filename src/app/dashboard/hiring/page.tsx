@@ -404,8 +404,20 @@ export default function HiringPage() {
                     {candidates.map((c) => (
                       <tr
                         key={c.id}
-                        onClick={() => setSelectedCandidate(c)}
-                        className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-800/40 transition-colors"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View details for ${c.name}`}
+                        onClick={(e) => {
+                          if ((e.target as HTMLElement).closest("a, button, input, select, textarea")) return;
+                          setSelectedCandidate(c);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedCandidate(c);
+                          }
+                        }}
+                        className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-800/40 transition-colors focus:outline-none focus:bg-slate-800/40 focus:ring-1 focus:ring-inset focus:ring-brand-500/50"
                       >
                         <td className="py-3 px-4">
                           <div>
@@ -414,13 +426,13 @@ export default function HiringPage() {
                             {(c.resumeUrl || c.githubUrl || c.portfolioUrl) && (
                               <div className="flex gap-2 mt-1">
                                 {c.resumeUrl && (
-                                  <a href={c.resumeUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">Resume</a>
+                                  <a href={c.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">Resume</a>
                                 )}
                                 {c.githubUrl && (
-                                  <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
+                                  <a href={c.githubUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">GitHub</a>
                                 )}
                                 {c.portfolioUrl && (
-                                  <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
+                                  <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
                                 )}
                               </div>
                             )}
@@ -436,7 +448,7 @@ export default function HiringPage() {
                           {formatDateIST(c.createdAt)}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             {c.reportUrl && (
                               <a
                                 href={c.reportUrl}
