@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
       include: {
         attendance: { orderBy: { date: "desc" }, take: 30 },
         tasks: { orderBy: { createdAt: "desc" } },
+        learningEnrollments: { orderBy: { enrolledAt: "desc" } },
       },
     });
 

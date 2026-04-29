@@ -46,6 +46,7 @@ enum NotificationType {
   TASK_REMINDER
   ATTENDANCE_NUDGE
   COMPLETION_CERT
+  COURSE_ENROLLED
   CUSTOM
 }
 
@@ -116,6 +117,7 @@ model Intern {
   performanceScores       PerformanceScore[]
   performanceReviews      PerformanceReview[]
   documentVerifications   DocumentVerification[]
+  learningEnrollments     LearningEnrollment[]
 
   @@index([orgId])
   @@index([status])
@@ -162,6 +164,7 @@ model Admin {
   name          String?
   role          String   @default("ADMIN")
   mentees       Intern[] @relation("InternMentor")
+  enrolledLearners LearningEnrollment[] @relation("AdminEnrolledLearners")
 
   org Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -332,4 +335,27 @@ model Candidate {
 
   @@index([jobPostingId])
   @@map("candidates")
+}
+
+// Tracks IntelliForge Learning (learning.intelliforge.tech) course
+// enrollments that HRMS provisioned via the Learning v1 API. The record on
+// the Learning side is the source of truth for progress; this row gives
+// HRMS local idempotency + UI history without re-fetching across the wire.
+model LearningEnrollment {
+  id                   String   @id @default(cuid())
+  internId             String
+  intern               Intern   @relation(fields: [internId], references: [id], onDelete: Cascade)
+  courseId             String
+  courseTitle          String
+  courseSlug           String?
+  learningEnrollmentId String?
+  status               String   @default("active")
+  enrolledByAdminId    String?
+  enrolledByAdmin      Admin?   @relation("AdminEnrolledLearners", fields: [enrolledByAdminId], references: [id], onDelete: SetNull)
+  enrolledAt           DateTime @default(now())
+  lastSyncedAt         DateTime @default(now())
+
+  @@unique([internId, courseId])
+  @@index([internId])
+  @@map("learning_enrollments")
 }

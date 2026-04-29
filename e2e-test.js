@@ -935,6 +935,142 @@ async function testCrossOrgIsolation() {
   });
 }
 
+// ─── 15. Learning Integration ───────────────────────────────────
+//
+// Covers HRMS ↔ learning.intelliforge.tech wiring:
+//   - GET /api/learning/courses requires a session
+//   - GET /api/learning/courses requires an org-attached admin
+//   - GET /api/learning/courses returns 503 if LEARNING_API_KEY isn't
+//     configured on the deployment (auto-skips the rest of the section)
+//   - POST /api/learning/enroll validates body
+//   - POST /api/learning/enroll is org-scoped (cross-org → 404)
+//   - Happy path enrolls + persists locally + Learning roundtrips
+//   - Idempotent: re-enrolling returns alreadyExisted: true
+//   - GET /api/dashboard/intern surfaces the new enrollment
+
+async function testLearningIntegration() {
+  console.log("\n┌─ 15. Learning Integration ───────────────────────────");
+
+  if (!state.adminCookie) return skip("Learning integration", "No admin session");
+
+  await test("GET /api/learning/courses unauthenticated → 401", async () => {
+    const { status } = await api("GET", "/api/learning/courses");
+    assert(status === 401, `Expected 401, got ${status}`);
+  });
+
+  await test("GET /api/learning/courses as intern → 401 (intern session, no admin claim)", async () => {
+    if (!state.internCookie) {
+      throw new Error("No intern session");
+    }
+    const { status } = await api("GET", "/api/learning/courses", null, null, state.internCookie);
+    assert(status === 401, `Expected 401, got ${status}`);
+  });
+
+  // Probe the configured-ness by hitting the courses route as an org admin.
+  // Two valid outcomes:
+  //   - 200 → LEARNING_API_KEY is set; run the full section
+  //   - 503 → integration not configured; skip the rest with a clean note
+  await delay(500);
+  const probe = await api("GET", "/api/learning/courses", null, null, state.adminCookie);
+
+  if (probe.status === 503) {
+    skip("GET /api/learning/courses as org admin → 200", "LEARNING_API_KEY not configured on deployment");
+    skip("POST /api/learning/enroll missing fields → 400", "LEARNING_API_KEY not configured");
+    skip("POST /api/learning/enroll cross-org intern → 404", "LEARNING_API_KEY not configured");
+    skip("POST /api/learning/enroll happy path → 200", "LEARNING_API_KEY not configured");
+    skip("POST /api/learning/enroll idempotent → alreadyExisted:true", "LEARNING_API_KEY not configured");
+    skip("GET /api/dashboard/intern includes learningEnrollments[]", "LEARNING_API_KEY not configured");
+    return;
+  }
+
+  await test("GET /api/learning/courses as org admin → 200", () => {
+    assert(probe.status === 200, `Expected 200, got ${probe.status}: ${JSON.stringify(probe.data)}`);
+    assert(Array.isArray(probe.data?.courses), "Response should contain courses[]");
+    return { courseCount: probe.data.courses.length, cached: probe.data.cached };
+  });
+
+  const courses = Array.isArray(probe.data?.courses) ? probe.data.courses : [];
+  if (courses.length === 0) {
+    skip("POST /api/learning/enroll missing fields → 400", "Need at least one published course on Learning");
+    skip("POST /api/learning/enroll cross-org intern → 404", "Need at least one published course on Learning");
+    skip("POST /api/learning/enroll happy path → 200", "Need at least one published course on Learning");
+    skip("POST /api/learning/enroll idempotent → alreadyExisted:true", "Need at least one published course on Learning");
+    skip("GET /api/dashboard/intern includes learningEnrollments[]", "Need at least one published course on Learning");
+    return;
+  }
+
+  const targetCourseId = courses[0].id;
+
+  await test("POST /api/learning/enroll missing fields → 400", async () => {
+    await delay(500);
+    const { status } = await apiWithRetry("POST", "/api/learning/enroll", {}, "json", state.adminCookie);
+    assert(status === 400 || status === 429, `Expected 400, got ${status}`);
+  });
+
+  if (state.adminCookie2 && state.orgInternId) {
+    await test("POST /api/learning/enroll cross-org intern → 404", async () => {
+      await delay(500);
+      const { status } = await apiWithRetry("POST", "/api/learning/enroll", {
+        internId: state.orgInternId,
+        courseId: targetCourseId,
+      }, "json", state.adminCookie2);
+      assert(status === 404, `Expected 404 (no existence leak), got ${status}`);
+    });
+  } else {
+    skip("POST /api/learning/enroll cross-org intern → 404", state.adminCookie2 ? "No org-attached intern" : "No second admin from xorg setup");
+  }
+
+  if (!state.orgInternId) {
+    skip("POST /api/learning/enroll happy path → 200", "No org-attached intern from convert-flow setup");
+    skip("POST /api/learning/enroll idempotent → alreadyExisted:true", "No org-attached intern");
+    skip("GET /api/dashboard/intern includes learningEnrollments[]", "No org-attached intern");
+    return;
+  }
+
+  let firstEnrollmentId = null;
+  await test("POST /api/learning/enroll happy path → 200", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/learning/enroll", {
+      internId: state.orgInternId,
+      courseId: targetCourseId,
+    }, "json", state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.enrollment?.id, "Missing enrollment.id");
+    assert(data.enrollment?.courseId === targetCourseId, `courseId mismatch: ${data.enrollment?.courseId}`);
+    firstEnrollmentId = data.enrollment.id;
+    return {
+      enrollmentId: firstEnrollmentId,
+      courseTitle: data.enrollment.courseTitle,
+      alreadyExisted: data.alreadyExisted,
+    };
+  });
+
+  await test("POST /api/learning/enroll idempotent → alreadyExisted:true", async () => {
+    await delay(500);
+    const { status, data } = await apiWithRetry("POST", "/api/learning/enroll", {
+      internId: state.orgInternId,
+      courseId: targetCourseId,
+    }, "json", state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.alreadyExisted === true, `Expected alreadyExisted:true, got ${data.alreadyExisted}`);
+    if (firstEnrollmentId) {
+      assert(data.enrollment?.id === firstEnrollmentId, `Expected same enrollment id, got ${data.enrollment?.id}`);
+    }
+    return { alreadyExisted: data.alreadyExisted };
+  });
+
+  await test("GET /api/dashboard/intern includes learningEnrollments[]", async () => {
+    await delay(500);
+    const { status, data } = await api("GET", `/api/dashboard/intern?id=${state.orgInternId}`, null, null, state.adminCookie);
+    assert(status === 200, `Expected 200, got ${status}`);
+    assert(Array.isArray(data.learningEnrollments), "learningEnrollments should be an array");
+    assert(data.learningEnrollments.length >= 1, `Expected ≥1 enrollment, got ${data.learningEnrollments.length}`);
+    const found = data.learningEnrollments.find((e) => e.courseId === targetCourseId);
+    assert(found, "Newly created enrollment should be present");
+    return { count: data.learningEnrollments.length, courseTitle: found.courseTitle };
+  });
+}
+
 // ─── 14. Final Verification ─────────────────────────────────────
 
 async function testFinalState() {
@@ -996,6 +1132,7 @@ async function main() {
   await testCareers();
   await testCandidateManagement();
   await testCrossOrgIsolation();
+  await testLearningIntegration();
   await testFinalState();
 
   const total = passed + failed + skipped;

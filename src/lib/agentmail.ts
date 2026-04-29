@@ -138,6 +138,38 @@ export async function sendAttendanceNudge(
   });
 }
 
+export async function sendCourseEnrolledEmail(
+  internEmail: string,
+  internName: string,
+  courseTitle: string,
+  courseUrl: string
+) {
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: internEmail,
+    subject: `You're enrolled in ${courseTitle} — IntelliForge Learning`,
+    html: `
+      <h2>Hi ${escapeHtml(internName)},</h2>
+      <p>You've been enrolled in <strong>${escapeHtml(courseTitle)}</strong>
+         on the IntelliForge Learning platform.</p>
+      <p>
+        <a href="${escapeHtml(courseUrl)}"
+           style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">
+          Open the course
+        </a>
+      </p>
+      <p style="font-size:13px;color:#475569;">
+        Sign in at
+        <a href="https://learning.intelliforge.tech">learning.intelliforge.tech</a>
+        with this email address (${escapeHtml(internEmail)}) to access your
+        lessons and track progress.
+      </p>
+      <br/>
+      <p>— IntelliForge Learning</p>
+    `,
+  });
+}
+
 export async function sendCompletionEmail(
   internEmail: string,
   internName: string,

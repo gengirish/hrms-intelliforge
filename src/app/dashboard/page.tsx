@@ -28,6 +28,9 @@ import {
   ShieldQuestion,
   CalendarDays,
   FileText,
+  GraduationCap,
+  ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import {
   LineChart,
@@ -45,7 +48,13 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
+import {
+  EnrollCourseModal,
+  type EnrollmentRecord as LearningEnrollmentRecord,
+} from "@/components/learning/enroll-course-modal";
 import { cn, formatINR, formatDateIST, formatTimeIST, getStatusColor } from "@/lib/utils";
+
+const LEARNING_BASE_URL = "https://learning.intelliforge.tech";
 
 interface Intern {
   id: string;
@@ -74,6 +83,7 @@ interface Intern {
   attendance?: AttendanceRecord[];
   tasks?: TaskRecord[];
   messages?: EmailMessage[];
+  learningEnrollments?: LearningEnrollmentRecord[];
 }
 
 interface AttendanceRecord {
@@ -178,8 +188,9 @@ export default function DashboardPage() {
   } | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "attendance" | "tasks" | "emails" | "notifications" | "analytics"
+    "overview" | "attendance" | "tasks" | "learning" | "emails" | "notifications" | "analytics"
   >("overview");
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [perfScores, setPerfScores] = useState<PerformanceScoreRecord[]>([]);
@@ -661,6 +672,7 @@ export default function DashboardPage() {
                     { key: "overview", label: "Overview" },
                     { key: "attendance", label: "Attendance" },
                     { key: "tasks", label: "Tasks" },
+                    { key: "learning", label: "Learning" },
                     { key: "analytics", label: "Analytics" },
                     { key: "emails", label: "Emails" },
                     { key: "notifications", label: "Notifications" },
@@ -967,6 +979,109 @@ export default function DashboardPage() {
               </div>
 
               <div
+                id="panel-learning"
+                role="tabpanel"
+                aria-labelledby="tab-learning"
+                hidden={activeTab !== "learning"}
+                className="glass-card p-6"
+              >
+                <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-indigo-400" />
+                      Learning enrollments
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Courses this intern has access to on{" "}
+                      <a
+                        href={LEARNING_BASE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-400 hover:text-indigo-300"
+                      >
+                        learning.intelliforge.tech
+                      </a>
+                      . They sign in with{" "}
+                      <span className="text-slate-300">{selectedIntern.email}</span>.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEnrollModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white transition-colors"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Enroll in a course
+                  </button>
+                </div>
+
+                {!selectedIntern.learningEnrollments ||
+                selectedIntern.learningEnrollments.length === 0 ? (
+                  <div className="text-center py-10">
+                    <BookOpen className="h-10 w-10 text-slate-500 mx-auto mb-3" />
+                    <p className="text-sm text-slate-400">
+                      No Learning enrollments yet.
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Click <span className="text-slate-300">Enroll in a course</span>{" "}
+                      to provision access.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedIntern.learningEnrollments.map((enr) => {
+                      const courseLink = enr.courseSlug
+                        ? `${LEARNING_BASE_URL}/courses/${enr.courseSlug}`
+                        : LEARNING_BASE_URL;
+                      const statusClass =
+                        enr.status === "completed"
+                          ? "bg-emerald-900/50 text-emerald-400"
+                          : enr.status === "expired" || enr.status === "failed"
+                          ? "bg-red-900/50 text-red-400"
+                          : "bg-indigo-900/50 text-indigo-300";
+                      return (
+                        <li
+                          key={enr.id}
+                          className="flex items-center gap-3 rounded-lg bg-slate-900/50 border border-slate-800 p-3"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center shrink-0">
+                            <BookOpen className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-white truncate">
+                                {enr.courseTitle}
+                              </span>
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                                  statusClass
+                                )}
+                              >
+                                {enr.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              Enrolled {formatDateIST(enr.enrolledAt)}
+                            </p>
+                          </div>
+                          <a
+                            href={courseLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors shrink-0"
+                          >
+                            Open
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <div
                 id="panel-analytics"
                 role="tabpanel"
                 aria-labelledby="tab-analytics"
@@ -1218,6 +1333,30 @@ export default function DashboardPage() {
         <Footer />
         <MobileBottomNav />
         <InstallPrompt />
+        {selectedIntern && (
+          <EnrollCourseModal
+            internId={selectedIntern.id}
+            internName={selectedIntern.name}
+            open={enrollModalOpen}
+            onClose={() => setEnrollModalOpen(false)}
+            enrolledCourseIds={
+              selectedIntern.learningEnrollments?.map((e) => e.courseId) ?? []
+            }
+            onEnrolled={(enrollment) => {
+              setSelectedIntern((prev) => {
+                if (!prev) return prev;
+                const existing = prev.learningEnrollments ?? [];
+                const without = existing.filter(
+                  (e) => e.courseId !== enrollment.courseId
+                );
+                return {
+                  ...prev,
+                  learningEnrollments: [enrollment, ...without],
+                };
+              });
+            }}
+          />
+        )}
       </div>
     );
   }

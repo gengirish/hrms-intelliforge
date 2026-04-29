@@ -10,6 +10,7 @@ import {
   sendTaskReminder,
   sendAttendanceNudge,
   sendCompletionEmail,
+  sendCourseEnrolledEmail,
 } from "@/lib/agentmail";
 import { sendWhatsAppTemplate, formatPhoneE164 } from "@/lib/whatsapp";
 import { formatINR } from "@/lib/utils";
@@ -25,6 +26,7 @@ export type NotificationType =
   | "TASK_REMINDER"
   | "ATTENDANCE_NUDGE"
   | "COMPLETION_CERT"
+  | "COURSE_ENROLLED"
   | "CUSTOM";
 
 export interface NotificationData {
@@ -33,6 +35,8 @@ export interface NotificationData {
   pdfBase64?: string;
   subject?: string;
   body?: string;
+  courseTitle?: string;
+  courseUrl?: string;
 }
 
 function logFieldsForType(
@@ -71,6 +75,11 @@ function logFieldsForType(
       return {
         subject: `Offer accepted — ${intern.name}`,
         body: `Offer accepted notification for ${intern.name}; start ${data.startDate ?? "—"}`,
+      };
+    case DbNotificationType.COURSE_ENROLLED:
+      return {
+        subject: `Course enrollment — ${intern.name}`,
+        body: `Enrolled ${intern.name} in "${data.courseTitle ?? "(unknown course)"}" on Learning (${data.courseUrl ?? "—"})`,
       };
     case DbNotificationType.CUSTOM:
     default:
@@ -155,6 +164,19 @@ export async function notify(
               data.pdfBase64!
             );
             break;
+          case "COURSE_ENROLLED":
+            if (!data.courseTitle || !data.courseUrl) {
+              throw new Error(
+                "COURSE_ENROLLED notification requires courseTitle and courseUrl"
+              );
+            }
+            await sendCourseEnrolledEmail(
+              intern.email,
+              intern.name,
+              data.courseTitle,
+              data.courseUrl
+            );
+            break;
           default:
             break;
         }
@@ -192,7 +214,8 @@ export async function notify(
     prefs.whatsapp &&
     intern.whatsappOptIn &&
     intern.phone &&
-    type !== "CUSTOM"
+    type !== "CUSTOM" &&
+    type !== "COURSE_ENROLLED"
   ) {
     const phone = formatPhoneE164(intern.phone);
     let result: { success: boolean; messageId?: string; error?: string } = {
