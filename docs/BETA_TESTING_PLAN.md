@@ -818,13 +818,28 @@ The integration suite covers 11 test groups with ~40 assertions across all API e
 
 ### D. Test Data Cleanup
 
-After beta completion, remove test data:
+After every E2E run (or beta completion), purge test rows with the
+maintenance script — it identifies E2E records by org slug
+(`e2e-*`), org name (`E2E Test Org*`), and `@test.intelliforge.tech`
+emails, deletes them in a single Prisma transaction, and lets FK cascades
+clean up child rows (attendance, tasks, notification logs, candidates,
+verification tokens, etc.).
 
-```sql
--- Remove beta test interns and cascaded records
-DELETE FROM interns WHERE email LIKE 'beta.%@intelliforge.tech';
-DELETE FROM interns WHERE email LIKE 'e2e.%@test.intelliforge.tech';
+```bash
+# Always preview first (dry run by default)
+node --env-file=.env.local scripts/purge-e2e-records.mjs
+
+# Then apply
+node --env-file=.env.local scripts/purge-e2e-records.mjs --execute
 ```
+
+The script is idempotent and safe to wire into CI as a `post-e2e` step.
+For ad-hoc removal of a single legitimate intern row (typo'd email, etc.)
+use `scripts/delete-intern.mjs <email>` instead.
+
+> Avoid raw `DELETE FROM interns WHERE email LIKE ...` — `Intern` cascades
+> through nine child tables and the script keeps the cascade visible
+> before it runs.
 
 ---
 

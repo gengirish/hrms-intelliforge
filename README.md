@@ -101,24 +101,28 @@ WHATSAPP_VERIFY_TOKEN=your-custom-verify-token
 
 ```bash
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy   # applies versioned migrations
+npx prisma db seed          # creates the IntelliForge AI org + demo data
 ```
+
+> Use `prisma migrate deploy` (not `db push`) so production schema changes
+> are governed by the SQL files in `prisma/migrations/`. The seed creates the
+> default `IntelliForge AI` organization and the bootstrap admin
+> `gen.girish@gmail.com`.
 
 ### 4. Admin Setup
 
-Admin self-registration is disabled. Create admin accounts via a database script:
+Self-registration via `/api/auth/register` only creates **interns**. Admins
+must be provisioned out-of-band. Use the helper script (refuses to run if
+0 or >1 organizations exist, to avoid creating an org-less admin):
 
 ```bash
-# Using the provided helper script
-node scripts/create-admin.js
+node --env-file=.env.local scripts/create-admin.mjs hr@intelliforge.tech 'StrongPass!23' 'HR Bot'
 ```
 
-Or insert directly into the database:
-
-```sql
-INSERT INTO admins (id, email, "passwordHash", "emailVerified", role)
-VALUES (gen_random_uuid(), 'hr@intelliforge.tech', '<bcrypt-hash>', true, 'ADMIN');
-```
+The script bcrypt-hashes the password, sets `orgId` to the single
+Organization, and `emailVerified=true` so the admin can log in immediately.
+It upserts by email, so re-running just resets the password.
 
 ### 5. Run Development Server
 
@@ -147,7 +151,7 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | Create intern account |
+| `/api/auth/register` | POST | Create intern account (auto-attaches to the single org; fails 503/500 if 0 or >1 orgs exist) |
 | `/api/auth/login` | POST | Sign in with email + password |
 | `/api/auth/me` | GET | Get current authenticated user (from JWT cookie) |
 | `/api/auth/logout` | POST | Sign out (clears session cookie) |
@@ -203,7 +207,61 @@ Configured in `vercel.json`:
 | `NotificationPreference` | Per-intern email/WhatsApp toggle |
 | `Intern.whatsappOptIn` | Explicit WhatsApp consent (set during onboarding) |
 
-## Indian Conventions
+## Multi-Tenant Model
+
+Every tenant-scoped row belongs to an `Organization`. The system currently
+runs **single-tenant** (one `IntelliForge AI` org), but the schema and
+runtime are written so multi-tenant rollout is a configuration change, not
+a refactor.
+
+### Hard invariants (enforced at the Postgres level)
+
+| Table | Column | Constraint |
+|-------|--------|------------|
+| `interns` | `orgId` | `NOT NULL`, `FK → organizations.id ON DELETE CASCADE` |
+| `admins` | `orgId` | `NOT NULL`, `FK → organizations.id ON DELETE CASCADE` |
+| `job_postings` | `orgId` | `NOT NULL`, `FK → organizations.id ON DELETE CASCADE` |
+
+Silent orphan rows (`orgId IS NULL`) are structurally impossible. Org-scoped
+queries like `/api/dashboard` and `/api/attendance` filter by
+`admin.orgId`, so any admin only sees rows in their own org.
+
+### How `orgId` is assigned at write time
+
+| Code path | How it sets `orgId` |
+|-----------|---------------------|
+| `POST /api/auth/register` | Looks up the single Organization; fails fast (503 / 500) if 0 or >1 orgs exist |
+| `POST /api/jobs/[id]/convert` | From `session.orgId` of the authenticated admin |
+| `POST /api/jobs` (create job) | From `session.orgId` of the authenticated admin |
+| `prisma/seed.mjs` | Creates the org first, then attaches admins/interns at create time |
+
+If you ever need to verify the invariant or repair drift, see
+[Maintenance Scripts](#maintenance-scripts) below.
+
+## Maintenance Scripts
+
+All scripts in `scripts/` are **dry-run by default** and idempotent. They
+read `DATABASE_URL` from `.env.local` (or any file passed to
+`node --env-file=...`).
+
+| Script | Purpose | Apply with |
+|--------|---------|------------|
+| `diagnose-hr-interns.mjs` | Audit visibility per admin: counts admins/interns by org, shows what each admin can/cannot see via `/api/dashboard` | (read-only) |
+| `purge-e2e-records.mjs` | Delete every E2E test row (orgs `slug LIKE 'e2e-%'`, admins/interns/candidates `@test.intelliforge.tech`, related verification tokens). Cascades through FKs. | `--execute` |
+| `consolidate-single-org.mjs` | Move every admin/intern into the single Organization. Used to repair drift, e.g. interns that were created with `orgId = NULL` before the constraint was added. | `--execute` |
+| `delete-intern.mjs <email>` | Delete a single intern (with cascade footprint preview). | `--execute` |
+| `create-admin.mjs <email> <pwd> [name]` | Provision an admin account (refuses to create an org-less one). | runs immediately |
+
+Typical flows:
+
+```bash
+# After every E2E run
+node --env-file=.env.local scripts/purge-e2e-records.mjs            # dry run
+node --env-file=.env.local scripts/purge-e2e-records.mjs --execute  # apply
+
+# Diagnose "why doesn't admin X see intern Y?"
+node --env-file=.env.local scripts/diagnose-hr-interns.mjs
+```
 
 ## Intern Lifecycle
 
