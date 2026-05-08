@@ -157,7 +157,7 @@ model Task {
 
 model Admin {
   id            String   @id @default(cuid())
-  orgId         String?
+  orgId         String
   passwordHash  String
   emailVerified Boolean  @default(false)
   email         String   @unique
@@ -166,7 +166,7 @@ model Admin {
   mentees       Intern[] @relation("InternMentor")
   enrolledLearners LearningEnrollment[] @relation("AdminEnrolledLearners")
 
-  org Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId])
   @@map("admins")
