@@ -81,7 +81,7 @@ model Organization {
 
 model Intern {
   id               String       @id @default(cuid())
-  orgId            String?
+  orgId            String
   passwordHash     String?
   emailVerified    Boolean      @default(false)
   name             String
@@ -108,7 +108,7 @@ model Intern {
   acceptedAt       DateTime?
   createdAt        DateTime     @default(now())
 
-  org                Organization?        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org                Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   attendance         Attendance[]
   tasks              Task[]
   notifications      NotificationLog[]

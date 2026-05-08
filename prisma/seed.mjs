@@ -6,19 +6,34 @@ const prisma = new PrismaClient();
 async function main() {
   const defaultPassword = await bcrypt.hash("Test1234!", 12);
 
-  // 1. Admin
+  // 1. Organization (must exist before admins / interns reference it)
+  const org = await prisma.organization.upsert({
+    where: { slug: "intelliforge-ai" },
+    update: {},
+    create: {
+      name: "IntelliForge AI",
+      slug: "intelliforge-ai",
+      domain: "intelliforge.tech",
+      plan: "growth",
+      maxInterns: 20,
+    },
+  });
+  console.log("Organization:", org.name);
+
+  // 2. Admin
   const admin = await prisma.admin.upsert({
     where: { email: "gen.girish@gmail.com" },
-    update: {},
+    update: { orgId: org.id },
     create: {
       email: "gen.girish@gmail.com",
       passwordHash: defaultPassword,
       emailVerified: true,
+      orgId: org.id,
     },
   });
   console.log("Admin:", admin.email);
 
-  // 2. Interns with varying statuses
+  // 3. Interns with varying statuses
   const now = new Date();
   const fourWeeksAgo = new Date(now.getTime() - 28 * 86400000);
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
@@ -111,8 +126,8 @@ async function main() {
   for (const data of internsData) {
     const intern = await prisma.intern.upsert({
       where: { email: data.email },
-      update: {},
-      create: data,
+      update: { orgId: org.id },
+      create: { ...data, orgId: org.id },
     });
     interns.push(intern);
     console.log(`Intern: ${intern.name} (${intern.status})`);
@@ -200,41 +215,7 @@ async function main() {
   }
   console.log(`Tasks: ${rahulTasks.length} for ${rahul.name}`);
 
-  // 5. Organization (for job postings)
-  const org = await prisma.organization.upsert({
-    where: { slug: "intelliforge-ai" },
-    update: {},
-    create: {
-      name: "IntelliForge AI",
-      slug: "intelliforge-ai",
-      domain: "intelliforge.tech",
-      plan: "growth",
-      maxInterns: 20,
-    },
-  });
-  console.log("Organization:", org.name);
-
-  // Link admin to org if not already linked
-  if (!admin.orgId) {
-    await prisma.admin.update({
-      where: { id: admin.id },
-      data: { orgId: org.id },
-    });
-    console.log("Linked admin to org");
-  }
-
-  // Link interns to org
-  for (const intern of interns) {
-    if (!intern.orgId) {
-      await prisma.intern.update({
-        where: { id: intern.id },
-        data: { orgId: org.id },
-      });
-    }
-  }
-  console.log("Linked interns to org");
-
-  // 6. AI Native Software Engineer Intern — Job Posting
+  // 5. AI Native Software Engineer Intern — Job Posting
   const existingJob = await prisma.jobPosting.findFirst({
     where: { orgId: org.id, title: "AI Native Software Engineer Intern" },
   });
