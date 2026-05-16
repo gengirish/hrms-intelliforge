@@ -221,7 +221,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4 text-sm text-slate-400">
                   <span className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    {org._count.interns} / {org.maxInterns} interns
+                    {org._count.interns} interns (unlimited)
                   </span>
                   <span>{org._count.admins} admin(s)</span>
                 </div>

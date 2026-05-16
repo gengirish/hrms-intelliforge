@@ -120,24 +120,6 @@ export async function POST(req: NextRequest) {
       photoUrl = await uploadFile(photoFile, "photos", email);
     }
 
-    const orgId = existingIntern.orgId ?? undefined;
-
-    if (orgId) {
-      const org = await prisma.organization.findUnique({
-        where: { id: orgId },
-        select: { maxInterns: true },
-      });
-      if (org) {
-        const currentCount = await prisma.intern.count({ where: { orgId } });
-        if (currentCount >= org.maxInterns) {
-          return NextResponse.json(
-            { error: `Intern limit reached (${org.maxInterns}). Upgrade your plan to add more.` },
-            { status: 403 }
-          );
-        }
-      }
-    }
-
     const intern = await prisma.intern.update({
       where: { id: session.sub },
       data: {
