@@ -15,6 +15,12 @@ import {
   X,
 } from "lucide-react";
 import { cn, formatDateIST } from "@/lib/utils";
+import {
+  CANDIDATE_STATUS_OPTIONS,
+  canConvertCandidate,
+  getConvertDisabledReason,
+  normalizeCandidateStatus,
+} from "@/lib/hiring/candidate-status";
 import { CandidateStatusBadge } from "./candidate-status-badge";
 import { ResumePreview } from "./resume-preview";
 
@@ -51,21 +57,6 @@ interface CandidateDetailPanelProps {
     contact?: boolean;
   };
 }
-
-const STATUS_OPTIONS = [
-  "APPLIED",
-  "SHORTLISTED",
-  "INTERVIEWED",
-  "REJECTED",
-  "HIRED",
-] as const;
-
-const CONVERTIBLE_STATUSES = new Set([
-  "INTERVIEWED",
-  "COMPLETED",
-  "SHORTLISTED",
-  "HIRED",
-]);
 
 function getScoreColor(score: number | null): string {
   if (score === null) return "text-slate-400";
@@ -116,10 +107,15 @@ export function CandidateDetailPanel({
   if (!open) return null;
 
   const placeholderSubject = `Re: Your application for ${jobTitle}`;
-  const normalizedStatus = (candidate.interviewStatus ?? "").toUpperCase();
-  const canConvert =
-    !candidate.convertedToIntern &&
-    CONVERTIBLE_STATUSES.has(normalizedStatus);
+  const normalizedStatus = normalizeCandidateStatus(candidate.interviewStatus);
+  const canConvert = canConvertCandidate(
+    candidate.interviewStatus,
+    candidate.convertedToIntern
+  );
+  const convertDisabledReason = getConvertDisabledReason(
+    candidate.interviewStatus,
+    candidate.convertedToIntern
+  );
 
   async function handleContactSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -269,8 +265,8 @@ export function CandidateDetailPanel({
               <select
                 id="candidate-status"
                 value={
-                  STATUS_OPTIONS.includes(
-                    normalizedStatus as (typeof STATUS_OPTIONS)[number]
+                  CANDIDATE_STATUS_OPTIONS.includes(
+                    normalizedStatus as (typeof CANDIDATE_STATUS_OPTIONS)[number]
                   )
                     ? normalizedStatus
                     : ""
@@ -283,14 +279,14 @@ export function CandidateDetailPanel({
                 }}
                 className="flex-1 rounded-lg bg-slate-900/60 border border-slate-700 px-3 py-2 text-sm text-white focus:border-brand-500 outline-none transition-colors disabled:opacity-50"
               >
-                {!STATUS_OPTIONS.includes(
-                  normalizedStatus as (typeof STATUS_OPTIONS)[number]
+                {!CANDIDATE_STATUS_OPTIONS.includes(
+                  normalizedStatus as (typeof CANDIDATE_STATUS_OPTIONS)[number]
                 ) && (
                   <option value="" disabled>
                     {candidate.interviewStatus || "—"}
                   </option>
                 )}
-                {STATUS_OPTIONS.map((option) => (
+                {CANDIDATE_STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option.charAt(0) + option.slice(1).toLowerCase()}
                   </option>
@@ -456,13 +452,7 @@ export function CandidateDetailPanel({
             type="button"
             onClick={() => void onConvert()}
             disabled={!canConvert || busy?.convert}
-            title={
-              candidate.convertedToIntern
-                ? "Already converted"
-                : !CONVERTIBLE_STATUSES.has(normalizedStatus)
-                  ? "Candidate must be shortlisted, interviewed, completed, or hired to convert"
-                  : undefined
-            }
+            title={convertDisabledReason}
             className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors"
           >
             {busy?.convert ? (

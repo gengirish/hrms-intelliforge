@@ -21,8 +21,10 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { CandidateDetailPanel } from "@/components/hiring/candidate-detail-panel";
 import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge";
+import { canConvertCandidate } from "@/lib/hiring/candidate-status";
 import { cn, formatDateIST } from "@/lib/utils";
 
 interface JobPosting {
@@ -326,6 +328,7 @@ export default function HiringPage() {
               { label: selectedJob.title },
             ]}
           />
+          <DashboardSubnav className="mb-6" />
           <button
             onClick={() => {
               setSelectedJob(null);
@@ -459,9 +462,12 @@ export default function HiringPage() {
                                 Report
                               </a>
                             )}
-                            {!c.convertedToIntern && c.interviewStatus === "COMPLETED" && (
+                            {canConvertCandidate(c.interviewStatus, c.convertedToIntern) && (
                               <button
-                                onClick={() => convertToIntern(c, selectedJob.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  convertToIntern(c, selectedJob.id);
+                                }}
                                 disabled={convertingId === c.id}
                                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-2.5 py-1.5 text-xs font-medium text-white transition-colors"
                               >
@@ -515,6 +521,7 @@ export default function HiringPage() {
       <Navbar />
       <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
         <Breadcrumbs className="mb-4" />
+        <DashboardSubnav className="mb-6" />
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Link

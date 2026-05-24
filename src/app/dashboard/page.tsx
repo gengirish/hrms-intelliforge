@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Users,
@@ -27,10 +28,12 @@ import {
   UserCheck,
   ShieldQuestion,
   CalendarDays,
-  FileText,
   GraduationCap,
   ExternalLink,
   BookOpen,
+  Search,
+  Filter,
+  ArrowRight,
 } from "lucide-react";
 import {
   LineChart,
@@ -48,6 +51,8 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import {
   EnrollCourseModal,
   type EnrollmentRecord as LearningEnrollmentRecord,
@@ -143,19 +148,17 @@ interface PerformanceReviewRecord {
   generatedAt: string;
 }
 
-interface AttendanceOverview {
+interface NotificationRecord {
   id: string;
-  name: string;
-  email: string;
-  role: string;
+  channel: "EMAIL" | "WHATSAPP";
+  type: string;
+  subject: string | null;
+  body: string;
   status: string;
-  today: {
-    id: string;
-    punchIn: string | null;
-    punchOut: string | null;
-    mode: string;
-    dailyStatus: string | null;
-  } | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  readAt: string | null;
+  createdAt: string;
 }
 
 interface DocVerification {
@@ -182,7 +185,10 @@ export default function DashboardPage() {
   const [stipendEdit, setStipendEdit] = useState<number | null>(null);
   const [isSavingStipend, setIsSavingStipend] = useState(false);
   const [showDeactivated, setShowDeactivated] = useState(false);
-  const [attendanceOverview, setAttendanceOverview] = useState<AttendanceOverview[]>([]);
+  const [nameFilter, setNameFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [joinFrom, setJoinFrom] = useState("");
+  const [joinTo, setJoinTo] = useState("");
   const [attendanceSummary, setAttendanceSummary] = useState<{
     total: number; present: number; absent: number; punchedOut: number; withStatus: number;
   } | null>(null);
@@ -205,7 +211,6 @@ export default function DashboardPage() {
       const res = await fetch("/api/dashboard/attendance");
       if (res.ok) {
         const data = await res.json();
-        setAttendanceOverview(data.overview);
         setAttendanceSummary(data.summary);
       }
     } catch {
@@ -432,6 +437,44 @@ export default function DashboardPage() {
     completed: activeInterns.filter((i) => i.status === "COMPLETED").length,
     deactivated: interns.filter((i) => i.deactivated).length,
   };
+
+  const filteredInterns = useMemo(() => {
+    let list = showDeactivated ? interns : interns.filter((i) => !i.deactivated);
+
+    if (nameFilter.trim()) {
+      const q = nameFilter.trim().toLowerCase();
+      list = list.filter(
+        (intern) =>
+          intern.name.toLowerCase().includes(q) ||
+          intern.email.toLowerCase().includes(q) ||
+          intern.role.toLowerCase().includes(q)
+      );
+    }
+
+    if (statusFilter !== "all") {
+      if (statusFilter === "DEACTIVATED") {
+        list = list.filter((intern) => intern.deactivated);
+      } else {
+        list = list.filter(
+          (intern) => intern.status === statusFilter && !intern.deactivated
+        );
+      }
+    }
+
+    if (joinFrom) {
+      const from = new Date(joinFrom);
+      from.setHours(0, 0, 0, 0);
+      list = list.filter((intern) => new Date(intern.createdAt) >= from);
+    }
+
+    if (joinTo) {
+      const to = new Date(joinTo);
+      to.setHours(23, 59, 59, 999);
+      list = list.filter((intern) => new Date(intern.createdAt) <= to);
+    }
+
+    return list;
+  }, [interns, showDeactivated, nameFilter, statusFilter, joinFrom, joinTo]);
 
   if (bootState === "loading") {
     return (
@@ -1367,6 +1410,9 @@ export default function DashboardPage() {
       <Navbar />
 
       <main id="main-content" className="flex-1 mx-auto max-w-6xl w-full px-4 py-8">
+        <Breadcrumbs className="mb-4" />
+        <DashboardSubnav className="mb-6" />
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
           <p className="mt-1 text-slate-400">
@@ -1420,119 +1466,104 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Today's Attendance Overview */}
-        <div className="glass-card overflow-hidden mb-8">
-          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-indigo-400" />
-              Today&apos;s Attendance
-            </h2>
-            {attendanceSummary && (
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-emerald-400 font-medium">{attendanceSummary.present} present</span>
-                <span className="text-red-400 font-medium">{attendanceSummary.absent} absent</span>
-                <span className="text-slate-400">{attendanceSummary.withStatus} status updates</span>
+        {/* Attendance snapshot */}
+        <Link
+          href="/dashboard/attendance"
+          className="glass-card p-5 mb-8 block hover:border-indigo-500/40 transition-colors group"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-indigo-500/10 p-2.5">
+                <CalendarDays className="h-5 w-5 text-indigo-400" />
               </div>
-            )}
+              <div>
+                <h2 className="text-lg font-semibold text-white">Today&apos;s Attendance</h2>
+                {attendanceLoading ? (
+                  <p className="text-sm text-slate-400 mt-1">Loading snapshot…</p>
+                ) : attendanceSummary ? (
+                  <p className="text-sm text-slate-400 mt-1">
+                    <span className="text-emerald-400 font-medium">{attendanceSummary.present} present</span>
+                    {" · "}
+                    <span className="text-red-400 font-medium">{attendanceSummary.absent} absent</span>
+                    {" · "}
+                    {attendanceSummary.total} active interns
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-400 mt-1">View punch-in status and weekly records</p>
+                )}
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-400 group-hover:text-indigo-300">
+              Open attendance
+              <ArrowRight className="h-4 w-4" />
+            </span>
           </div>
-          {attendanceLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
-            </div>
-          ) : attendanceOverview.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-400">
-              No active/offered interns to track attendance for.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700 bg-slate-800/50">
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Intern</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Punch In</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Punch Out</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Mode</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Daily Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceOverview.map((entry) => (
-                    <tr key={entry.id} className="border-b border-slate-800 last:border-0">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-xs font-bold text-white">
-                            {entry.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium text-white text-xs">{entry.name}</p>
-                            <p className="text-xs text-slate-500">{entry.role}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {entry.today ? (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-900/50 text-emerald-400">
-                            <CheckCircle2 className="h-3 w-3" />
-                            Present
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-red-900/50 text-red-400">
-                            Absent
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-slate-300 text-xs">
-                        {entry.today?.punchIn ? formatTimeIST(entry.today.punchIn) : "—"}
-                      </td>
-                      <td className="py-3 px-4 text-slate-300 text-xs">
-                        {entry.today?.punchOut ? formatTimeIST(entry.today.punchOut) : "—"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {entry.today ? (
-                          <span className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                            entry.today.mode === "WFH"
-                              ? "bg-indigo-500/10 text-indigo-400"
-                              : "bg-purple-500/10 text-purple-400"
-                          )}>
-                            {entry.today.mode}
-                          </span>
-                        ) : "—"}
-                      </td>
-                      <td className="py-3 px-4 text-xs max-w-64">
-                        {entry.today?.dailyStatus ? (
-                          <div className="flex items-start gap-1.5">
-                            <FileText className="h-3 w-3 text-indigo-400 mt-0.5 shrink-0" />
-                            <span className="text-slate-300 line-clamp-2" title={entry.today.dailyStatus}>
-                              {entry.today.dailyStatus}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-600">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        </Link>
 
         {/* Intern Table */}
         <div className="glass-card overflow-hidden">
-          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Interns</h2>
-            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showDeactivated}
-                onChange={(e) => setShowDeactivated(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
-              />
-              Show deactivated
-            </label>
+          <div className="p-4 border-b border-slate-700 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Interns</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {filteredInterns.length} of {interns.length} shown
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showDeactivated}
+                  onChange={(e) => setShowDeactivated(e.target.checked)}
+                  className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                />
+                Show deactivated
+              </label>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  value={nameFilter}
+                  onChange={(e) => setNameFilter(e.target.value)}
+                  placeholder="Search by name, email, or role…"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="pl-9 pr-8 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none transition-colors min-w-[10rem]"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="OFFERED">Offered</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="DEACTIVATED">Deactivated</option>
+                  </select>
+                </div>
+                <input
+                  type="date"
+                  value={joinFrom}
+                  onChange={(e) => setJoinFrom(e.target.value)}
+                  aria-label="Joined from"
+                  className="px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                />
+                <input
+                  type="date"
+                  value={joinTo}
+                  onChange={(e) => setJoinTo(e.target.value)}
+                  aria-label="Joined to"
+                  className="px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                />
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1557,21 +1588,19 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {(() => {
-                  const filtered = showDeactivated
-                    ? interns
-                    : interns.filter((i) => !i.deactivated);
-                  if (filtered.length === 0) return (
+                {filteredInterns.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
                       className="py-12 text-center text-slate-400"
                     >
-                      {showDeactivated ? "No interns onboarded yet." : "No active interns. Toggle \"Show deactivated\" to see all."}
+                      {interns.length === 0
+                        ? "No interns onboarded yet."
+                        : "No interns match your filters."}
                     </td>
                   </tr>
-                  );
-                  return filtered.map((intern) => (
+                ) : (
+                  filteredInterns.map((intern) => (
                     <tr
                       key={intern.id}
                       tabIndex={0}
@@ -1634,8 +1663,8 @@ export default function DashboardPage() {
                         <ChevronRight className="h-4 w-4 text-slate-600" />
                       </td>
                     </tr>
-                  ));
-                })()}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

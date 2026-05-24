@@ -17,6 +17,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn } from "@/lib/utils";
 
 interface OrgData {
@@ -156,6 +157,7 @@ export default function SettingsPage() {
       <Navbar />
       <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
         <Breadcrumbs className="mb-4" />
+        <DashboardSubnav className="mb-6" />
         <div className="flex items-center gap-3 mb-8">
           <Link
             href="/dashboard"
