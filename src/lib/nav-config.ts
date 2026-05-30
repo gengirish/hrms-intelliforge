@@ -4,6 +4,7 @@ import {
   UserPlus,
   Clock,
   ClipboardList,
+  BookOpen,
   FileSignature,
   LayoutDashboard,
   Briefcase,
@@ -77,6 +78,15 @@ export const NAV_ITEMS: NavItem[] = [
     group: "self-service",
   },
   {
+    href: "/weekly-progress",
+    label: "Weekly progress",
+    shortLabel: "Progress",
+    icon: BookOpen,
+    description: "Accomplishments, learning, and challenges by week",
+    audience: ["intern"],
+    group: "self-service",
+  },
+  {
     href: "/offer",
     label: "Offer Letter",
     shortLabel: "Offer",
@@ -121,33 +131,50 @@ export const NOTIFICATIONS_ITEM: NavItem = {
 };
 
 export function getVisibleNav(
-  accountType: AccountType | null | undefined
+  accountType: AccountType | null | undefined,
+  orgAdminRole?: "ADMIN" | "MENTOR" | null
 ): NavItem[] {
   const audience: Array<AccountType | "public"> = accountType
     ? ["public", accountType]
     : ["public"];
-  return NAV_ITEMS.filter((item) =>
-    item.audience.some((a) => audience.includes(a))
-  );
+  return NAV_ITEMS.filter((item) => {
+    if (!item.audience.some((a) => audience.includes(a))) return false;
+    if (
+      accountType === "admin" &&
+      orgAdminRole === "MENTOR" &&
+      (item.href === "/dashboard/hiring" || item.href === "/dashboard/settings")
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function getMobileTabs(
-  accountType: AccountType | null | undefined
+  accountType: AccountType | null | undefined,
+  orgAdminRole?: "ADMIN" | "MENTOR" | null
 ): NavItem[] {
   if (accountType === "admin") {
-    return [
+    const base = [
       NAV_ITEMS.find((i) => i.href === "/")!,
       NAV_ITEMS.find((i) => i.href === "/dashboard")!,
       NAV_ITEMS.find((i) => i.href === "/dashboard/hiring")!,
       NAV_ITEMS.find((i) => i.href === "/dashboard/settings")!,
       NOTIFICATIONS_ITEM,
     ];
+    if (orgAdminRole === "MENTOR") {
+      return base.filter(
+        (i) => i.href !== "/dashboard/hiring" && i.href !== "/dashboard/settings"
+      );
+    }
+    return base;
   }
   return [
     NAV_ITEMS.find((i) => i.href === "/")!,
     NAV_ITEMS.find((i) => i.href === "/intern-onboarding")!,
     NAV_ITEMS.find((i) => i.href === "/attendance")!,
     NAV_ITEMS.find((i) => i.href === "/tasks")!,
+    NAV_ITEMS.find((i) => i.href === "/weekly-progress")!,
     NAV_ITEMS.find((i) => i.href === "/offer")!,
   ];
 }

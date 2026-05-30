@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/sign-up",
   "/reset-password",
   "/create-org",
+  "/accept-admin-invite",
 ];
 
 const PUBLIC_PATH_PREFIXES = [
@@ -20,6 +21,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/webhooks/",
   "/api/cron/",
   "/api/careers",
+  "/api/org/admins/invite/",
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -65,6 +67,34 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-user-email", payload.email as string);
     if (payload.orgId) {
       requestHeaders.set("x-user-org-id", payload.orgId as string);
+    }
+
+    const adminOrgRole = String(
+      (payload as { adminOrgRole?: string }).adminOrgRole ?? "ADMIN"
+    ).toUpperCase();
+    if (payload.role === "admin" && adminOrgRole === "MENTOR") {
+      if (
+        pathname.startsWith("/dashboard/settings") ||
+        pathname.startsWith("/dashboard/hiring")
+      ) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      if (pathname.startsWith("/api/billing") || pathname.startsWith("/api/jobs")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (pathname === "/api/org" && request.method === "PUT") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const teamMemberPatch =
+        request.method === "PATCH" &&
+        /^\/api\/org\/admins\/(?!promote-intern)[^/]+\/?$/.test(pathname);
+      const isOrgAdminsMutation =
+        (pathname === "/api/org/admins" && request.method === "POST") ||
+        teamMemberPatch ||
+        (pathname === "/api/org/admins/promote-intern" && request.method === "POST");
+      if (isOrgAdminsMutation) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     return NextResponse.next({ request: { headers: requestHeaders } });

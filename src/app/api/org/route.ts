@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
+import { ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
 import { serverError } from "@/lib/api-utils";
 import { z } from "zod";
 
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
       role: "admin",
       email: result.admin.email,
       orgId: result.org.id,
+      adminOrgRole: ORG_ADMIN_ROLE.ADMIN,
     });
 
     const response = NextResponse.json({

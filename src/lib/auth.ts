@@ -32,6 +32,8 @@ export interface SessionPayload extends JWTPayload {
   role: "admin" | "intern";
   email: string;
   orgId?: string;
+  /** Present when `role` is `admin`: `ADMIN` (full) or `MENTOR` (limited). Omitted/legacy tokens treated as full admin. */
+  adminOrgRole?: string;
   tokenVersion?: number;
 }
 
@@ -40,15 +42,20 @@ export async function signJWT(payload: {
   role: "admin" | "intern";
   email: string;
   orgId?: string;
+  adminOrgRole?: string;
   tokenVersion?: number;
 }): Promise<string> {
   const tokenVersion = payload.tokenVersion ?? 0;
-  return new SignJWT({
+  const body: Record<string, unknown> = {
     role: payload.role,
     email: payload.email,
     orgId: payload.orgId,
     tokenVersion,
-  })
+  };
+  if (payload.role === "admin") {
+    body.adminOrgRole = payload.adminOrgRole ?? "ADMIN";
+  }
+  return new SignJWT(body)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.userId)
     .setIssuedAt()

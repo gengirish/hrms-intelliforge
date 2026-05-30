@@ -10,7 +10,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   const accountType = (user?.accountType as AccountType | undefined) ?? null;
-  const tabs = getMobileTabs(accountType);
+  const tabs = getMobileTabs(accountType, user?.orgAdminRole ?? null);
 
   return (
     <nav

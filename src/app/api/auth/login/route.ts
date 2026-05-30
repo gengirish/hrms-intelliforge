@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, signJWT, setAuthCookie } from "@/lib/auth";
+import { normalizeOrgAdminRole } from "@/lib/org-admin-roles";
 import { loginSchema } from "@/lib/validations";
 import { errorResponse, serverError } from "@/lib/api-utils";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
@@ -32,7 +33,13 @@ export async function POST(req: Request) {
         );
       }
 
-      const token = await signJWT({ userId: admin.id, role: "admin", email, orgId: admin.orgId ?? undefined });
+      const token = await signJWT({
+        userId: admin.id,
+        role: "admin",
+        email,
+        orgId: admin.orgId ?? undefined,
+        adminOrgRole: normalizeOrgAdminRole(admin.role),
+      });
       const response = NextResponse.json({
         user: { id: admin.id, email: admin.email, role: "admin", orgId: admin.orgId },
       });

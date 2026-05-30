@@ -6,20 +6,35 @@ import {
   LayoutDashboard,
   Briefcase,
   Clock,
+  ClipboardSignature,
   Settings,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/dashboard", label: "Interns", icon: LayoutDashboard },
   { href: "/dashboard/attendance", label: "Attendance", icon: Clock },
+  {
+    href: "/dashboard/weekly-progress",
+    label: "Weekly progress",
+    icon: ClipboardSignature,
+  },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function DashboardSubnav({ className }: { className?: string }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const isMentorOnly =
+    user?.accountType === "admin" && user?.orgAdminRole === "MENTOR";
+  const tabs = isMentorOnly
+    ? ADMIN_TABS.filter(
+        (t) => t.href !== "/dashboard/hiring" && t.href !== "/dashboard/settings"
+      )
+    : ADMIN_TABS;
 
   return (
     <nav
@@ -29,7 +44,7 @@ export function DashboardSubnav({ className }: { className?: string }) {
         className
       )}
     >
-      {ADMIN_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active =
           tab.href === "/dashboard"
             ? pathname === "/dashboard"

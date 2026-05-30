@@ -32,7 +32,7 @@ export function Navbar() {
   const drawerRef = useRef<HTMLDivElement>(null);
 
   const accountType = (user?.accountType as AccountType | undefined) ?? null;
-  const navLinks = getVisibleNav(accountType);
+  const navLinks = getVisibleNav(accountType, user?.orgAdminRole ?? null);
   const isAdmin = accountType === "admin";
 
   useEffect(() => {

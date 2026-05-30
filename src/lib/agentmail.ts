@@ -243,4 +243,58 @@ export async function sendNewApplicationAlert({
   });
 }
 
+export async function sendWeeklyProgressSubmittedToMentor({
+  mentorEmail,
+  mentorName,
+  internName,
+  weekKey,
+}: {
+  mentorEmail: string;
+  mentorName: string | null;
+  internName: string;
+  weekKey: string;
+}) {
+  const inboxId = await getHRInboxId();
+  const greet = mentorName ? escapeHtml(mentorName) : "there";
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: mentorEmail,
+    subject: `Weekly progress submitted — ${escapeHtml(internName)} (${weekKey})`,
+    html: `
+      <p>Hi ${greet},</p>
+      <p><strong>${escapeHtml(internName)}</strong> submitted their weekly progress report for <strong>${escapeHtml(weekKey)}</strong>.</p>
+      <p><a href="${APP_URL}/dashboard/weekly-progress?week=${encodeURIComponent(weekKey)}">→ Review in HRMS</a></p>
+      <p>— IntelliForge HRMS</p>
+    `,
+  });
+}
+
+export async function sendWeeklyProgressFeedbackToIntern({
+  internEmail,
+  internName,
+  weekKey,
+  feedbackPreview,
+}: {
+  internEmail: string;
+  internName: string;
+  weekKey: string;
+  feedbackPreview: string;
+}) {
+  const inboxId = await getHRInboxId();
+  const preview =
+    feedbackPreview.length > 400
+      ? `${escapeHtml(feedbackPreview.slice(0, 400))}…`
+      : escapeHtml(feedbackPreview);
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: internEmail,
+    subject: `Mentor feedback on your week — ${weekKey}`,
+    html: `
+      <p>Hi ${escapeHtml(internName)},</p>
+      <p>Your mentor left feedback for <strong>${escapeHtml(weekKey)}</strong>.</p>
+      <blockquote style="border-left:4px solid #4f46e5;padding-left:12px;margin:12px 0;color:#334155;">${preview}</blockquote>
+      <p><a href="${APP_URL}/weekly-progress">→ View full report in HRMS</a></p>
+      <p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export { getHRInboxId };

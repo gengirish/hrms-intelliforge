@@ -47,7 +47,14 @@ enum NotificationType {
   ATTENDANCE_NUDGE
   COMPLETION_CERT
   COURSE_ENROLLED
+  WEEKLY_PROGRESS_SUBMITTED
+  WEEKLY_PROGRESS_FEEDBACK
   CUSTOM
+}
+
+enum WeeklyProgressStatus {
+  DRAFT
+  SUBMITTED
 }
 
 enum TokenType {
@@ -72,11 +79,32 @@ model Organization {
   maxInterns        Int      @default(5)
   createdAt         DateTime @default(now())
 
-  admins      Admin[]
-  interns     Intern[]
-  jobPostings JobPosting[]
+  admins       Admin[]
+  interns      Intern[]
+  jobPostings  JobPosting[]
+  adminInvites AdminInvite[]
 
   @@map("organizations")
+}
+
+/// Pending workspace admin/mentor onboarding via email link (no shared password).
+model AdminInvite {
+  id        String   @id @default(cuid())
+  orgId     String
+  email     String
+  name      String?
+  role      String
+  /// When set, accepting the invite runs intern→admin promotion instead of a blank new account.
+  internId  String?
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orgId, email])
+  @@map("admin_invites")
 }
 
 model Intern {
@@ -118,6 +146,7 @@ model Intern {
   performanceReviews      PerformanceReview[]
   documentVerifications   DocumentVerification[]
   learningEnrollments     LearningEnrollment[]
+  weeklyProgressReports   WeeklyProgressReport[]
 
   @@index([orgId])
   @@index([status])
@@ -165,6 +194,7 @@ model Admin {
   role          String   @default("ADMIN")
   mentees       Intern[] @relation("InternMentor")
   enrolledLearners LearningEnrollment[] @relation("AdminEnrolledLearners")
+  weeklyProgressFeedback WeeklyProgressReport[] @relation("WeeklyProgressFeedbackAuthor")
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -358,4 +388,27 @@ model LearningEnrollment {
   @@unique([internId, courseId])
   @@index([internId])
   @@map("learning_enrollments")
+}
+
+model WeeklyProgressReport {
+  id                String                @id @default(cuid())
+  internId          String
+  weekKey           String
+  accomplishments   String                @default("")
+  learningOutcomes  String                @default("")
+  challenges        String                @default("")
+  status            WeeklyProgressStatus  @default(DRAFT)
+  submittedAt       DateTime?
+  mentorFeedback    String?
+  feedbackAt        DateTime?
+  feedbackById      String?
+  feedbackBy        Admin?                @relation("WeeklyProgressFeedbackAuthor", fields: [feedbackById], references: [id], onDelete: SetNull)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  intern Intern @relation(fields: [internId], references: [id], onDelete: Cascade)
+
+  @@unique([internId, weekKey])
+  @@index([internId])
+  @@map("weekly_progress_reports")
 }

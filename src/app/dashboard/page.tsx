@@ -204,6 +204,10 @@ export default function DashboardPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [docVerifications, setDocVerifications] = useState<DocVerification[]>([]);
+  const [mentorOptions, setMentorOptions] = useState<
+    { id: string; email: string; name: string | null; role: string }[]
+  >([]);
+  const [mentorSaving, setMentorSaving] = useState(false);
 
   async function loadAttendanceOverview() {
     setAttendanceLoading(true);
@@ -250,6 +254,24 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (bootState !== "ready") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/org/admins");
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        setMentorOptions(data.admins ?? []);
+      } catch {
+        /* non-critical */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootState]);
 
   async function loadInternDetail(internId: string) {
     setDetailLoading(true);
@@ -425,6 +447,37 @@ export default function DashboardPage() {
       toast.error("Failed to update stipend");
     } finally {
       setIsSavingStipend(false);
+    }
+  }
+
+  async function saveInternMentor(mentorId: string | null) {
+    if (!selectedIntern) return;
+    setMentorSaving(true);
+    try {
+      const res = await fetch("/api/dashboard/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "set_mentor",
+          internId: selectedIntern.id,
+          mentorId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Could not update mentor");
+      }
+      toast.success(mentorId ? "Mentor assigned" : "Mentor unassigned");
+      await loadInternDetail(selectedIntern.id);
+      const listRes = await fetch("/api/dashboard");
+      if (listRes.ok) {
+        const data = await listRes.json();
+        setInterns(data.interns);
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not update mentor");
+    } finally {
+      setMentorSaving(false);
     }
   }
 
@@ -898,6 +951,37 @@ export default function DashboardPage() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-6 space-y-3 md:col-span-2">
+                    <h3 className="text-sm font-semibold text-white">Mentor assignment</h3>
+                    <p className="text-xs text-slate-400">
+                      Pick a workspace teammate with a mentor or admin login. They receive mentor-facing emails (for
+                      example weekly progress feedback).
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center max-w-xl">
+                      <select
+                        className="w-full sm:flex-1 rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none disabled:opacity-50"
+                        value={selectedIntern.mentorId ?? ""}
+                        disabled={mentorSaving}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          void saveInternMentor(v === "" ? null : v);
+                        }}
+                        aria-busy={mentorSaving}
+                      >
+                        <option value="">No mentor assigned</option>
+                        {mentorOptions.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {(m.name ?? m.email) + " · " + m.email}
+                            {m.role === "MENTOR" ? " (mentor role)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                      {mentorSaving ? (
+                        <Loader2 className="h-5 w-5 shrink-0 animate-spin text-indigo-400" aria-hidden />
+                      ) : null}
                     </div>
                   </div>
               </div>

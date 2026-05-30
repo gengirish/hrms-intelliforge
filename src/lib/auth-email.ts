@@ -81,6 +81,45 @@ export async function sendVerificationEmail(email: string, name: string) {
   });
 }
 
+const ADMIN_INVITE_EXPIRY_DAYS = 7;
+
+export async function sendAdminInviteEmail(args: {
+  to: string;
+  rawToken: string;
+  recipientName?: string | null;
+  orgName: string;
+  workspaceRole: string;
+  isPromotion: boolean;
+}) {
+  const link = `${APP_URL}/accept-admin-invite?t=${encodeURIComponent(args.rawToken)}`;
+  const greeting = args.recipientName?.trim()
+    ? `Hi ${escapeHtml(args.recipientName.trim())}`
+    : "Hi";
+  const roleLabel =
+    args.workspaceRole === "MENTOR" ? "mentor" : "full workspace admin";
+  const lead = args.isPromotion
+    ? `<p>You've been invited to continue with <strong>${escapeHtml(args.orgName)}</strong> as a <strong>${escapeHtml(roleLabel)}</strong> using your existing intern email.</p>`
+    : `<p>You've been invited to join <strong>${escapeHtml(args.orgName)}</strong> on IntelliForge HRMS as a <strong>${escapeHtml(roleLabel)}</strong>.</p>`;
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: args.to,
+    subject: args.isPromotion
+      ? `Complete your move to team access — ${args.orgName}`
+      : `You're invited to IntelliForge HRMS — ${args.orgName}`,
+    html: `
+      <h2>${greeting},</h2>
+      ${lead}
+      <p>Click the button below to choose your password and activate your account:</p>
+      <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Accept invitation
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">This link expires in ${ADMIN_INVITE_EXPIRY_DAYS} days. If you didn't expect this, you can ignore this email.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export async function sendPasswordResetEmail(email: string, name?: string) {
   const token = generateToken();
   await storeToken(email, token, "PASSWORD_RESET");

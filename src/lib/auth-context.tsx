@@ -8,6 +8,8 @@ interface User {
   role?: string;
   name?: string;
   accountType: "admin" | "intern";
+  /** Workspace role when `accountType` is `admin`: full admin vs mentor-only. */
+  orgAdminRole?: "ADMIN" | "MENTOR";
 }
 
 interface AuthContextValue {

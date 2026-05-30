@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { action, internId, stipendPaise } = parsed.data;
+    const { action, internId, stipendPaise, mentorId: nextMentorId } = parsed.data;
 
     if (action === "update_stipend" && stipendPaise === undefined) {
       return NextResponse.json(
@@ -204,6 +204,25 @@ export async function POST(req: NextRequest) {
         data: { deactivated: false, deactivatedAt: null },
       });
       return NextResponse.json({ ok: true, deactivated: false });
+    }
+
+    if (action === "set_mentor") {
+      if (nextMentorId !== null) {
+        const mentor = await prisma.admin.findFirst({
+          where: { id: nextMentorId, orgId: admin.orgId },
+        });
+        if (!mentor) {
+          return NextResponse.json(
+            { error: "Selected mentor is not part of your organization." },
+            { status: 404 }
+          );
+        }
+      }
+      await prisma.intern.update({
+        where: { id: internId },
+        data: { mentorId: nextMentorId ?? null },
+      });
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });

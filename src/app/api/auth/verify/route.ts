@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signJWT, setAuthCookie } from "@/lib/auth";
+import { normalizeOrgAdminRole } from "@/lib/org-admin-roles";
 import { consumeToken } from "@/lib/auth-email";
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
@@ -55,7 +56,13 @@ export async function GET(req: Request) {
   }
 
   const role = admin ? "admin" : "intern";
-  const jwtToken = await signJWT({ userId: user.id, role, email });
+  const jwtToken = await signJWT({
+    userId: user.id,
+    role,
+    email,
+    orgId: admin?.orgId ?? undefined,
+    adminOrgRole: admin ? normalizeOrgAdminRole(admin.role) : undefined,
+  });
 
   const redirectUrl =
     tokenType === "EMAIL_VERIFY"

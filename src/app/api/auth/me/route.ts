@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { errorResponse } from "@/lib/api-utils";
+import { normalizeOrgAdminRole } from "@/lib/org-admin-roles";
 
 export async function GET() {
   const session = await getSession();
@@ -21,7 +22,14 @@ export async function GET() {
         403
       );
     }
-    return NextResponse.json({ user: { ...admin, accountType: "admin" } });
+    const orgAdminRole = normalizeOrgAdminRole(admin.role);
+    return NextResponse.json({
+      user: {
+        ...admin,
+        accountType: "admin",
+        orgAdminRole,
+      },
+    });
   }
 
   const intern = await prisma.intern.findUnique({

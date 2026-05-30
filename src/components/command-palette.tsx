@@ -74,7 +74,7 @@ export function CommandPalette() {
   }, [open]);
 
   const actions: CommandAction[] = useMemo(() => {
-    const items = getVisibleNav(user?.accountType);
+    const items = getVisibleNav(user?.accountType, user?.orgAdminRole ?? null);
     const navActions: CommandAction[] = items.map((item) => ({
       id: `nav:${item.href}`,
       label: item.label,
@@ -142,7 +142,7 @@ export function CommandPalette() {
       });
     }
     return navActions;
-  }, [user?.accountType, isSignedIn, router, close, signOut]);
+  }, [user?.accountType, user?.orgAdminRole, isSignedIn, router, close, signOut]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
