@@ -45,6 +45,34 @@ test.describe("Page Load", () => {
     expect(response!.status()).toBe(200);
   });
 
+  test("/weekly-progress resolves (unauthenticated: sign-in redirect or gate)", async ({
+    page,
+  }) => {
+    const response = await page.goto("/weekly-progress");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+    if (page.url().includes("/sign-in")) {
+      await expect(page.getByLabel("Email")).toBeVisible();
+    } else {
+      await expect(page.getByRole("heading", { name: /^Weekly progress$/i })).toBeVisible();
+    }
+  });
+
+  test("/dashboard/weekly-progress resolves (unauthenticated: sign-in redirect or gate)", async ({
+    page,
+  }) => {
+    const response = await page.goto("/dashboard/weekly-progress");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+    if (page.url().includes("/sign-in")) {
+      await expect(page.getByLabel("Email")).toBeVisible();
+    } else {
+      await expect(
+        page.getByRole("heading", { name: /Weekly progress review|Admin access required/i })
+      ).toBeVisible();
+    }
+  });
+
   test("/offer page loads (not 404)", async ({ page }) => {
     const response = await page.goto("/offer");
     expect(response).not.toBeNull();
