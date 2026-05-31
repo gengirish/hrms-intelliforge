@@ -13,10 +13,11 @@ test.describe("Responsive Design", () => {
     await page.goto("/");
     const hamburger = page.getByLabel(/open navigation menu/i);
     await hamburger.click();
-    const mobileNav = page.locator("#mobile-nav-menu");
+    const mobileNav = page.locator("#mobile-nav-drawer");
     await expect(mobileNav).toBeVisible();
-    await expect(mobileNav.getByText("Onboard")).toBeVisible();
-    await expect(mobileNav.getByText("Dashboard")).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: "Careers", exact: true })).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
   });
 
   test("desktop viewport hides hamburger menu", async ({ page }) => {
@@ -30,7 +31,7 @@ test.describe("Responsive Design", () => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
     await expect(page.getByText("Self-onboarding for new interns")).toBeVisible();
-    await expect(page.getByText("Log daily attendance with punch-in/out")).toBeVisible();
+    await expect(page.getByText(/Log daily attendance with a single tap/)).toBeVisible();
     await expect(page.getByText("Submit weekly task logs")).toBeVisible();
   });
 });

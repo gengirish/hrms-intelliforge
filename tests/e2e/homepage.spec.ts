@@ -10,17 +10,19 @@ test.describe("Homepage", () => {
   test("should display all three action cards with descriptions", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText("Self-onboarding for new interns")).toBeVisible();
-    await expect(page.getByText("Log daily attendance with punch-in/out")).toBeVisible();
+    await expect(
+      page.getByText(/Log daily attendance with a single tap/)
+    ).toBeVisible();
     await expect(page.getByText("Submit weekly task logs")).toBeVisible();
   });
 
   test("should have working navigation links in navbar", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");
-    const topNav = page.locator("nav").first();
-    await expect(topNav.getByText("Home", { exact: true })).toBeVisible();
-    await expect(topNav.getByText("Intern Onboarding", { exact: true })).toBeVisible();
-    await expect(topNav.getByText("Dashboard", { exact: true })).toBeVisible();
+    const topNav = page.locator("nav[aria-label='Primary']");
+    await expect(topNav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    await expect(topNav.getByRole("link", { name: "Careers", exact: true })).toBeVisible();
+    await expect(topNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
   });
 
   test("should have Start Onboarding CTA link", async ({ page }) => {
