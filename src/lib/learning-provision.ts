@@ -2,10 +2,8 @@
  * Learning provisioning & progress sync for HRMS ↔ IntelliForge Learning.
  *
  * Auto-provision triggers when an intern becomes ACTIVE (offer accepted).
- * Configure with:
- *   LEARNING_AUTO_ENROLL_COURSE_IDS=cuid1,cuid2
- *   LEARNING_AUTO_REGISTER_SESSION=AI Bootcamp
- *   LEARNING_AUTO_REGISTER_LIVE_SESSION_ID=cuid...
+ * Configure with LEARNING_AUTO_ENROLL_COURSE_SLUGS or LEARNING_AUTO_ENROLL_COURSE_IDS.
+ * See docs/LEARNING_SETUP.md and src/lib/learning-config.ts for production defaults.
  */
 
 import type { LearningEnrollment } from "@prisma/client";
@@ -21,24 +19,18 @@ import {
   isConfigured,
   LearningApiError,
 } from "@/lib/learning-client";
+import {
+  getAutoRegisterSession,
+  getAutoRegisterLiveSessionId,
+  resolveAutoEnrollCourseIds,
+} from "@/lib/learning-config";
 
-function parseCsvEnv(name: string): string[] {
-  const raw = process.env[name]?.trim();
-  if (!raw) return [];
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-export function getAutoEnrollCourseIds(): string[] {
-  return parseCsvEnv("LEARNING_AUTO_ENROLL_COURSE_IDS");
-}
-
-export function getAutoRegisterSession(): string | null {
-  return process.env.LEARNING_AUTO_REGISTER_SESSION?.trim() || null;
-}
-
-export function getAutoRegisterLiveSessionId(): string | null {
-  return process.env.LEARNING_AUTO_REGISTER_LIVE_SESSION_ID?.trim() || null;
-}
+export {
+  getAutoEnrollCourseIds,
+  getAutoEnrollCourseSlugs,
+  getAutoRegisterSession,
+  getAutoRegisterLiveSessionId,
+} from "@/lib/learning-config";
 
 export interface ProvisionResult {
   coursesEnrolled: number;
@@ -213,7 +205,9 @@ export async function provisionLearningForIntern(
     errors: [],
   };
 
-  const courseIds = getAutoEnrollCourseIds();
+  const { courseIds, errors: resolveErrors } = await resolveAutoEnrollCourseIds(listCourses);
+  result.errors.push(...resolveErrors);
+
   for (const courseId of courseIds) {
     try {
       const enrolled = await enrollInternInCourse({

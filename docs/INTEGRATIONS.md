@@ -27,8 +27,10 @@ behalf.
 | Var                                  | Notes                                                                 |
 | ------------------------------------ | --------------------------------------------------------------------- |
 | `LEARNING_AUTO_ENROLL_COURSE_IDS`    | Comma-separated Learning course IDs enrolled automatically            |
+| `LEARNING_AUTO_ENROLL_COURSE_SLUGS` | Comma-separated slugs (preferred). Defaults to intern onboarding courses — see `docs/LEARNING_SETUP.md` |
 | `LEARNING_AUTO_REGISTER_SESSION`     | Training session title for bootcamp registration via `/api/participants` |
 | `LEARNING_AUTO_REGISTER_LIVE_SESSION_ID` | Live session ID registered via `/api/v1/sessions/{id}/register`   |
+| `LEARNING_AUTO_ENROLL_DEFAULTS`    | Set `false` to disable built-in intern onboarding slug defaults       |
 
 Auto-provision runs when an intern's status changes to **ACTIVE** (offer
 accepted via dashboard, offer page, email reply, or WhatsApp). Failures are

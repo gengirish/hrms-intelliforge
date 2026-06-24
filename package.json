@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "stripe:check": "node scripts/stripe-setup-check.mjs",
+    "learning:catalog": "node scripts/learning-catalog.mjs",
     "clerk:login": "npx @clerk/clerk-cli@latest login",
     "clerk:link": "npx @clerk/clerk-cli@latest link --application app_3BctTh7vfehedWUUaGNAR0eMDaH",
     "clerk:env": "npx @clerk/clerk-cli@latest env pull --env-file .env.local"
