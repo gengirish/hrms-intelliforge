@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { getISTStartOfDay, isISTWeekday } from "@/lib/utils";
 
 const NOTIFY_CONCURRENCY = 15;
-
-function getISTStartOfDay() {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istNow = new Date(now.getTime() + istOffset);
-  istNow.setUTCHours(0, 0, 0, 0);
-  return new Date(istNow.getTime() - istOffset);
-}
 
 async function notifyInBatches(
   items: { id: string; email: string }[],
@@ -51,6 +44,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (!isISTWeekday()) {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        reason: "weekend",
+        sent: 0,
+        failed: 0,
+        total: 0,
+      });
+    }
+
     const activeInterns = await prisma.intern.findMany({
       where: { status: "ACTIVE", deactivated: false },
     });

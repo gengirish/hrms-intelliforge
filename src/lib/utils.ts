@@ -55,6 +55,15 @@ export function getISTDayKey(reference = new Date()): string {
   return reference.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 }
 
+/** Mon–Fri in Asia/Kolkata (interns are not nudged on weekends). */
+export function isISTWeekday(reference = new Date()): boolean {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+  }).format(reference);
+  return weekday !== "Sat" && weekday !== "Sun";
+}
+
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()
