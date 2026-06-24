@@ -80,7 +80,7 @@ export async function resolveAutoEnrollCourseIds(
       courses = await listCoursesFn();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load courses";
-      return { courseIds: [...ids], errors: [msg] };
+      return { courseIds: Array.from(ids), errors: [msg] };
     }
 
     for (const slug of slugs) {
@@ -93,5 +93,5 @@ export async function resolveAutoEnrollCourseIds(
     }
   }
 
-  return { courseIds: [...ids], errors };
+  return { courseIds: Array.from(ids), errors };
 }
