@@ -439,10 +439,14 @@ function DashboardTasksContent() {
                       className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none resize-none"
                     />
                     <div className="w-32">
-                      <label className="block text-xs text-slate-400 mb-1">
+                      <label
+                        htmlFor={`draft-hours-${draft.key}`}
+                        className="block text-xs text-slate-400 mb-1"
+                      >
                         Est. hours
                       </label>
                       <input
+                        id={`draft-hours-${draft.key}`}
                         type="number"
                         min="0.5"
                         max="40"
