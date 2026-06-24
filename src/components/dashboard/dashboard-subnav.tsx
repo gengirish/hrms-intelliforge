@@ -7,6 +7,7 @@ import {
   Briefcase,
   Clock,
   ClipboardSignature,
+  ClipboardList,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +21,11 @@ const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
     href: "/dashboard/weekly-progress",
     label: "Weekly progress",
     icon: ClipboardSignature,
+  },
+  {
+    href: "/dashboard/tasks",
+    label: "Weekly tasks",
+    icon: ClipboardList,
   },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },

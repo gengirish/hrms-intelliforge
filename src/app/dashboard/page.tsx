@@ -1100,9 +1100,19 @@ export default function DashboardPage() {
                 hidden={activeTab !== "tasks"}
                 className="glass-card p-6"
               >
-                  <h3 className="text-sm font-semibold text-white mb-4">
-                    Task Log
-                  </h3>
+                  <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                    <h3 className="text-sm font-semibold text-white">
+                      Task Log
+                    </h3>
+                    {selectedIntern.status === "ACTIVE" && (
+                      <Link
+                        href={`/dashboard/tasks?internId=${encodeURIComponent(selectedIntern.id)}`}
+                        className="text-xs font-medium text-indigo-400 hover:text-indigo-300"
+                      >
+                        Assign week tasks →
+                      </Link>
+                    )}
+                  </div>
                   {!selectedIntern.tasks ||
                   selectedIntern.tasks.length === 0 ? (
                     <p className="text-sm text-slate-400 text-center py-6">

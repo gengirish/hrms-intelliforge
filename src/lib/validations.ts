@@ -106,6 +106,27 @@ export const dailyPlanActionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
+export const adminWeekTasksSchema = z.object({
+  internId: z.string().min(1),
+  weekKey: z
+    .string()
+    .regex(/^\d{4}-W\d{2}$/, "Week must look like 2026-W22"),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(500),
+        description: z.string().max(2000).optional().default(""),
+        hours: z.coerce.number().min(0.5).max(40).optional().default(1),
+        status: z
+          .enum(["TODO", "IN_PROGRESS", "DONE"])
+          .optional()
+          .default("TODO"),
+      })
+    )
+    .min(1)
+    .max(30),
+});
+
 export const weeklyProgressBodySchema = z.object({
   accomplishments: z.string().max(8000),
   learningOutcomes: z.string().max(8000),
