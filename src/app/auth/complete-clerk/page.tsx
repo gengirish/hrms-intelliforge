@@ -25,30 +25,44 @@ function CompleteClerkInner() {
     (async () => {
       try {
         let body: { createOrg?: PendingOrgPayload } | undefined;
+        const pendingRaw = sessionStorage.getItem(PENDING_ORG_STORAGE_KEY);
 
-        if (mode === "create-org") {
-          const raw = sessionStorage.getItem(PENDING_ORG_STORAGE_KEY);
-          if (!raw) {
+        if (pendingRaw) {
+          try {
+            body = { createOrg: JSON.parse(pendingRaw) as PendingOrgPayload };
+          } catch {
             if (!cancelled) {
-              setError("Missing organization details. Start again from Create Organization.");
+              setError("Invalid organization details. Start again from Create Organization.");
             }
             return;
           }
-          body = { createOrg: JSON.parse(raw) as PendingOrgPayload };
+        } else if (mode === "create-org") {
+          if (!cancelled) {
+            setError("Missing organization details. Start again from Create Organization.");
+          }
+          return;
         }
 
         const res = await fetch("/api/auth/sync-clerk", {
           method: "POST",
           headers: body ? { "Content-Type": "application/json" } : undefined,
           body: body ? JSON.stringify(body) : undefined,
+          credentials: "same-origin",
         });
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         if (!res.ok) {
-          if (!cancelled) setError(data.error ?? "Could not link your account.");
+          if (!cancelled) {
+            setError(
+              data.error ??
+                (res.status >= 500
+                  ? "Server error while linking your account. Try again in a moment."
+                  : "Could not link your account.")
+            );
+          }
           return;
         }
 
-        if (mode === "create-org") {
+        if (body?.createOrg) {
           sessionStorage.removeItem(PENDING_ORG_STORAGE_KEY);
         }
 

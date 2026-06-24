@@ -1,4 +1,11 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function openInternSignInIfPresent(page: Page) {
+  const internSection = page.getByTestId("intern-sign-in");
+  if (await internSection.isVisible()) {
+    await internSection.locator("summary").click();
+  }
+}
 
 test.describe("Authentication", () => {
   test("sign-in page loads successfully (not 404)", async ({ page }) => {
@@ -32,17 +39,20 @@ test.describe("Authentication", () => {
 
   test("sign-in page has email and password fields", async ({ page }) => {
     await page.goto("/sign-in");
+    await openInternSignInIfPresent(page);
     await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
   });
 
   test("sign-in page has Sign In submit button", async ({ page }) => {
     await page.goto("/sign-in");
+    await openInternSignInIfPresent(page);
     await expect(page.getByRole("button", { name: /Sign In/i })).toBeVisible();
   });
 
   test("sign-in page has Send Magic Link button", async ({ page }) => {
     await page.goto("/sign-in");
+    await openInternSignInIfPresent(page);
     await expect(page.getByRole("button", { name: /Magic Link/i })).toBeVisible();
   });
 
@@ -82,11 +92,13 @@ test.describe("Authentication", () => {
 
   test("sign-in page has Forgot password link", async ({ page }) => {
     await page.goto("/sign-in");
+    await openInternSignInIfPresent(page);
     await expect(page.getByRole("link", { name: /Forgot password/i })).toBeVisible();
   });
 
   test("sign-in with invalid credentials shows error feedback", async ({ page }) => {
     await page.goto("/sign-in");
+    await openInternSignInIfPresent(page);
     await page.getByLabel("Email").fill("e2e-invalid@example.com");
     await page.getByLabel("Password", { exact: true }).fill("wrong-password-123");
     await page.getByRole("button", { name: /Sign In/i }).click();
