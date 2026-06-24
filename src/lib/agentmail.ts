@@ -138,6 +138,28 @@ export async function sendAttendanceNudge(
   });
 }
 
+export async function sendDailyPlanNudge(
+  internEmail: string,
+  internName: string
+) {
+  const inboxId = await getHRInboxId();
+  const today = new Date().toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  });
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: internEmail,
+    subject: `📋 Daily Task Plan Reminder — ${today}`,
+    html: `
+      <p>Hi ${escapeHtml(internName)},</p>
+      <p>You haven't submitted today's task plan yet. Plan your day and mark tasks as you complete them:</p>
+      <p><a href="${APP_URL}/daily-plan">
+        → Open Daily Task Plan
+      </a></p>
+      <p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export async function sendCourseEnrolledEmail(
   internEmail: string,
   internName: string,

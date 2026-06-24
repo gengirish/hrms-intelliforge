@@ -43,6 +43,18 @@ export function getISTDate(): Date {
   );
 }
 
+/** UTC instant for 00:00:00 on the current calendar day in Asia/Kolkata. */
+export function getISTStartOfDay(reference = new Date()): Date {
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istNow = new Date(reference.getTime() + istOffset);
+  istNow.setUTCHours(0, 0, 0, 0);
+  return new Date(istNow.getTime() - istOffset);
+}
+
+export function getISTDayKey(reference = new Date()): string {
+  return reference.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()

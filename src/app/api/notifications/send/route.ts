@@ -13,6 +13,7 @@ const sendSchema = z.object({
     "OFFER_LETTER",
     "TASK_REMINDER",
     "ATTENDANCE_NUDGE",
+    "DAILY_PLAN_NUDGE",
     "COMPLETION_CERT",
     "CUSTOM",
   ]),

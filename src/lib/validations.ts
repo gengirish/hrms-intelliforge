@@ -72,6 +72,40 @@ export const onboardSchema = z.object({
   whatsappOptIn: z.coerce.boolean().default(false),
 });
 
+export const dailyPlanItemSchema = z.object({
+  title: z.string().min(1).max(300),
+  description: z.string().max(1000).optional().default(""),
+});
+
+export const dailyPlanItemUpdateSchema = z.object({
+  itemId: z.string().min(1),
+  title: z.string().min(1).max(300).optional(),
+  description: z.string().max(1000).optional(),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
+});
+
+export const dailyPlanActionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("add"),
+    title: z.string().min(1).max(300),
+    description: z.string().max(1000).optional().default(""),
+  }),
+  z.object({
+    action: z.literal("update"),
+    itemId: z.string().min(1),
+    title: z.string().min(1).max(300).optional(),
+    description: z.string().max(1000).optional(),
+    status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
+  }),
+  z.object({
+    action: z.literal("delete"),
+    itemId: z.string().min(1),
+  }),
+  z.object({
+    action: z.literal("submit"),
+  }),
+]);
+
 export const weeklyProgressBodySchema = z.object({
   accomplishments: z.string().max(8000),
   learningOutcomes: z.string().max(8000),

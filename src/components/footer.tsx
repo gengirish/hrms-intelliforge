@@ -12,6 +12,7 @@ const quickLinks = [
   { href: "/careers", label: "Careers" },
   { href: "/intern-onboarding", label: "Intern Onboarding" },
   { href: "/attendance", label: "Attendance" },
+  { href: "/daily-plan", label: "Daily Plan" },
   { href: "/tasks", label: "Tasks" },
   { href: "/offer", label: "Offer Letter" },
 ];

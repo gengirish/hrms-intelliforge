@@ -9,6 +9,7 @@ import {
   sendOfferLetter,
   sendTaskReminder,
   sendAttendanceNudge,
+  sendDailyPlanNudge,
   sendCompletionEmail,
   sendCourseEnrolledEmail,
 } from "@/lib/agentmail";
@@ -25,6 +26,7 @@ export type NotificationType =
   | "OFFER_ACCEPTED"
   | "TASK_REMINDER"
   | "ATTENDANCE_NUDGE"
+  | "DAILY_PLAN_NUDGE"
   | "COMPLETION_CERT"
   | "COURSE_ENROLLED"
   | "CUSTOM";
@@ -65,6 +67,11 @@ function logFieldsForType(
       return {
         subject: `Attendance nudge — ${intern.name}`,
         body: `Attendance nudge for ${intern.name}; attendance URL: ${appUrl}/attendance`,
+      };
+    case DbNotificationType.DAILY_PLAN_NUDGE:
+      return {
+        subject: `Daily plan nudge — ${intern.name}`,
+        body: `Daily task plan nudge for ${intern.name}; daily plan URL: ${appUrl}/daily-plan`,
       };
     case DbNotificationType.COMPLETION_CERT:
       return {
@@ -156,6 +163,9 @@ export async function notify(
             break;
           case "ATTENDANCE_NUDGE":
             await sendAttendanceNudge(intern.email, intern.name);
+            break;
+          case "DAILY_PLAN_NUDGE":
+            await sendDailyPlanNudge(intern.email, intern.name);
             break;
           case "COMPLETION_CERT":
             await sendCompletionEmail(
@@ -253,6 +263,12 @@ export async function notify(
             "en",
             [intern.name, `${APP_URL}/attendance`]
           );
+          break;
+        case "DAILY_PLAN_NUDGE":
+          result = await sendWhatsAppTemplate(phone, "task_reminder", "en", [
+            intern.name,
+            `${APP_URL}/daily-plan`,
+          ]);
           break;
         case "COMPLETION_CERT":
           result = await sendWhatsAppTemplate(

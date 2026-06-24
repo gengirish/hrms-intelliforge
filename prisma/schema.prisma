@@ -45,11 +45,17 @@ enum NotificationType {
   OFFER_ACCEPTED
   TASK_REMINDER
   ATTENDANCE_NUDGE
+  DAILY_PLAN_NUDGE
   COMPLETION_CERT
   COURSE_ENROLLED
   WEEKLY_PROGRESS_SUBMITTED
   WEEKLY_PROGRESS_FEEDBACK
   CUSTOM
+}
+
+enum DailyPlanStatus {
+  DRAFT
+  SUBMITTED
 }
 
 enum WeeklyProgressStatus {
@@ -147,6 +153,7 @@ model Intern {
   documentVerifications   DocumentVerification[]
   learningEnrollments     LearningEnrollment[]
   weeklyProgressReports   WeeklyProgressReport[]
+  dailyTaskPlans          DailyTaskPlan[]
 
   @@index([orgId])
   @@index([status])
@@ -388,6 +395,38 @@ model LearningEnrollment {
   @@unique([internId, courseId])
   @@index([internId])
   @@map("learning_enrollments")
+}
+
+model DailyTaskPlan {
+  id          String           @id @default(cuid())
+  internId    String
+  date        DateTime
+  status      DailyPlanStatus  @default(DRAFT)
+  submittedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  intern Intern          @relation(fields: [internId], references: [id], onDelete: Cascade)
+  items  DailyTaskItem[]
+
+  @@unique([internId, date])
+  @@index([internId])
+  @@map("daily_task_plans")
+}
+
+model DailyTaskItem {
+  id          String     @id @default(cuid())
+  planId      String
+  title       String
+  description String     @default("")
+  status      TaskStatus @default(TODO)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  plan DailyTaskPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@map("daily_task_items")
 }
 
 model WeeklyProgressReport {
