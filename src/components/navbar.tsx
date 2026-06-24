@@ -224,13 +224,18 @@ export function Navbar() {
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/sign-in"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-brand-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                >
-                  <User className="h-4 w-4" aria-hidden="true" />
-                  Sign In
-                </Link>
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                  >
+                    <User className="h-4 w-4" aria-hidden="true" />
+                    Sign In
+                  </Link>
+                  <Link href="/create-org" className="btn-cta px-3.5 py-2 text-sm">
+                    Start free
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -352,14 +357,23 @@ export function Navbar() {
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/sign-in"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                >
-                  <User className="h-4 w-4" aria-hidden="true" />
-                  Sign In
-                </Link>
+                <>
+                  <Link
+                    href="/create-org"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full btn-cta py-2.5 text-sm"
+                  >
+                    Start free
+                  </Link>
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                  >
+                    <User className="h-4 w-4" aria-hidden="true" />
+                    Sign In
+                  </Link>
+                </>
               )}
             </div>
           </div>

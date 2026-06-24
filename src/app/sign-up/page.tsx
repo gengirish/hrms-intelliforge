@@ -1,14 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { SignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { isClerkEnabled } from "@/lib/clerk-config";
 
 export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">
+          Loading…
+        </div>
+      }
+    >
+      <SignUpBody />
+    </Suspense>
+  );
+}
+
+function SignUpBody() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/";
   const { refresh } = useAuth();
+  const clerkEnabled = isClerkEnabled();
 
   const [form, setForm] = useState({
     name: "",
@@ -17,12 +36,8 @@ export default function SignUpPage() {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [passwordShortError, setPasswordShortError] = useState<string | null>(
-    null
-  );
-  const [passwordMismatchError, setPasswordMismatchError] = useState<
-    string | null
-  >(null);
+  const [passwordShortError, setPasswordShortError] = useState<string | null>(null);
+  const [passwordMismatchError, setPasswordMismatchError] = useState<string | null>(null);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -87,6 +102,34 @@ export default function SignUpPage() {
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
+          {clerkEnabled && (
+            <>
+              <div className="flex flex-col items-center [&_.cl-card]:shadow-none [&_.cl-card]:bg-transparent [&_.cl-card]:border-0">
+                <SignUp
+                  routing="path"
+                  path="/sign-up"
+                  signInUrl="/sign-in"
+                  forceRedirectUrl={redirect}
+                  appearance={{
+                    variables: { colorPrimary: "#6366f1" },
+                    elements: {
+                      rootBox: "w-full mx-auto",
+                      card: "bg-transparent shadow-none border-0 p-0 w-full",
+                    },
+                  }}
+                />
+              </div>
+
+              <div className="my-8 flex items-center gap-3" aria-hidden="true">
+                <div className="flex-1 h-px bg-slate-700" />
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                  Or intern self-signup
+                </span>
+                <div className="flex-1 h-px bg-slate-700" />
+              </div>
+            </>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -118,7 +161,6 @@ export default function SignUpPage() {
               />
             </div>
 
-
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
                 Password
@@ -141,7 +183,10 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
                 Confirm Password
               </label>
               <input
@@ -172,7 +217,10 @@ export default function SignUpPage() {
 
         <p className="text-center text-sm text-slate-500 mt-6">
           Already have an account?{" "}
-          <Link href="/sign-in" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+          <Link
+            href="/sign-in"
+            className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+          >
             Sign in
           </Link>
         </p>

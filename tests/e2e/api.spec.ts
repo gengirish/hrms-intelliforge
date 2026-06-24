@@ -105,6 +105,11 @@ test.describe("API Cron Endpoints", () => {
     expect([401, 403, 500, 503]).toContain(response.status());
   });
 
+  test("GET /api/cron/daily-plan-nudge rejects without cron secret", async ({ request }) => {
+    const response = await request.get("/api/cron/daily-plan-nudge");
+    expect([401, 403, 500, 503]).toContain(response.status());
+  });
+
   test("GET /api/cron/task-reminder rejects without cron secret", async ({ request }) => {
     const response = await request.get("/api/cron/task-reminder");
     expect([401, 403, 500, 503]).toContain(response.status());
@@ -113,6 +118,53 @@ test.describe("API Cron Endpoints", () => {
   test("GET /api/cron/performance-scores rejects without cron secret", async ({ request }) => {
     const response = await request.get("/api/cron/performance-scores");
     expect([401, 403, 500, 503]).toContain(response.status());
+  });
+});
+
+test.describe("Daily Plan API (unauthenticated)", () => {
+  test("GET /api/daily-plan returns 401", async ({ request }) => {
+    const response = await request.get("/api/daily-plan");
+    expect(response.status()).toBe(401);
+  });
+
+  test("POST /api/daily-plan returns 401", async ({ request }) => {
+    const response = await request.post("/api/daily-plan", {
+      data: { action: "submit" },
+    });
+    expect(response.status()).toBe(401);
+  });
+});
+
+test.describe("Notifications API (unauthenticated)", () => {
+  test("GET /api/notifications blocks unauthenticated access", async ({ request }) => {
+    const response = await request.get("/api/notifications");
+    expect([401, 403]).toContain(response.status());
+  });
+
+  test("GET /api/notifications/preferences blocks unauthenticated access", async ({
+    request,
+  }) => {
+    const response = await request.get("/api/notifications/preferences");
+    expect([401, 403]).toContain(response.status());
+  });
+});
+
+test.describe("Learning API (unauthenticated)", () => {
+  test("GET /api/learning/courses blocks unauthenticated access", async ({ request }) => {
+    const response = await request.get("/api/learning/courses");
+    expect([401, 403]).toContain(response.status());
+  });
+});
+
+test.describe("Dashboard attendance API (unauthenticated)", () => {
+  test("GET /api/dashboard/attendance blocks unauthenticated access", async ({ request }) => {
+    const response = await request.get("/api/dashboard/attendance");
+    expect([401, 403]).toContain(response.status());
+  });
+
+  test("GET /api/dashboard/intern blocks unauthenticated access", async ({ request }) => {
+    const response = await request.get("/api/dashboard/intern");
+    expect([401, 403]).toContain(response.status());
   });
 });
 

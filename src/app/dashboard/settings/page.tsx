@@ -21,6 +21,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { DASHBOARD_PLANS } from "@/lib/pricing";
 
 interface OrgData {
   id: string;
@@ -36,12 +37,6 @@ interface OrgData {
   _count: { interns: number; admins: number };
 }
 
-const PLANS = [
-  { key: "free", name: "Free", price: "$0/mo", interns: 5, current: false },
-  { key: "starter", name: "Starter", price: "$29/mo", interns: 25, current: false },
-  { key: "growth", name: "Growth", price: "$79/mo", interns: 100, current: false },
-  { key: "enterprise", name: "Enterprise", price: "Custom", interns: "Unlimited", current: false },
-];
 
 interface TeamAdminRow {
   id: string;
@@ -620,7 +615,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {PLANS.map((plan) => {
+              {DASHBOARD_PLANS.map((plan) => {
                 const isCurrent = plan.key === org.plan;
                 return (
                   <div

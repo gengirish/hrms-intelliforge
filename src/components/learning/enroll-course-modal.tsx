@@ -33,6 +33,11 @@ export interface EnrollmentRecord {
   courseSlug: string | null;
   learningEnrollmentId: string | null;
   status: string;
+  progressTotal?: number | null;
+  progressCompleted?: number | null;
+  progressPercent?: number | null;
+  completedAt?: string | null;
+  lastSyncedAt?: string | null;
   enrolledAt: string;
 }
 

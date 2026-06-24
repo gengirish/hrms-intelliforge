@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthIntern } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { scheduleLearningProvision } from "@/lib/learning-provision";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +26,8 @@ export async function POST(req: NextRequest) {
       where: { id: intern.id },
       data: { status: "ACTIVE", acceptedAt: new Date() },
     });
+
+    scheduleLearningProvision(intern.id);
 
     return NextResponse.json({ ok: true, status: "ACTIVE" });
   } catch (err) {

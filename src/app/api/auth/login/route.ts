@@ -23,6 +23,12 @@ export async function POST(req: Request) {
 
     const admin = await prisma.admin.findUnique({ where: { email } });
     if (admin) {
+      if (!admin.passwordHash) {
+        return errorResponse(
+          "This account uses Clerk sign-in. Use the Clerk option on the sign-in page.",
+          401
+        );
+      }
       const valid = await verifyPassword(password, admin.passwordHash);
       if (!valid) return errorResponse("Invalid email or password", 401);
 

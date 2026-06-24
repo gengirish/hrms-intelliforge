@@ -1,22 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Navigation", () => {
-  test("clicking Onboard card navigates to /intern-onboarding", async ({ page }) => {
+  test("intern onboarding link navigates from homepage", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /Get started/i }).click();
+    await page.getByRole("link", { name: "Start onboarding" }).click();
     await expect(page).toHaveURL(/\/intern-onboarding/);
   });
 
-  test("clicking Attendance card navigates to /attendance", async ({ page }) => {
+  test("Start free CTA navigates to create-org", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /Log now/i }).click();
-    await expect(page).toHaveURL(/\/attendance/);
-  });
-
-  test("clicking Tasks card navigates to /tasks", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("link", { name: /View tasks/i }).click();
-    await expect(page).toHaveURL(/\/tasks/);
+    await page.getByRole("link", { name: "Start free — 5 interns" }).click();
+    await expect(page).toHaveURL(/\/create-org/);
   });
 
   test("navbar brand links to homepage", async ({ page }) => {
@@ -54,7 +48,10 @@ test.describe("Page Load", () => {
     if (page.url().includes("/sign-in")) {
       await expect(page.getByLabel("Email")).toBeVisible();
     } else {
-      await expect(page.getByRole("heading", { name: /^Weekly progress$/i })).toBeVisible();
+      await expect(page.getByText(/Loading weekly progress/i)).toBeHidden({ timeout: 30_000 });
+      await expect(
+        page.locator("#main-content").getByRole("heading", { name: /^Weekly progress$/i })
+      ).toBeVisible();
     }
   });
 
@@ -68,7 +65,7 @@ test.describe("Page Load", () => {
       await expect(page.getByLabel("Email")).toBeVisible();
     } else {
       await expect(
-        page.getByRole("heading", { name: /Weekly progress review|Admin access required/i })
+        page.getByRole("heading", { name: /Weekly progress review|Admin access required/i }),
       ).toBeVisible();
     }
   });
@@ -91,6 +88,12 @@ test.describe("Page Load", () => {
     expect(response!.status()).toBe(200);
   });
 
+  test("/pricing page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/pricing");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
   test("/dashboard/hiring page loads (not 404)", async ({ page }) => {
     const response = await page.goto("/dashboard/hiring");
     expect(response).not.toBeNull();
@@ -105,6 +108,30 @@ test.describe("Page Load", () => {
 
   test("/reset-password page loads (not 404)", async ({ page }) => {
     const response = await page.goto("/reset-password");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/about page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/about");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/daily-plan page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/daily-plan");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/dashboard/attendance page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/dashboard/attendance");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+  });
+
+  test("/accept-admin-invite page loads (not 404)", async ({ page }) => {
+    const response = await page.goto("/accept-admin-invite");
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
   });

@@ -18,9 +18,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        {
+          error:
+            "Billing is not configured on this deployment. Set STRIPE_SECRET_KEY and plan price IDs (see docs/STRIPE_SETUP.md).",
+        },
+        { status: 503 },
+      );
+    }
+
     const priceId = PLANS[plan].priceId;
     if (!priceId) {
-      return NextResponse.json({ error: "Price not configured" }, { status: 400 });
+      const planName = PLANS[plan].name;
+      const envKey = `STRIPE_${plan.toUpperCase()}_PRICE_ID`;
+      return NextResponse.json(
+        {
+          error: `The ${planName} plan is unavailable: ${envKey} is not set. Add the Stripe Price ID in your environment (see docs/STRIPE_SETUP.md).`,
+        },
+        { status: 503 },
+      );
     }
 
     const org = await prisma.organization.findUnique({ where: { id: session.orgId } });

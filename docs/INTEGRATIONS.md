@@ -11,7 +11,7 @@ live dropdown, and HRMS POSTs to Learning's v1 enrollment API on their
 behalf.
 
 - Source of truth: [`learning.intelliforge.tech`](https://learning.intelliforge.tech)
-- Repo (separate): `D:\codebase\training-feedback`
+- Repo (separate): `training-feedback` (local: `C:\Users\gengi\Documents\training-feedback`)
 - Identity bridge: `Intern.email` ↔ `enrollments.user_email`. There is **no**
   shared session — interns sign in to Learning independently.
 
@@ -21,6 +21,18 @@ behalf.
 | ------------------------- | :------: | ----------------------- | ------------------------------------------------------------- |
 | `LEARNING_API_KEY`        | yes      | Vercel: prod & preview  | Raw `ifk_...` key minted in Learning admin UI (`write` scope) |
 | `LEARNING_API_BASE_URL`   | no       | Vercel: prod & preview  | Defaults to `https://learning.intelliforge.tech`. Override for staging. |
+
+### Optional auto-provision (when intern becomes ACTIVE)
+
+| Var                                  | Notes                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| `LEARNING_AUTO_ENROLL_COURSE_IDS`    | Comma-separated Learning course IDs enrolled automatically            |
+| `LEARNING_AUTO_REGISTER_SESSION`     | Training session title for bootcamp registration via `/api/participants` |
+| `LEARNING_AUTO_REGISTER_LIVE_SESSION_ID` | Live session ID registered via `/api/v1/sessions/{id}/register`   |
+
+Auto-provision runs when an intern's status changes to **ACTIVE** (offer
+accepted via dashboard, offer page, email reply, or WhatsApp). Failures are
+logged but never block the status transition.
 
 If `LEARNING_API_KEY` is unset, the courses proxy returns `503` and the
 "Enroll in Learning" UI shows a friendly "integration not configured"
@@ -65,9 +77,21 @@ makes key rotation isolated.
 | Method | Path                          | Use                                         |
 | ------ | ----------------------------- | ------------------------------------------- |
 | GET    | `/api/v1/courses`             | Populate the course-picker dropdown         |
+| GET    | `/api/v1/enrollments?email=`  | Sync lesson progress into HRMS              |
 | POST   | `/api/v1/enrollments`         | Create an enrollment for `{email, course_id}` |
+| POST   | `/api/participants`           | Bootcamp / training session registration (no API key) |
+| GET    | `/api/v1/sessions?upcoming=`  | List live sessions (Learning repo)            |
+| POST   | `/api/v1/sessions/{id}/register` | Register learner for live session (Learning repo) |
 
-Both require `Authorization: Bearer <LEARNING_API_KEY>`. The POST is
+HRMS exposes:
+
+| Method | Path                    | Use                                      |
+| ------ | ----------------------- | ---------------------------------------- |
+| POST   | `/api/learning/sync`    | Admin-triggered progress sync for an intern |
+| POST   | `/api/learning/enroll`  | Manual course enrollment                 |
+| GET    | `/api/learning/courses` | Course catalog proxy                     |
+
+Both v1 GET/POST enrollment endpoints require `Authorization: Bearer <LEARNING_API_KEY>`. The POST is
 upsert on `(user_email, course_id)` so retries are safe; HRMS additionally
 holds a unique row in `learning_enrollments(internId, courseId)` for local
 idempotency and UI history.

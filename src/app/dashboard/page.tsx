@@ -197,6 +197,7 @@ export default function DashboardPage() {
     "overview" | "attendance" | "tasks" | "learning" | "emails" | "notifications" | "analytics"
   >("overview");
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [learningSyncLoading, setLearningSyncLoading] = useState(false);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [perfScores, setPerfScores] = useState<PerformanceScoreRecord[]>([]);
@@ -313,6 +314,39 @@ export default function DashboardPage() {
       }
     } catch {
       /* non-critical */
+    }
+  }
+
+  async function syncLearningProgress(internId: string, silent = false) {
+    setLearningSyncLoading(true);
+    try {
+      const res = await fetch("/api/learning/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ internId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to sync Learning progress");
+      }
+      setSelectedIntern((prev) =>
+        prev && prev.id === internId
+          ? { ...prev, learningEnrollments: data.enrollments ?? prev.learningEnrollments }
+          : prev
+      );
+      if (!silent) {
+        toast.success(
+          data.synced > 0
+            ? `Synced progress for ${data.synced} course${data.synced === 1 ? "" : "s"}`
+            : "Learning progress is up to date"
+        );
+      }
+    } catch (err) {
+      if (!silent) {
+        toast.error(err instanceof Error ? err.message : "Failed to sync Learning progress");
+      }
+    } finally {
+      setLearningSyncLoading(false);
     }
   }
 
@@ -789,6 +823,9 @@ export default function DashboardPage() {
                       if (tab.key === "analytics" && selectedIntern) {
                         loadAnalytics(selectedIntern.id);
                       }
+                      if (tab.key === "learning" && selectedIntern) {
+                        void syncLearningProgress(selectedIntern.id, true);
+                      }
                     }}
                     className={cn(
                       "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
@@ -1132,14 +1169,29 @@ export default function DashboardPage() {
                       <span className="text-slate-300">{selectedIntern.email}</span>.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setEnrollModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white transition-colors"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Enroll in a course
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => selectedIntern && syncLearningProgress(selectedIntern.id)}
+                      disabled={learningSyncLoading}
+                      className="inline-flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 px-3.5 py-2 text-sm font-medium text-slate-200 transition-colors"
+                    >
+                      {learningSyncLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                      Sync progress
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEnrollModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white transition-colors"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Enroll in a course
+                    </button>
+                  </div>
                 </div>
 
                 {!selectedIntern.learningEnrollments ||
@@ -1190,7 +1242,30 @@ export default function DashboardPage() {
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">
                               Enrolled {formatDateIST(enr.enrolledAt)}
+                              {enr.progressPercent != null && (
+                                <>
+                                  {" "}
+                                  &middot; {enr.progressCompleted ?? 0}/
+                                  {enr.progressTotal ?? 0} lessons (
+                                  {enr.progressPercent}%)
+                                </>
+                              )}
                             </p>
+                            {enr.progressPercent != null && (
+                              <div className="mt-2 h-1.5 w-full max-w-xs rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all",
+                                    enr.status === "completed"
+                                      ? "bg-emerald-500"
+                                      : "bg-indigo-500"
+                                  )}
+                                  style={{
+                                    width: `${Math.min(100, Math.max(0, enr.progressPercent))}%`,
+                                  }}
+                                />
+                              </div>
+                            )}
                           </div>
                           <a
                             href={courseLink}

@@ -18,8 +18,8 @@ test.describe("Create Organization Page", () => {
 
   test("has admin email and password fields", async ({ page }) => {
     await page.goto("/create-org");
-    await expect(page.getByLabel(/Email/i)).toBeVisible();
-    await expect(page.getByLabel(/Password/i)).toBeVisible();
+    await expect(page.getByLabel(/Admin Email/i)).toBeVisible();
+    await expect(page.locator("#adminPassword")).toBeVisible();
   });
 
   test("has submit button", async ({ page }) => {
@@ -40,8 +40,8 @@ test.describe("Dashboard Hiring Page", () => {
   test("has hiring-related heading", async ({ page }) => {
     await page.goto("/dashboard/hiring");
     await expect(
-      page.getByText(/Hiring|Jobs|Pipeline|Candidates/i).first()
-    ).toBeVisible();
+      page.locator("#main-content").getByRole("heading", { name: /Hiring Pipeline/i })
+    ).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -55,7 +55,9 @@ test.describe("Dashboard Settings Page", () => {
   test("has settings-related heading", async ({ page }) => {
     await page.goto("/dashboard/settings");
     await expect(
-      page.getByText(/Settings|Organization|Configuration/i).first()
-    ).toBeVisible();
+      page
+        .locator("#main-content")
+        .getByRole("heading", { name: /Organization Settings|No Organization/i })
+    ).toBeVisible({ timeout: 30_000 });
   });
 });

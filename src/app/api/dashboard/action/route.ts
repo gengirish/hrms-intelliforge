@@ -7,6 +7,7 @@ import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
 import { notify } from "@/lib/notifications";
+import { scheduleLearningProvision } from "@/lib/learning-provision";
 import { formatINR, formatDateIST } from "@/lib/utils";
 import React, { type ReactElement } from "react";
 
@@ -139,6 +140,8 @@ export async function POST(req: NextRequest) {
       } catch {
         // non-critical — status is already updated
       }
+
+      scheduleLearningProvision(internId, admin.id);
 
       return NextResponse.json({ ok: true, status: "ACTIVE" });
     }

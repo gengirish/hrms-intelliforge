@@ -13,6 +13,7 @@ import {
   Bell,
   Sparkles,
   Info,
+  CreditCard,
 } from "lucide-react";
 
 export type AccountType = "admin" | "intern";
@@ -41,6 +42,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Careers",
     icon: Sparkles,
     description: "Open roles at IntelliForge",
+    audience: ["public", "intern", "admin"],
+    group: "primary",
+  },
+  {
+    href: "/pricing",
+    label: "Pricing",
+    icon: CreditCard,
+    description: "Plans and pricing",
     audience: ["public", "intern", "admin"],
     group: "primary",
   },

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SignIn } from "@clerk/nextjs";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -13,6 +14,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { isClerkEnabled } from "@/lib/clerk-config";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -35,6 +37,8 @@ function SignInForm() {
   const verified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
   const { refresh } = useAuth();
+  const clerkEnabled = isClerkEnabled();
+  const clerkCompleteRedirect = `/auth/complete-clerk?redirect=${encodeURIComponent(redirect)}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -150,6 +154,35 @@ function SignInForm() {
           )}
 
           <div className="rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md p-7 sm:p-8 shadow-trust-card">
+            {clerkEnabled && (
+              <>
+                <div className="flex flex-col items-center [&_.cl-card]:shadow-none [&_.cl-card]:bg-transparent [&_.cl-card]:border-0 [&_.cl-footerAction]:hidden">
+                  <SignIn
+                    routing="path"
+                    path="/sign-in"
+                    signUpUrl="/sign-up"
+                    forceRedirectUrl={clerkCompleteRedirect}
+                    fallbackRedirectUrl={clerkCompleteRedirect}
+                    appearance={{
+                      variables: { colorPrimary: "#3b82f6" },
+                      elements: {
+                        rootBox: "w-full mx-auto",
+                        card: "bg-transparent shadow-none border-0 p-0 w-full",
+                      },
+                    }}
+                  />
+                </div>
+
+                <div className="my-8 flex items-center gap-3" aria-hidden="true">
+                  <div className="flex-1 h-px bg-slate-700" />
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                    Or email &amp; password
+                  </span>
+                  <div className="flex-1 h-px bg-slate-700" />
+                </div>
+              </>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-5" noValidate>
               <div>
                 <label

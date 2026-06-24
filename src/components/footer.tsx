@@ -8,8 +8,14 @@ import {
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 
-const quickLinks = [
+const productLinks = [
+  { href: "/pricing", label: "Pricing" },
+  { href: "/create-org", label: "Start free" },
   { href: "/careers", label: "Careers" },
+  { href: "/about", label: "About" },
+];
+
+const internLinks = [
   { href: "/intern-onboarding", label: "Intern Onboarding" },
   { href: "/attendance", label: "Attendance" },
   { href: "/daily-plan", label: "Daily Plan" },
@@ -57,14 +63,14 @@ export function Footer() {
       className="border-t border-slate-800 bg-slate-950"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="mb-4">
               <BrandMark href="/" />
             </div>
             <p className="text-sm text-slate-400 max-w-xs">
-              IntelliForge HRMS — Streamlined intern management for the AI age.
-              A product of{" "}
+              The internship OS for modern teams — onboarding, attendance,
+              offers, and cohort analytics in one workspace. A product of{" "}
               <a
                 href="https://www.intelliforge.tech"
                 target="_blank"
@@ -92,11 +98,27 @@ export function Footer() {
           </div>
 
           <div>
+            <h3 className="text-sm font-semibold text-white mb-3">Product</h3>
+            <ul className="space-y-2">
+              {productLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-slate-400 hover:text-brand-300 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
             <h3 className="text-sm font-semibold text-white mb-3">
-              Quick Links
+              Intern Portal
             </h3>
             <ul className="space-y-2">
-              {quickLinks.map((link) => (
+              {internLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

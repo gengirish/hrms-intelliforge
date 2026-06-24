@@ -27,11 +27,11 @@ test.describe("Responsive Design", () => {
     await expect(hamburger).not.toBeVisible();
   });
 
-  test("tablet viewport renders action card descriptions", async ({ page }) => {
+  test("tablet viewport renders homepage feature section", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await expect(page.getByText("Self-onboarding for new interns")).toBeVisible();
-    await expect(page.getByText(/Log daily attendance with a single tap/)).toBeVisible();
-    await expect(page.getByText("Submit weekly task logs")).toBeVisible();
+    await expect(page.getByText("Self-serve onboarding")).toBeVisible();
+    await expect(page.getByText("Attendance that sticks")).toBeVisible();
+    await expect(page.getByText("Offer letters on autopilot")).toBeVisible();
   });
 });

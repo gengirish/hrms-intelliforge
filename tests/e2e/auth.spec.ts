@@ -84,4 +84,15 @@ test.describe("Authentication", () => {
     await page.goto("/sign-in");
     await expect(page.getByRole("link", { name: /Forgot password/i })).toBeVisible();
   });
+
+  test("sign-in with invalid credentials shows error feedback", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByLabel("Email").fill("e2e-invalid@example.com");
+    await page.getByLabel("Password", { exact: true }).fill("wrong-password-123");
+    await page.getByRole("button", { name: /Sign In/i }).click();
+    await expect(page.locator("#login-error")).toContainText(/Invalid email or password/i, {
+      timeout: 15_000,
+    });
+    await expect(page).toHaveURL(/\/sign-in/);
+  });
 });

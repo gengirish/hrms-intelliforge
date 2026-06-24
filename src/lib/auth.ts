@@ -94,21 +94,51 @@ export function clearAuthCookie(response: NextResponse) {
   });
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyJWT(token);
-}
-
 export async function getSessionFromHeaders(): Promise<SessionPayload | null> {
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
   const role = hdrs.get("x-user-role") as "admin" | "intern" | null;
   const email = hdrs.get("x-user-email");
   const orgId = hdrs.get("x-user-org-id") ?? undefined;
+  const adminOrgRole = hdrs.get("x-user-admin-org-role") ?? undefined;
   if (!userId || !role || !email) return null;
-  return { sub: userId, role, email, orgId } as SessionPayload;
+  return { sub: userId, role, email, orgId, adminOrgRole } as SessionPayload;
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const fromHeaders = await getSessionFromHeaders();
+  if (fromHeaders?.sub) return fromHeaders;
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (token) {
+    const verified = await verifyJWT(token);
+    if (verified) return verified;
+  }
+
+  try {
+    const { auth, clerkClient } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+    if (!userId) return null;
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const { readHrmsFromPublicMetadata } = await import(
+      "@/lib/hrms-clerk-public-metadata"
+    );
+    const hrms = readHrmsFromPublicMetadata(
+      user.publicMetadata as Record<string, unknown>
+    );
+    if (!hrms) return null;
+    return {
+      sub: hrms.userId,
+      role: hrms.role,
+      email: hrms.email,
+      orgId: hrms.orgId,
+      adminOrgRole: hrms.adminOrgRole,
+    } as SessionPayload;
+  } catch {
+    return null;
+  }
 }
 
 export function getOrgId(session: SessionPayload): string | undefined {

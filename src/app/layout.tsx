@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import { OptionalClerkProvider } from "@/components/optional-clerk-provider";
 import { ServiceWorkerRegistrar } from "@/components/sw-register";
 import { AuthProvider } from "@/lib/auth-context";
 import { SkipToContent } from "@/components/skip-to-content";
@@ -15,12 +16,12 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const SITE_DESCRIPTION =
-  "Human Resource Management System for IntelliForge AI internship program. Onboard, track attendance, manage tasks, and more. A product of IntelliForge AI, founded by Girish Hiremath — aligned with the Bharat AI Mission.";
+  "IntelliForge HRMS — the internship OS for modern teams. Self-serve onboarding, attendance, offer letters, and cohort analytics. Start free with 5 interns. Multi-tenant SaaS with Stripe billing.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hrms.intelliforge.tech"),
   title: {
-    default: "IntelliForge HRMS — Intern Portal",
+    default: "IntelliForge HRMS — Internship OS for Modern Teams",
     template: "%s | IntelliForge HRMS",
   },
   description: SITE_DESCRIPTION,
@@ -35,18 +36,19 @@ export const metadata: Metadata = {
   publisher: "IntelliForge AI",
   keywords: [
     "HRMS",
-    "intern management",
-    "IntelliForge AI",
-    "Bharat AI Mission",
-    "AI agents",
+    "internship management",
+    "intern program software",
+    "micro SaaS",
+    "startup HR",
     "onboarding",
-    "attendance",
-    "Hyderabad",
-    "Girish Hiremath",
+    "attendance tracking",
+    "offer letter automation",
+    "WhatsApp HR",
+    "multi-tenant SaaS",
   ],
   category: "Business · Human Resources",
   openGraph: {
-    title: "IntelliForge HRMS — Intern Portal",
+    title: "IntelliForge HRMS — Internship OS for Modern Teams",
     description: SITE_DESCRIPTION,
     siteName: "IntelliForge HRMS",
     locale: "en_IN",
@@ -54,7 +56,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "IntelliForge HRMS — Intern Portal",
+    title: "IntelliForge HRMS — Internship OS for Modern Teams",
     description: SITE_DESCRIPTION,
   },
   manifest: "/manifest.json",
@@ -112,7 +114,7 @@ const organizationJsonLd = {
       applicationCategory: "BusinessApplication",
       url: "https://hrms.intelliforge.tech",
       description:
-        "Human Resource Management System for the IntelliForge AI internship program — onboarding, attendance, tasks, hiring and notifications.",
+        "Micro SaaS for running internship programs — self-serve onboarding, attendance, offer letters, WhatsApp nudges, and cohort analytics.",
       operatingSystem: "Web",
       publisher: {
         "@id": "https://www.intelliforge.tech/#organization",
@@ -139,10 +141,12 @@ export default function RootLayout({
           }}
         />
         <SkipToContent />
-        <AuthProvider>
-          {children}
-          <CommandPalette />
-        </AuthProvider>
+        <OptionalClerkProvider>
+          <AuthProvider>
+            {children}
+            <CommandPalette />
+          </AuthProvider>
+        </OptionalClerkProvider>
         <Toaster
           position="top-right"
           richColors

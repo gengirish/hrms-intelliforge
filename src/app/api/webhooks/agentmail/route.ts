@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { scheduleLearningProvision } from "@/lib/learning-provision";
 
 function parseSenderEmail(from: unknown): string | null {
   if (!from) return null;
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
           where: { id: intern.id },
           data: { acceptedAt: new Date(), status: "ACTIVE" },
         });
+        scheduleLearningProvision(intern.id);
         console.log(`Intern ${intern.name} auto-accepted via email reply`);
       }
     }

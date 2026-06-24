@@ -1,19 +1,17 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Homepage", () => {
-  test("should render hero section with correct title", async ({ page }) => {
+  test("should render hero section with SaaS positioning", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("IntelliForge HRMS");
-    await expect(page.locator("h1")).toContainText("Intern Portal");
+    await expect(page.locator("h1")).toContainText("Run internship programs");
+    await expect(page.locator("h1")).toContainText("spreadsheet chaos");
   });
 
-  test("should display all three action cards with descriptions", async ({ page }) => {
+  test("should display feature section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Self-onboarding for new interns")).toBeVisible();
-    await expect(
-      page.getByText(/Log daily attendance with a single tap/)
-    ).toBeVisible();
-    await expect(page.getByText("Submit weekly task logs")).toBeVisible();
+    await expect(page.getByText("Self-serve onboarding")).toBeVisible();
+    await expect(page.getByText("Attendance that sticks")).toBeVisible();
+    await expect(page.getByText("Offer letters on autopilot")).toBeVisible();
   });
 
   test("should have working navigation links in navbar", async ({ page }) => {
@@ -21,28 +19,35 @@ test.describe("Homepage", () => {
     await page.goto("/");
     const topNav = page.locator("nav[aria-label='Primary']");
     await expect(topNav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    await expect(topNav.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
     await expect(topNav.getByRole("link", { name: "Careers", exact: true })).toBeVisible();
     await expect(topNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
   });
 
-  test("should have Start Onboarding CTA link", async ({ page }) => {
+  test("should have Start free CTA linking to create-org", async ({ page }) => {
     await page.goto("/");
-    const cta = page.getByRole("link", { name: "Start Onboarding" });
+    const cta = page.getByRole("link", { name: "Start free — 5 interns" });
     await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", "/intern-onboarding");
+    await expect(cta).toHaveAttribute("href", "/create-org");
   });
 
-  test("should have Admin Dashboard CTA link", async ({ page }) => {
+  test("should have demo video section", async ({ page }) => {
     await page.goto("/");
-    const cta = page.getByRole("link", { name: "Admin Dashboard" });
-    await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", "/dashboard");
+    await expect(page.getByRole("heading", { name: "See it in 60 seconds" })).toBeVisible();
+    await expect(page.getByText("Watch 60-second demo")).toBeVisible();
   });
 
-  test("should show Sign In link when not authenticated", async ({ page }) => {
+  test("should have pricing section on homepage", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#pricing")).toBeVisible();
+    await expect(page.getByText("Start free. Scale when your cohort grows.")).toBeVisible();
+  });
+
+  test("should show Sign In and Start free when not authenticated", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");
     await expect(page.getByRole("link", { name: "Sign In" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
   });
 
   test("should have footer visible", async ({ page }) => {
@@ -50,8 +55,30 @@ test.describe("Homepage", () => {
     await expect(page.locator("footer")).toBeVisible();
   });
 
-  test("should display hero subtitle text", async ({ page }) => {
+  test("should display social proof testimonials", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Streamlined onboarding, attendance tracking")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Trusted by teams running intern programs" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Onboarding dropped from 3 days of back-and-forth emails/),
+    ).toBeVisible();
+  });
+
+  test("intern portal links are accessible from homepage", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "Start onboarding" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Intern sign in" })).toHaveAttribute(
+      "href",
+      "/sign-in",
+    );
+  });
+});
+
+test.describe("Pricing page", () => {
+  test("loads and shows plan cards", async ({ page }) => {
+    await page.goto("/pricing");
+    await expect(page.getByRole("heading", { name: /Pricing that scales/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
   });
 });

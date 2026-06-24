@@ -77,6 +77,43 @@ export interface LearningEnrollResult {
   alreadyEnrolled: boolean;
 }
 
+export interface LearningEnrollmentProgress {
+  total: number;
+  completed: number;
+  percentage: number;
+}
+
+export interface LearningEnrollmentDetail {
+  id: string;
+  user_email: string;
+  course_id: string;
+  course_title?: string;
+  course_slug?: string;
+  status: string;
+  enrolled_at: string;
+  completed_at?: string | null;
+  progress?: LearningEnrollmentProgress;
+}
+
+export interface LearningLiveSession {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  instructor: string;
+  registration_count: number;
+}
+
+export interface LearningParticipantRegistration {
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  organization?: string | null;
+  training_session: string;
+  referral_source?: string | null;
+}
+
 interface LearningCoursesResponse {
   courses: LearningCourse[];
 }
@@ -84,6 +121,21 @@ interface LearningCoursesResponse {
 interface LearningEnrollResponse {
   success: boolean;
   enrollment: LearningEnrollment;
+}
+
+interface LearningEnrollmentsResponse {
+  enrollments: LearningEnrollmentDetail[];
+}
+
+interface LearningLiveSessionsResponse {
+  sessions: LearningLiveSession[];
+}
+
+interface LearningLiveSessionRegisterResponse {
+  success?: boolean;
+  message?: string;
+  status?: string;
+  waitlist_position?: number;
 }
 
 async function request<T>(
@@ -199,4 +251,104 @@ export function courseUrl(slug: string): string {
  */
 export function isConfigured(): boolean {
   return !!process.env.LEARNING_API_KEY?.trim();
+}
+
+/**
+ * Fetch all enrollments for a learner email, including lesson progress.
+ */
+export async function getEnrollmentsByEmail(
+  email: string,
+  init?: { signal?: AbortSignal }
+): Promise<LearningEnrollmentDetail[]> {
+  const params = new URLSearchParams({ email });
+  const data = await request<LearningEnrollmentsResponse>(
+    "GET",
+    `/api/v1/enrollments?${params.toString()}`,
+    undefined,
+    init
+  );
+  return Array.isArray(data?.enrollments) ? data.enrollments : [];
+}
+
+/**
+ * Register a participant for a bootcamp / instructor-led training session
+ * via Learning's public participants API (no API key required).
+ */
+export async function registerParticipant(
+  data: LearningParticipantRegistration,
+  init?: { signal?: AbortSignal }
+): Promise<{ success: boolean; message?: string }> {
+  const url = `${getBaseUrl()}/api/participants`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone ?? null,
+        organization: data.organization ?? null,
+        training_session: data.training_session,
+        referral_source: data.referral_source ?? "hrms",
+      }),
+      signal: init?.signal,
+      cache: "no-store",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Network error";
+    throw new LearningApiError(0, `Failed to reach Learning participants API: ${message}`);
+  }
+
+  const text = await res.text();
+  let parsed: unknown;
+  try {
+    parsed = text.length > 0 ? JSON.parse(text) : undefined;
+  } catch {
+    parsed = text;
+  }
+
+  if (!res.ok) {
+    const errorMsg =
+      typeof parsed === "object" && parsed !== null && "error" in parsed
+        ? String((parsed as { error: unknown }).error)
+        : `Learning participants API failed with status ${res.status}`;
+    throw new LearningApiError(res.status, errorMsg, parsed);
+  }
+
+  return (parsed as { success: boolean; message?: string }) ?? { success: true };
+}
+
+/**
+ * List upcoming live sessions (requires API key with read scope).
+ */
+export async function listLiveSessions(
+  upcoming = true,
+  init?: { signal?: AbortSignal }
+): Promise<LearningLiveSession[]> {
+  const params = upcoming ? "?upcoming=true" : "";
+  const data = await request<LearningLiveSessionsResponse>(
+    "GET",
+    `/api/v1/sessions${params}`,
+    undefined,
+    init
+  );
+  return Array.isArray(data?.sessions) ? data.sessions : [];
+}
+
+/**
+ * Register a learner for a live session by email (requires write scope).
+ */
+export async function registerLiveSession(
+  sessionId: string,
+  email: string,
+  name: string,
+  init?: { signal?: AbortSignal }
+): Promise<LearningLiveSessionRegisterResponse> {
+  return request<LearningLiveSessionRegisterResponse>(
+    "POST",
+    `/api/v1/sessions/${encodeURIComponent(sessionId)}/register`,
+    { email, name },
+    init
+  );
 }

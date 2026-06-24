@@ -116,6 +116,8 @@ model AdminInvite {
 model Intern {
   id               String       @id @default(cuid())
   orgId            String
+  /// Clerk user id (`user_*`) when linked for Clerk sign-in.
+  clerkUserId      String?      @unique
   passwordHash     String?
   emailVerified    Boolean      @default(false)
   name             String
@@ -194,7 +196,10 @@ model Task {
 model Admin {
   id            String   @id @default(cuid())
   orgId         String
-  passwordHash  String
+  /// Null when the admin only signs in via Clerk (no password).
+  passwordHash  String?
+  /// Clerk user id (`user_*`) when linked for SSO / Clerk sign-in.
+  clerkUserId   String?  @unique
   emailVerified Boolean  @default(false)
   email         String   @unique
   name          String?
@@ -387,6 +392,10 @@ model LearningEnrollment {
   courseSlug           String?
   learningEnrollmentId String?
   status               String   @default("active")
+  progressTotal        Int?
+  progressCompleted    Int?
+  progressPercent      Int?
+  completedAt          DateTime?
   enrolledByAdminId    String?
   enrolledByAdmin      Admin?   @relation("AdminEnrolledLearners", fields: [enrolledByAdminId], references: [id], onDelete: SetNull)
   enrolledAt           DateTime @default(now())

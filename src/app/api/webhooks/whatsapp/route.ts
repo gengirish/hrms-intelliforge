@@ -9,6 +9,7 @@ import {
 import { formatDateIST } from "@/lib/utils";
 import { parseIntent } from "@/lib/wa-bot/intent-parser";
 import { executeIntent } from "@/lib/wa-bot/executor";
+import { scheduleLearningProvision } from "@/lib/learning-provision";
 
 function indicatesOfferAcceptance(text: string): boolean {
   const lower = text.toLowerCase();
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
               where: { id: intern.id },
               data: { status: "ACTIVE", acceptedAt: new Date() },
             });
+            scheduleLearningProvision(intern.id);
             await sendWhatsAppTemplate(e164, "offer_accepted", "en", [
               intern.name,
               formatDateIST(intern.startDate),
