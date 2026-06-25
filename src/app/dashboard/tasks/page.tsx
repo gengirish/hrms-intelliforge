@@ -10,6 +10,9 @@ import {
   Plus,
   Trash2,
   Save,
+  FileJson,
+  Upload,
+  Copy,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -19,6 +22,12 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { useAuth } from "@/lib/auth-context";
 import { cn, getCurrentISOWeek, getStatusColor } from "@/lib/utils";
+import {
+  parseTaskImportJson,
+  TASK_IMPORT_EXAMPLE,
+  TASK_BULK_IMPORT_EXAMPLE,
+  type ParsedTaskImport,
+} from "@/lib/admin-task-import";
 
 const WEEK_KEY_RE = /^\d{4}-W\d{2}$/;
 
@@ -126,6 +135,12 @@ function DashboardTasksContent() {
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [forbidden, setForbidden] = useState(false);
   const [drafts, setDrafts] = useState<DraftTask[]>([emptyDraft()]);
+  const [entryMode, setEntryMode] = useState<"manual" | "json">("manual");
+  const [jsonText, setJsonText] = useState(TASK_IMPORT_EXAMPLE);
+  const [importPreview, setImportPreview] = useState<ParsedTaskImport | null>(
+    null
+  );
+  const [importError, setImportError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -220,6 +235,141 @@ function DashboardTasksContent() {
     setDrafts((prev) =>
       prev.map((d) => (d.key === key ? { ...d, [field]: value } : d))
     );
+  }
+
+  function previewJsonImport() {
+    const result = parseTaskImportJson(jsonText, {
+      weekKey: week,
+      internId: internId || undefined,
+      internEmail: assignableInterns.find((i) => i.id === internId)?.email,
+    });
+    if (!result.ok) {
+      setImportPreview(null);
+      setImportError(result.error);
+      return;
+    }
+    setImportError(null);
+    setImportPreview(result.data);
+    toast.success("JSON looks valid — review preview below");
+  }
+
+  function loadJsonIntoForm() {
+    const result = parseTaskImportJson(jsonText, {
+      weekKey: week,
+      internId: internId || undefined,
+      internEmail: assignableInterns.find((i) => i.id === internId)?.email,
+    });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    if (result.data.mode === "bulk") {
+      toast.error("Bulk JSON cannot load into the manual form — use Import JSON");
+      return;
+    }
+    const single = result.data;
+    if (single.internEmail && !single.internId) {
+      const match = assignableInterns.find(
+        (i) => i.email.toLowerCase() === single.internEmail!.toLowerCase()
+      );
+      if (match) setInternId(match.id);
+    }
+    if (single.weekKey) setWeek(single.weekKey);
+    setDrafts(
+      single.tasks.map((t) => ({
+        key: crypto.randomUUID(),
+        title: t.title,
+        description: t.description ?? "",
+        hours: String(t.hours ?? 1),
+      }))
+    );
+    setEntryMode("manual");
+    toast.success(`Loaded ${single.tasks.length} task(s) into the form`);
+  }
+
+  async function importFromJson() {
+    const result = parseTaskImportJson(jsonText, {
+      weekKey: week,
+      internId: internId || undefined,
+      internEmail: assignableInterns.find((i) => i.id === internId)?.email,
+    });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let body: Record<string, unknown>;
+      if (result.data.mode === "bulk") {
+        body = {
+          weekKey: result.data.weekKey ?? week,
+          assignments: result.data.assignments,
+        };
+      } else {
+        body = {
+          weekKey: result.data.weekKey,
+          internId: result.data.internId,
+          internEmail: result.data.internEmail,
+          tasks: result.data.tasks,
+        };
+      }
+
+      const res = await fetch("/api/dashboard/tasks/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 401 || res.status === 403) {
+        toast.error("You don't have permission to import tasks");
+        return;
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Import failed");
+      }
+      const data = await res.json();
+      if (data.mode === "bulk") {
+        toast.success(
+          `Imported ${data.totalTasks} task(s) for ${data.results.length} intern(s)`
+        );
+        if (data.errors?.length) {
+          toast.error(data.errors.slice(0, 3).join("; "));
+        }
+      } else {
+        toast.success(`Imported ${data.count} task(s) for week ${data.weekKey}`);
+        if (data.internId) setInternId(data.internId);
+        if (data.weekKey) setWeek(data.weekKey);
+        await loadTasks(data.internId, data.weekKey);
+      }
+      setImportPreview(null);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Import failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleJsonFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? "");
+      setJsonText(text);
+      setImportPreview(null);
+      setImportError(null);
+      toast.success(`Loaded ${file.name}`);
+    };
+    reader.onerror = () => toast.error("Could not read file");
+    reader.readAsText(file);
+  }
+
+  async function copyExample(example: string) {
+    try {
+      await navigator.clipboard.writeText(example);
+      toast.success("Example copied to clipboard");
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
   }
 
   async function assignTasks() {
@@ -332,8 +482,26 @@ function DashboardTasksContent() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Assign weekly tasks</h1>
           <p className="mt-1 text-slate-400">
-            Add tasks for an intern&apos;s whole week. They appear on the intern&apos;s Tasks page.
+            Add tasks manually or import JSON for one intern or many at once.
           </p>
+        </div>
+
+        <div className="flex rounded-lg border border-slate-700 overflow-hidden mb-6 w-fit">
+          {(["manual", "json"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setEntryMode(mode)}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors capitalize",
+                entryMode === mode
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              {mode === "manual" ? "Manual rows" : "JSON import"}
+            </button>
+          ))}
         </div>
 
         <div className="glass-card p-6 mb-6 space-y-4">
@@ -383,7 +551,145 @@ function DashboardTasksContent() {
           </div>
         </div>
 
-        {internId && (
+        {entryMode === "json" && (
+          <div className="glass-card p-6 mb-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <FileJson className="h-5 w-5 text-indigo-400" />
+                Import tasks from JSON
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void copyExample(TASK_IMPORT_EXAMPLE)}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2 py-1 rounded border border-slate-700"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Single intern example
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void copyExample(TASK_BULK_IMPORT_EXAMPLE)}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2 py-1 rounded border border-slate-700"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Bulk example
+                </button>
+                <label className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2 py-1 rounded border border-slate-700 cursor-pointer">
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload .json
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleJsonFile(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Paste a task array, a single-intern object with{" "}
+              <code className="text-slate-300">tasks</code>, or bulk{" "}
+              <code className="text-slate-300">assignments</code> for many interns.
+              If week/intern are selected above, a plain{" "}
+              <code className="text-slate-300">tasks</code> array is enough.
+            </p>
+
+            <textarea
+              value={jsonText}
+              onChange={(e) => {
+                setJsonText(e.target.value);
+                setImportPreview(null);
+                setImportError(null);
+              }}
+              rows={14}
+              spellCheck={false}
+              className="w-full rounded-lg bg-slate-950/60 border border-slate-700 px-4 py-3 font-mono text-xs text-emerald-100/90 focus:border-indigo-500 outline-none resize-y"
+            />
+
+            {importError && (
+              <p className="text-sm text-red-400">{importError}</p>
+            )}
+
+            {importPreview && (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-4 text-sm text-slate-300">
+                {importPreview.mode === "bulk" ? (
+                  <>
+                    <p className="font-medium text-emerald-400 mb-2">
+                      Bulk import: {importPreview.assignments.length} intern(s),{" "}
+                      {importPreview.assignments.reduce(
+                        (n, a) => n + a.tasks.length,
+                        0
+                      )}{" "}
+                      task(s)
+                    </p>
+                    <ul className="space-y-1 text-xs">
+                      {importPreview.assignments.map((a, i) => (
+                        <li key={i}>
+                          {a.internEmail ?? a.internId} — {a.tasks.length} task(s)
+                          {a.weekKey ? ` · ${a.weekKey}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-emerald-400 mb-1">
+                      Single intern: {importPreview.tasks.length} task(s)
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Week {importPreview.weekKey}
+                      {importPreview.internEmail
+                        ? ` · ${importPreview.internEmail}`
+                        : importPreview.internId
+                          ? ` · ${importPreview.internId}`
+                          : ""}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={previewJsonImport}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                Validate JSON
+              </button>
+              {importPreview?.mode === "single" && (
+                <button
+                  type="button"
+                  onClick={loadJsonIntoForm}
+                  className="rounded-lg border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-300 hover:bg-indigo-500/10 transition-colors"
+                >
+                  Load into manual form
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => void importFromJson()}
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-6 py-2 text-sm font-semibold text-white transition-colors"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                Import & assign
+              </button>
+            </div>
+          </div>
+        )}
+
+        {entryMode === "manual" && internId && (
           <>
             <div className="glass-card p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -476,8 +782,11 @@ function DashboardTasksContent() {
                 Assign tasks for week
               </button>
             </div>
+          </>
+        )}
 
-            <div className="glass-card p-6">
+        {(entryMode === "manual" || entryMode === "json") && internId && (
+          <div className="glass-card p-6">
               <h2 className="text-lg font-semibold text-white mb-4">
                 Tasks already assigned ({week})
               </h2>
@@ -537,10 +846,9 @@ function DashboardTasksContent() {
                 </div>
               )}
             </div>
-          </>
         )}
 
-        {!internId && !loadingInterns && (
+        {entryMode === "manual" && !internId && !loadingInterns && (
           <div className="glass-card p-8 text-center text-sm text-slate-400">
             {assignableInterns.length === 0
               ? "No active interns available to assign tasks."
