@@ -1,4 +1,5 @@
-import { Quote, Sparkles, ShieldCheck, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Quote, Sparkles, ShieldCheck, MapPin, ArrowRight } from "lucide-react";
 
 const partnerBadges = [
   { icon: Sparkles, label: "IntelliForge AI" },
@@ -18,19 +19,11 @@ const testimonials = [
   },
   {
     quote:
-      "We built HRMS because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — the same stack we ship to teams scaling intern programs.",
+      "We built HRMS because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — built for programs like ours.",
     name: "Girish Hiremath",
     role: "Founder, IntelliForge AI",
     initials: "GH",
     tag: null,
-  },
-  {
-    quote:
-      "Before IntelliForge HRMS, we lost the first week of every batch fixing bad data. Offer letters went out in bulk on day zero; attendance reconciled itself. We got 18 hours back per cohort start.",
-    name: "Program Ops Lead",
-    role: "AI accelerator cohort · 120 interns/quarter",
-    initials: "PO",
-    tag: "Example · Early adopter",
   },
 ] as const;
 
@@ -48,11 +41,11 @@ export function SocialProof() {
           id="social-proof-heading"
           className="text-2xl sm:text-3xl font-bold text-white"
         >
-          Trusted by teams running intern programs
+          Built in production for our own cohort
         </h2>
         <p className="mt-3 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-          Built in production for our own cohort first — then opened to programs
-          that need the same outcomes, not another spreadsheet.
+          Dogfooded on IntelliForge&apos;s 500+ intern program — now opening to a
+          small number of design partners who run real cohorts.
         </p>
       </div>
 
@@ -108,6 +101,23 @@ export function SocialProof() {
             </figcaption>
           </figure>
         ))}
+        <div className="trust-card p-6 flex flex-col h-full border-dashed border-brand-500/30">
+          <span className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-300 w-fit mb-4">
+            Beta · Design partners
+          </span>
+          <p className="flex-1 text-sm text-slate-300 leading-relaxed">
+            We&apos;re onboarding a handful of programs running real intern
+            cohorts — not fabricated case studies. Get early access, direct
+            founder support, and help shape the roadmap.
+          </p>
+          <Link
+            href="/create-org"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand-300 hover:text-brand-200 transition-colors pt-5 border-t border-slate-800"
+          >
+            Apply as a design partner
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </section>
   );

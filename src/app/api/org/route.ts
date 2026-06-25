@@ -11,7 +11,10 @@ const createOrgSchema = z.object({
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes"),
   adminEmail: z.string().email(),
   adminPassword: z.string().min(8),
-  adminName: z.string().min(2).max(100).optional(),
+  adminName: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.string().min(2).max(100).optional()
+  ),
 });
 
 const updateOrgSchema = z.object({

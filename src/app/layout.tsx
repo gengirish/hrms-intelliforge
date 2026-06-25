@@ -15,7 +15,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const SITE_DESCRIPTION =
-  "IntelliForge HRMS — the internship OS for modern teams. Self-serve onboarding, attendance, offer letters, and cohort analytics. Start free with 5 interns. Multi-tenant SaaS with Stripe billing.";
+  "IntelliForge HRMS — internship OS dogfooded on our 500+ intern cohort. Self-serve onboarding, attendance, offer letters, and cohort analytics. Start free with 5 interns.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hrms.intelliforge.tech"),

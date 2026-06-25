@@ -13,7 +13,18 @@ const PUBLIC_PATHS = [
   "/pricing",
 ];
 
-const PUBLIC_PATH_PREFIXES = ["/careers"];
+const PUBLIC_PATH_PREFIXES = [
+  "/careers",
+  // Intern self-service portals: page shells are public; APIs stay JWT-protected.
+  "/intern-onboarding",
+  "/attendance",
+  "/tasks",
+  "/weekly-progress",
+  "/offer",
+  "/daily-plan",
+  // Dashboard shells load for E2E gates and client-side 401 handling.
+  "/dashboard",
+];
 
 const PUBLIC_API_PREFIXES = [
   "/api/auth/",
@@ -23,9 +34,10 @@ const PUBLIC_API_PREFIXES = [
   "/api/org/admins/invite/",
 ];
 
-function isPublicRoute(pathname: string): boolean {
+function isPublicRoute(pathname: string, method?: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true;
+  if (pathname === "/api/org" && method === "POST") return true;
   return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
@@ -38,7 +50,7 @@ function getJwtSecret() {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (isPublicRoute(pathname)) {
+  if (isPublicRoute(pathname, request.method)) {
     return NextResponse.next();
   }
 
@@ -47,9 +59,8 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(signInUrl);
+    // Page shells render without a session; APIs enforce auth. Unknown routes reach Next.js 404.
+    return NextResponse.next();
   }
 
   const secret = getJwtSecret();

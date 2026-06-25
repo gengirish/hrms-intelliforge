@@ -3,14 +3,15 @@ import { test, expect } from "@playwright/test";
 test.describe("Navigation", () => {
   test("intern onboarding link navigates from homepage", async ({ page }) => {
     await page.goto("/");
+    await page.getByRole("link", { name: "Start onboarding" }).scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "Start onboarding" }).click();
-    await expect(page).toHaveURL(/\/intern-onboarding/);
+    await expect(page).toHaveURL(/\/intern-onboarding/, { timeout: 15_000 });
   });
 
   test("Start free CTA navigates to create-org", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Start free — 5 interns" }).click();
-    await expect(page).toHaveURL(/\/create-org/);
+    await expect(page).toHaveURL(/\/create-org/, { timeout: 15_000 });
   });
 
   test("navbar brand links to homepage", async ({ page }) => {

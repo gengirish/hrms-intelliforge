@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { useAuth } from "@/lib/auth-context";
 
 export default function CreateOrgPage() {
   const router = useRouter();
+  const { refresh } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     orgName: "",
@@ -42,6 +44,7 @@ export default function CreateOrgPage() {
       const res = await fetch("/api/org", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify(form),
       });
 
@@ -52,7 +55,9 @@ export default function CreateOrgPage() {
       }
 
       toast.success("Organization created! Redirecting to dashboard...");
+      await refresh();
       router.push("/dashboard");
+      router.refresh();
     } catch {
       toast.error("Something went wrong");
     } finally {

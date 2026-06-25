@@ -9,7 +9,6 @@ import {
   Bell,
   BarChart3,
   Zap,
-  Building2,
   CheckCircle2,
   MessageSquare,
 } from "lucide-react";
@@ -22,9 +21,9 @@ import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 const stats = [
-  { value: "500+", label: "Interns managed" },
+  { value: "500+", label: "Intern cohort we run on HRMS" },
   { value: "< 2 min", label: "Workspace setup" },
-  { value: "99.9%", label: "Uptime SLA" },
+  { value: "60s", label: "Per-intern onboarding" },
 ];
 
 const features = [
@@ -59,10 +58,10 @@ const features = [
       "Task logs, mentor reviews, and score dashboards — see who's thriving before demo day.",
   },
   {
-    icon: Building2,
-    title: "Multi-tenant by design",
+    icon: MessageSquare,
+    title: "WhatsApp-native ops",
     description:
-      "Each org is isolated at the database level. Run bootcamps, agencies, or corporate cohorts.",
+      "Attendance nudges, offer acceptances, and cohort reminders where interns already are — not lost in email threads.",
   },
 ];
 
@@ -74,15 +73,15 @@ const steps = [
   },
   {
     step: "02",
-    title: "Publish & onboard",
+    title: "Hire & onboard",
     description:
-      "Share your careers page. Interns self-register; you send offers from the dashboard.",
+      "Publish your careers page. Send offers on WhatsApp or email; interns self-onboard in one flow.",
   },
   {
     step: "03",
     title: "Run the cohort",
     description:
-      "Attendance, tasks, and progress reviews run on autopilot with smart nudges.",
+      "Attendance, tasks, and weekly scores on autopilot — with nudges on WhatsApp and email.",
   },
 ];
 
@@ -114,23 +113,24 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="badge-trust mb-6 animate-stat-reveal inline-flex">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Internship OS · Built in India, global-ready</span>
+                <span>Internship OS · WhatsApp-native · Built in India</span>
               </div>
 
               <h1
                 id="hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance"
               >
-                <span className="text-white">Run internship programs</span>
+                <span className="text-white">Run intern cohorts on WhatsApp + email</span>
                 <br />
                 <span className="gradient-text">without the spreadsheet chaos</span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl leading-relaxed">
-                IntelliForge HRMS is the micro SaaS for teams running intern
-                cohorts — onboarding, attendance, offers, and weekly reviews in
-                one auditable workspace. Self-serve signup. Stripe billing. Live
-                in minutes.
+                IntelliForge HRMS is the internship OS for cohort-based programs —
+                hire, onboard, track attendance, and score weekly progress in one
+                auditable workspace. Nudges and offers go out on WhatsApp and
+                email. Spot attrition risk before demo day. Self-serve signup;
+                live in minutes.
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
@@ -150,7 +150,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Multi-tenant isolation
+                  Attrition alerts before demo day
                 </li>
                 <li className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
