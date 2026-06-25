@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (admin) {
       if (!admin.passwordHash) {
         return errorResponse(
-          "This account uses Clerk sign-in. Use the Clerk option on the sign-in page.",
+          "No password is set for this account. Use Forgot password or contact your workspace admin.",
           401
         );
       }

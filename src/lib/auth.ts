@@ -111,34 +111,8 @@ export async function getSession(): Promise<SessionPayload | null> {
 
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (token) {
-    const verified = await verifyJWT(token);
-    if (verified) return verified;
-  }
-
-  try {
-    const { auth, clerkClient } = await import("@clerk/nextjs/server");
-    const { userId } = await auth();
-    if (!userId) return null;
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-    const { readHrmsFromPublicMetadata } = await import(
-      "@/lib/hrms-clerk-public-metadata"
-    );
-    const hrms = readHrmsFromPublicMetadata(
-      user.publicMetadata as Record<string, unknown>
-    );
-    if (!hrms) return null;
-    return {
-      sub: hrms.userId,
-      role: hrms.role,
-      email: hrms.email,
-      orgId: hrms.orgId,
-      adminOrgRole: hrms.adminOrgRole,
-    } as SessionPayload;
-  } catch {
-    return null;
-  }
+  if (!token) return null;
+  return verifyJWT(token);
 }
 
 export function getOrgId(session: SessionPayload): string | undefined {

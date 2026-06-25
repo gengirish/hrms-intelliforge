@@ -7,15 +7,9 @@ import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import {
-  isClerkEnabled,
-  PENDING_ORG_STORAGE_KEY,
-  type PendingOrgPayload,
-} from "@/lib/clerk-config";
 
 export default function CreateOrgPage() {
   const router = useRouter();
-  const clerkEnabled = isClerkEnabled();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     orgName: "",
@@ -36,7 +30,7 @@ export default function CreateOrgPage() {
     }
   }
 
-  async function handleLegacySubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (form.adminPassword.length < 8) {
       toast.error("Password must be at least 8 characters");
@@ -66,25 +60,6 @@ export default function CreateOrgPage() {
     }
   }
 
-  function handleClerkSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.orgName.trim() || !form.slug.trim()) {
-      toast.error("Organization name and slug are required");
-      return;
-    }
-
-    const pending: PendingOrgPayload = {
-      orgName: form.orgName.trim(),
-      slug: form.slug.trim(),
-      adminName: form.adminName.trim() || undefined,
-    };
-
-    sessionStorage.setItem(PENDING_ORG_STORAGE_KEY, JSON.stringify(pending));
-
-    const completeUrl = `/auth/complete-clerk?mode=create-org&redirect=${encodeURIComponent("/dashboard")}`;
-    router.push(`/sign-up?redirect=${encodeURIComponent(completeUrl)}`);
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -100,10 +75,7 @@ export default function CreateOrgPage() {
             </p>
           </div>
 
-          <form
-            onSubmit={clerkEnabled ? handleClerkSubmit : handleLegacySubmit}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
               <div>
                 <label htmlFor="orgName" className="block text-sm font-medium text-slate-300 mb-1">
@@ -159,52 +131,41 @@ export default function CreateOrgPage() {
                 />
               </div>
 
-              {!clerkEnabled && (
-                <>
-                  <div>
-                    <label
-                      htmlFor="adminEmail"
-                      className="block text-sm font-medium text-slate-300 mb-1"
-                    >
-                      Admin Email
-                    </label>
-                    <input
-                      id="adminEmail"
-                      type="email"
-                      required
-                      value={form.adminEmail}
-                      onChange={(e) => update("adminEmail", e.target.value)}
-                      placeholder="admin@acme.com"
-                      className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
-                    />
-                  </div>
+              <div>
+                <label
+                  htmlFor="adminEmail"
+                  className="block text-sm font-medium text-slate-300 mb-1"
+                >
+                  Admin Email
+                </label>
+                <input
+                  id="adminEmail"
+                  type="email"
+                  required
+                  value={form.adminEmail}
+                  onChange={(e) => update("adminEmail", e.target.value)}
+                  placeholder="admin@acme.com"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+              </div>
 
-                  <div>
-                    <label
-                      htmlFor="adminPassword"
-                      className="block text-sm font-medium text-slate-300 mb-1"
-                    >
-                      Password
-                    </label>
-                    <input
-                      id="adminPassword"
-                      type="password"
-                      required
-                      value={form.adminPassword}
-                      onChange={(e) => update("adminPassword", e.target.value)}
-                      placeholder="Min 8 characters"
-                      className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
-                    />
-                  </div>
-                </>
-              )}
-
-              {clerkEnabled && (
-                <p className="text-xs text-slate-500">
-                  You&apos;ll create your account with Clerk on the next step. Your verified email
-                  becomes the workspace admin email.
-                </p>
-              )}
+              <div>
+                <label
+                  htmlFor="adminPassword"
+                  className="block text-sm font-medium text-slate-300 mb-1"
+                >
+                  Password
+                </label>
+                <input
+                  id="adminPassword"
+                  type="password"
+                  required
+                  value={form.adminPassword}
+                  onChange={(e) => update("adminPassword", e.target.value)}
+                  placeholder="Min 8 characters"
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors text-sm"
+                />
+              </div>
             </div>
 
             <button
@@ -217,8 +178,6 @@ export default function CreateOrgPage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Creating...
                 </>
-              ) : clerkEnabled ? (
-                "Continue with Clerk"
               ) : (
                 "Create Organization"
               )}

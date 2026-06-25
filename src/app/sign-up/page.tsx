@@ -3,120 +3,8 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SignUp } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
-import { isClerkEnabled } from "@/lib/clerk-config";
-import { hrmsClerkAppearance } from "@/lib/clerk-appearance";
-
-type InternSignUpFormProps = {
-  form: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-  };
-  loading: boolean;
-  passwordShortError: string | null;
-  passwordMismatchError: string | null;
-  update: (field: string, value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-};
-
-function InternSignUpForm({
-  form,
-  loading,
-  passwordShortError,
-  passwordMismatchError,
-  update,
-  onSubmit,
-}: InternSignUpFormProps) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1.5">
-          Full Name
-        </label>
-        <input
-          id="name"
-          type="text"
-          required
-          value={form.name}
-          onChange={(e) => update("name", e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-          placeholder="John Doe"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={form.email}
-          onChange={(e) => update("email", e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-          placeholder="you@example.com"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          minLength={8}
-          value={form.password}
-          onChange={(e) => update("password", e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-          placeholder="Min 8 characters"
-        />
-        {passwordShortError && (
-          <p className="text-sm text-red-400 mt-1" role="alert">
-            {passwordShortError}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium text-slate-300 mb-1.5"
-        >
-          Confirm Password
-        </label>
-        <input
-          id="confirmPassword"
-          type="password"
-          required
-          value={form.confirmPassword}
-          onChange={(e) => update("confirmPassword", e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-          placeholder="Repeat your password"
-        />
-        {passwordMismatchError && (
-          <p className="text-sm text-red-400 mt-1" role="alert">
-            {passwordMismatchError}
-          </p>
-        )}
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? "Creating account..." : "Create Account"}
-      </button>
-    </form>
-  );
-}
 
 export default function SignUpPage() {
   return (
@@ -137,7 +25,6 @@ function SignUpBody() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
   const { refresh } = useAuth();
-  const clerkEnabled = isClerkEnabled();
 
   const [form, setForm] = useState({
     name: "",
@@ -192,7 +79,7 @@ function SignUpBody() {
       }
       toast.success("Account created! Check your email to verify.");
       await refresh();
-      router.push("/");
+      router.push(redirect);
       router.refresh();
     } catch {
       toast.error("Network error. Please try again.");
@@ -212,45 +99,89 @@ function SignUpBody() {
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-          {clerkEnabled && (
-            <>
-              <SignUp
-                routing="path"
-                path="/sign-up"
-                signInUrl="/sign-in"
-                forceRedirectUrl={redirect}
-                appearance={hrmsClerkAppearance}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1.5">
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="John Doe"
               />
+            </div>
 
-              <details className="group mt-8 rounded-xl border border-slate-800 bg-slate-950/40 open:pb-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white [&::-webkit-details-marker]:hidden">
-                  <span>Intern self-signup (email &amp; password)</span>
-                  <span className="text-slate-500 group-open:rotate-180 transition-transform">▾</span>
-                </summary>
-                <div className="border-t border-slate-800 px-4 pt-5">
-                  <InternSignUpForm
-                    form={form}
-                    loading={loading}
-                    passwordShortError={passwordShortError}
-                    passwordMismatchError={passwordMismatchError}
-                    update={update}
-                    onSubmit={handleSubmit}
-                  />
-                </div>
-              </details>
-            </>
-          )}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="you@example.com"
+              />
+            </div>
 
-          {!clerkEnabled && (
-            <InternSignUpForm
-              form={form}
-              loading={loading}
-              passwordShortError={passwordShortError}
-              passwordMismatchError={passwordMismatchError}
-              update={update}
-              onSubmit={handleSubmit}
-            />
-          )}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="Min 8 characters"
+              />
+              {passwordShortError && (
+                <p className="text-sm text-red-400 mt-1" role="alert">
+                  {passwordShortError}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                value={form.confirmPassword}
+                onChange={(e) => update("confirmPassword", e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                placeholder="Repeat your password"
+              />
+              {passwordMismatchError && (
+                <p className="text-sm text-red-400 mt-1" role="alert">
+                  {passwordMismatchError}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+          </form>
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-6">

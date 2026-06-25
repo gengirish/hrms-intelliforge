@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
-import { OptionalClerkProvider } from "@/components/optional-clerk-provider";
 import { ServiceWorkerRegistrar } from "@/components/sw-register";
 import { AuthProvider } from "@/lib/auth-context";
 import { SkipToContent } from "@/components/skip-to-content";
@@ -141,12 +140,10 @@ export default function RootLayout({
           }}
         />
         <SkipToContent />
-        <OptionalClerkProvider>
-          <AuthProvider>
-            {children}
-            <CommandPalette />
-          </AuthProvider>
-        </OptionalClerkProvider>
+        <AuthProvider>
+          {children}
+          <CommandPalette />
+        </AuthProvider>
         <Toaster
           position="top-right"
           richColors

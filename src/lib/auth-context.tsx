@@ -8,8 +8,6 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { useAuth as useClerkAuth, useClerk } from "@clerk/nextjs";
-import { isClerkEnabled } from "@/lib/clerk-config";
 
 interface User {
   id: string;
@@ -36,17 +34,7 @@ const AuthContext = createContext<AuthContextValue>({
   refresh: async () => {},
 });
 
-function AuthProviderInner({
-  children,
-  clerkSignedIn = false,
-  clerkLoaded = true,
-  clerkSignOut,
-}: {
-  children: ReactNode;
-  clerkSignedIn?: boolean;
-  clerkLoaded?: boolean;
-  clerkSignOut?: () => Promise<void>;
-}) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -67,29 +55,21 @@ function AuthProviderInner({
   }, []);
 
   useEffect(() => {
-    if (!clerkLoaded) return;
     void refresh();
-  }, [clerkLoaded, clerkSignedIn, refresh]);
+  }, [refresh]);
 
   const signOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    if (clerkSignedIn && clerkSignOut) {
-      await clerkSignOut();
-      setUser(null);
-      return;
-    }
     setUser(null);
     window.location.href = "/";
-  }, [clerkSignedIn, clerkSignOut]);
-
-  const effectiveSignedIn = clerkSignedIn || !!user;
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isSignedIn: effectiveSignedIn,
-        isLoading: !clerkLoaded || isLoading,
+        isSignedIn: !!user,
+        isLoading,
         signOut,
         refresh,
       }}
@@ -97,27 +77,6 @@ function AuthProviderInner({
       {children}
     </AuthContext.Provider>
   );
-}
-
-function ClerkAuthBridge({ children }: { children: ReactNode }) {
-  const { isSignedIn: clerkSignedIn, isLoaded: clerkLoaded } = useClerkAuth();
-  const { signOut: clerkSignOut } = useClerk();
-  return (
-    <AuthProviderInner
-      clerkSignedIn={clerkSignedIn}
-      clerkLoaded={clerkLoaded}
-      clerkSignOut={() => clerkSignOut({ redirectUrl: "/" })}
-    >
-      {children}
-    </AuthProviderInner>
-  );
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  if (isClerkEnabled()) {
-    return <ClerkAuthBridge>{children}</ClerkAuthBridge>;
-  }
-  return <AuthProviderInner>{children}</AuthProviderInner>;
 }
 
 export function useAuth() {
