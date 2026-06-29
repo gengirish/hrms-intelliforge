@@ -13,12 +13,14 @@ import {
   IndianRupee,
   Download,
   ExternalLink,
+  FileSignature,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { formatINR, formatDateIST } from "@/lib/utils";
+import { captureEvent } from "@/lib/posthog";
 
 interface InternOffer {
   id: string;
@@ -32,12 +34,19 @@ interface InternOffer {
   college: string;
 }
 
+interface EsignInfo {
+  status: string;
+  signingUrl: string | null;
+  signedPdfUrl: string | null;
+}
+
 export default function OfferPage() {
   const [loading, setLoading] = useState(true);
   const [intern, setIntern] = useState<InternOffer | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [esign, setEsign] = useState<EsignInfo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +54,7 @@ export default function OfferPage() {
       setLoading(true);
       setNeedsOnboarding(false);
       setIntern(null);
+      setEsign(null);
       try {
         const res = await fetch("/api/offer");
         if (res.status === 401) {
@@ -57,6 +67,20 @@ export default function OfferPage() {
         }
         const data = await res.json();
         if (!cancelled) setIntern(data);
+
+        if (!cancelled && data?.id) {
+          const esignRes = await fetch(`/api/offer/esign/${data.id}`);
+          if (esignRes.ok) {
+            const esignData = await esignRes.json();
+            if (!cancelled && esignData.esign) {
+              setEsign({
+                status: esignData.esign.status,
+                signingUrl: esignData.esign.signingUrl ?? null,
+                signedPdfUrl: esignData.esign.signedPdfUrl ?? null,
+              });
+            }
+          }
+        }
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Could not load offer";
@@ -84,6 +108,7 @@ export default function OfferPage() {
         throw new Error(err.error || "Failed to accept");
       }
       setAccepted(true);
+      captureEvent("offer_accepted", { intern_id: intern.id, role: intern.role });
       toast.success("Offer accepted! Welcome to IntelliForge AI.");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";
@@ -201,6 +226,32 @@ export default function OfferPage() {
                 Download PDF
               </a>
             </div>
+
+            {esign &&
+              (esign.status === "SENT" || esign.status === "PENDING") &&
+              esign.signingUrl && (
+                <a
+                  href={esign.signingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-lg bg-gradient-to-r from-violet-600 to-indigo-500 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all flex items-center justify-center gap-2"
+                >
+                  <FileSignature className="h-4 w-4" />
+                  Sign electronically
+                </a>
+              )}
+
+            {esign?.status === "SIGNED" && esign.signedPdfUrl && (
+              <a
+                href={esign.signedPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-6 py-3 font-semibold text-emerald-300 transition-colors flex items-center justify-center gap-2"
+              >
+                <FileSignature className="h-4 w-4" />
+                View signed offer letter
+              </a>
+            )}
 
             {intern.status === "OFFERED" && (
               <button

@@ -460,3 +460,110 @@ model WeeklyProgressReport {
   @@index([internId])
   @@map("weekly_progress_reports")
 }
+
+enum EsignStatus {
+  PENDING
+  SENT
+  SIGNED
+  DECLINED
+  EXPIRED
+  FAILED
+}
+
+model OfferEsignRequest {
+  id              String      @id @default(cuid())
+  internId        String
+  orgId           String
+  status          EsignStatus @default(PENDING)
+  provider        String      @default("digio")
+  providerDocId   String?
+  signingUrl      String?
+  signedPdfUrl    String?
+  sentAt          DateTime?
+  signedAt        DateTime?
+  createdAt       DateTime    @default(now())
+
+  @@index([internId])
+  @@index([orgId])
+  @@map("offer_esign_requests")
+}
+
+enum StipendPayoutStatus {
+  DRAFT
+  PROCESSING
+  PROCESSED
+  FAILED
+  CANCELLED
+}
+
+model StipendPayoutBatch {
+  id          String              @id @default(cuid())
+  orgId       String
+  month       String
+  status      StipendPayoutStatus @default(DRAFT)
+  totalPaise  Int                 @default(0)
+  createdById String?
+  processedAt DateTime?
+  createdAt   DateTime            @default(now())
+  payouts     StipendPayout[]
+
+  @@index([orgId, month])
+  @@map("stipend_payout_batches")
+}
+
+model StipendPayout {
+  id               String              @id @default(cuid())
+  batchId          String
+  internId         String
+  amountPaise      Int
+  status           StipendPayoutStatus @default(DRAFT)
+  razorpayPayoutId String?
+  failureReason    String?
+  createdAt        DateTime            @default(now())
+  batch            StipendPayoutBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([internId])
+  @@map("stipend_payouts")
+}
+
+/// Per-intern RazorpayX recipient profile (bank/UPI). Linked by internId without
+/// modifying the Intern model; FK enforced in migration SQL.
+model InternPayoutProfile {
+  id                    String   @id @default(cuid())
+  internId              String   @unique
+  razorpayContactId     String?
+  razorpayFundAccountId String?
+  recipientJson         String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([internId])
+  @@map("intern_payout_profiles")
+}
+
+enum CalendarEventStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+model ScheduledEvent {
+  id              String   @id @default(cuid())
+  orgId           String
+  candidateId     String?
+  internId        String?
+  title           String
+  description     String?
+  startAt         DateTime
+  endAt           DateTime
+  timezone        String   @default("Asia/Kolkata")
+  googleEventId   String?
+  meetLink        String?
+  status          CalendarEventStatus @default(SCHEDULED)
+  createdById     String?
+  createdAt       DateTime @default(now())
+  @@index([orgId])
+  @@index([candidateId])
+  @@map("scheduled_events")
+}

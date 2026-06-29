@@ -16,6 +16,7 @@ import {
   IndianRupee,
   Save,
   Send,
+  FileSignature,
   MessageSquare,
   BarChart3,
   TrendingUp,
@@ -422,6 +423,33 @@ export default function DashboardPage() {
     }
   }
 
+  async function sendForEsign(internId: string) {
+    setActionLoading("send_esign");
+    try {
+      const res = await fetch("/api/offer/esign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ internId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "E-sign request failed");
+      }
+      toast.success("Offer sent for electronic signing!");
+      await loadInternDetail(internId);
+      const listRes = await fetch("/api/dashboard");
+      if (listRes.ok) {
+        const data = await listRes.json();
+        setInterns(data.interns);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "E-sign request failed";
+      toast.error(message);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handleAction(action: string, internId: string) {
     setActionLoading(action);
     try {
@@ -704,6 +732,26 @@ export default function DashboardPage() {
                           <Send className="h-4 w-4" />
                         )}
                         Send Offer Letter
+                      </button>
+                      <button
+                        onClick={() => sendForEsign(selectedIntern.id)}
+                        disabled={
+                          actionLoading === "send_esign" ||
+                          selectedIntern.stipendPaise === 0
+                        }
+                        title={
+                          selectedIntern.stipendPaise === 0
+                            ? "Set the stipend first before sending for e-sign"
+                            : "Send offer for Aadhaar e-sign via Digio"
+                        }
+                        className="rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white transition-colors flex items-center gap-2"
+                      >
+                        {actionLoading === "send_esign" ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileSignature className="h-4 w-4" />
+                        )}
+                        Send for E-Sign
                       </button>
                       {selectedIntern.stipendPaise === 0 && (
                         <span className="text-xs text-amber-400">Set stipend first →</span>

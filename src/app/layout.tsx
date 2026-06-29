@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegistrar } from "@/components/sw-register";
 import { AuthProvider } from "@/lib/auth-context";
+import { PostHogProvider } from "@/components/posthog-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
@@ -141,8 +142,10 @@ export default function RootLayout({
         />
         <SkipToContent />
         <AuthProvider>
-          {children}
-          <CommandPalette />
+          <PostHogProvider>
+            {children}
+            <CommandPalette />
+          </PostHogProvider>
         </AuthProvider>
         <Toaster
           position="top-right"

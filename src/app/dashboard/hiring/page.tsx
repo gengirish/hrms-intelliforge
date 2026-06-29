@@ -15,6 +15,7 @@ import {
   MapPin,
   Clock,
   Link2,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
@@ -23,6 +24,7 @@ import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { CandidateDetailPanel } from "@/components/hiring/candidate-detail-panel";
+import { ScheduleInterviewModal } from "@/components/hiring/schedule-interview-modal";
 import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge";
 import { canConvertCandidate } from "@/lib/hiring/candidate-status";
 import { cn, formatDateIST } from "@/lib/utils";
@@ -69,6 +71,7 @@ export default function HiringPage() {
   const [creating, setCreating] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [schedulingCandidate, setSchedulingCandidate] = useState<Candidate | null>(null);
   const [panelBusy, setPanelBusy] = useState<{
     status?: boolean;
     convert?: boolean;
@@ -452,6 +455,16 @@ export default function HiringPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSchedulingCandidate(c);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-500 px-2.5 py-1.5 text-xs font-medium text-white transition-colors"
+                            >
+                              <Calendar className="h-3 w-3" />
+                              Schedule
+                            </button>
                             {c.reportUrl && (
                               <a
                                 href={c.reportUrl}
@@ -507,7 +520,18 @@ export default function HiringPage() {
             onConvert={handlePanelConvert}
             onDelete={handleDeleteCandidate}
             onContact={handleContactCandidate}
+            onSchedule={() => setSchedulingCandidate(selectedCandidate)}
             busy={panelBusy}
+          />
+        )}
+        {schedulingCandidate && selectedJob && (
+          <ScheduleInterviewModal
+            open={true}
+            onClose={() => setSchedulingCandidate(null)}
+            candidateId={schedulingCandidate.id}
+            candidateName={schedulingCandidate.name}
+            candidateEmail={schedulingCandidate.email}
+            jobTitle={selectedJob.title}
           />
         )}
         <Footer />

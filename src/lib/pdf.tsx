@@ -5,29 +5,30 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer";
+import {
+  COMPANY,
+  REGISTERED_OFFICE_INLINE,
+  REGISTERED_OFFICE_TEXT,
+} from "@/lib/company";
+import {
+  BRAND_COLORS,
+  BrandLogoMark,
+  OfferLetterFooter,
+  OfferLetterWatermark,
+} from "@/lib/pdf-brand";
 
-/* ── brand palette ─────────────────────────────────────── */
-const C = {
-  indigo: "#4f46e5",
-  indigoDark: "#3730a3",
-  slate900: "#0f172a",
-  slate700: "#334155",
-  slate500: "#64748b",
-  slate300: "#cbd5e1",
-  slate100: "#f1f5f9",
-  white: "#ffffff",
-  emerald: "#059669",
-};
+/* ── brand palette (matches intelliforge.tech) ─────────── */
+const C = BRAND_COLORS;
 
 /* ── shared styles ─────────────────────────────────────── */
 const base = StyleSheet.create({
-  page: { paddingTop: 0, paddingBottom: 40, paddingHorizontal: 0, fontFamily: "Helvetica", backgroundColor: C.white },
-  footer: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: C.slate100, paddingVertical: 8, paddingHorizontal: 50,
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+  page: {
+    paddingTop: 0,
+    paddingBottom: 82,
+    paddingHorizontal: 0,
+    fontFamily: "Helvetica",
+    backgroundColor: C.white,
   },
-  footerText: { fontSize: 7.5, color: C.slate500 },
 });
 
 /* ── offer letter styles ───────────────────────────────── */
@@ -35,10 +36,24 @@ const o = StyleSheet.create({
   accentBar: { height: 6, backgroundColor: C.indigo },
   header: {
     backgroundColor: C.slate900, paddingVertical: 16, paddingHorizontal: 50,
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start",
   },
+  headerBrandRow: { flexDirection: "row", alignItems: "center" },
+  headerBrandText: { marginLeft: 12 },
   brand: { fontSize: 20, fontFamily: "Helvetica-Bold", color: C.white, letterSpacing: 0.5 },
+  brandAccent: { color: C.indigoLight },
+  legalName: { fontSize: 8.5, color: C.slate300, marginTop: 3, letterSpacing: 0.2 },
   brandTag: { fontSize: 8.5, color: C.slate300, marginTop: 2, letterSpacing: 0.3 },
+  missionBadge: {
+    fontSize: 6.5,
+    color: C.indigoLight,
+    marginTop: 4,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 0.3,
+  },
+  officeBlock: { marginTop: 8, maxWidth: 280 },
+  officeLabel: { fontSize: 7, color: C.slate500, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 2 },
+  officeLine: { fontSize: 7.5, color: C.slate300, lineHeight: 1.45 },
   refBox: { alignItems: "flex-end" },
   refText: { fontSize: 8.5, color: C.slate300 },
   body: { paddingHorizontal: 50, paddingTop: 18 },
@@ -62,6 +77,7 @@ const o = StyleSheet.create({
   cell: { paddingVertical: 6, paddingHorizontal: 14 },
   cellLabel: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.slate900, width: 155 },
   cellValue: { fontSize: 10, color: C.slate700, flex: 1 },
+  cellValueMultiline: { fontSize: 9.5, color: C.slate700, flex: 1, lineHeight: 1.45 },
   sectionTitle: { fontSize: 10.5, fontFamily: "Helvetica-Bold", color: C.slate900, marginTop: 10, marginBottom: 4 },
   term: { fontSize: 9, color: C.slate700, lineHeight: 1.55, marginBottom: 2 },
   acceptBox: {
@@ -74,11 +90,16 @@ const o = StyleSheet.create({
   sigLine: { borderTop: `1.5px solid ${C.slate900}`, marginTop: 28, paddingTop: 5 },
   sigName: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: C.slate900 },
   sigRole: { fontSize: 8, color: C.slate500, marginTop: 1 },
-  confidential: {
-    position: "absolute", top: 400, left: 140,
-    fontSize: 60, color: "#e2e8f0", fontFamily: "Helvetica-Bold",
-    opacity: 0.18, transform: "rotate(-35deg)",
+  page2Header: {
+    backgroundColor: C.slate900,
+    paddingVertical: 10,
+    paddingHorizontal: 50,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
+  page2Title: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.white },
+  page2Sub: { fontSize: 7.5, color: C.slate300, marginTop: 2 },
 });
 
 interface OfferLetterProps {
@@ -112,29 +133,48 @@ export function OfferLetterPDF({
   const refNum = 1000 + (refHash % 9000);
   const refStr = `IF/INTERN/${new Date().getFullYear()}/${refNum}`;
 
-  const details: [string, string][] = [
-    ["Position", role],
-    ["Monthly Stipend", stipendINR],
-    ["Start Date", startDate],
-    ["Duration", `${durationWeeks} weeks`],
-    ["Work Mode", "Remote / Hybrid"],
-    ["Reporting To", "IntelliForge AI — HR Team"],
+  const details: { label: string; value: string; multiline?: boolean }[] = [
+    { label: "Legal Entity", value: COMPANY.legalName },
+    { label: "Position", value: role },
+    { label: "Monthly Stipend", value: stipendINR },
+    { label: "Start Date", value: startDate },
+    { label: "Duration", value: `${durationWeeks} weeks` },
+    { label: "Work Mode", value: "Hybrid (Remote / On-site)" },
+    {
+      label: "Registered Office",
+      value: REGISTERED_OFFICE_TEXT,
+      multiline: true,
+    },
+    { label: "Reporting To", value: `${COMPANY.brandName} — HR Team` },
   ];
 
   return (
     <Document>
       <Page size="A4" style={base.page}>
-        {/* watermark */}
-        <Text style={o.confidential}>CONFIDENTIAL</Text>
+        <OfferLetterWatermark />
 
         {/* accent bar */}
         <View style={o.accentBar} />
 
         {/* header */}
         <View style={o.header}>
-          <View>
-            <Text style={o.brand}>IntelliForge AI</Text>
-            <Text style={o.brandTag}>Artificial Intelligence &bull; Machine Learning &bull; Innovation</Text>
+          <View style={o.headerBrandRow}>
+            <BrandLogoMark size={38} gradientId="ifHdGrad" />
+            <View style={o.headerBrandText}>
+              <Text style={o.brand}>
+                Intelli<Text style={o.brandAccent}>Forge</Text> AI
+              </Text>
+              <Text style={o.legalName}>{COMPANY.legalName}</Text>
+              <Text style={o.brandTag}>{COMPANY.elevatorPitch}</Text>
+              <Text style={o.missionBadge}>{COMPANY.missionLabel}</Text>
+              <View style={o.officeBlock}>
+                <Text style={o.officeLabel}>Registered Office</Text>
+                <Text style={o.officeLine}>{COMPANY.registeredOffice.name}</Text>
+                <Text style={o.officeLine}>{COMPANY.registeredOffice.line1}</Text>
+                <Text style={o.officeLine}>{COMPANY.registeredOffice.line2}</Text>
+                <Text style={o.officeLine}>{COMPANY.registeredOffice.line3}</Text>
+              </View>
+            </View>
           </View>
           <View style={o.refBox}>
             <Text style={o.refText}>Date: {today}</Text>
@@ -152,12 +192,14 @@ export function OfferLetterPDF({
           {/* greeting */}
           <Text style={o.greeting}>Dear <Text style={{ fontFamily: "Helvetica-Bold" }}>{internName}</Text>,</Text>
           <Text style={o.para}>
-            We are delighted to extend this formal offer of internship at IntelliForge AI.
-            Based on your academic credentials at {college} and demonstrated aptitude, we are
-            confident you will make a meaningful contribution to our team.
+            We are delighted to extend this formal offer of internship at {COMPANY.brandName},
+            a brand of {COMPANY.legalName}. Based on your academic credentials at {college} and
+            demonstrated aptitude, we are confident you will make a meaningful contribution to our team.
           </Text>
           <Text style={o.para}>
-            The terms and details of your internship engagement are outlined below.
+            Your internship may be carried out remotely or on-site at our Hyderabad office
+            ({REGISTERED_OFFICE_INLINE}), as agreed with your mentor. The terms and details of your
+            engagement are outlined on the following page.
           </Text>
 
           {/* details table */}
@@ -165,7 +207,7 @@ export function OfferLetterPDF({
             <View style={o.tableHeader}>
               <Text style={o.tableHeaderText}>INTERNSHIP DETAILS</Text>
             </View>
-            {details.map(([label, value], i) => (
+            {details.map(({ label, value, multiline }, i) => (
               <View
                 key={label}
                 style={[
@@ -175,32 +217,53 @@ export function OfferLetterPDF({
                 ]}
               >
                 <Text style={[o.cell, o.cellLabel]}>{label}</Text>
-                <Text style={[o.cell, o.cellValue]}>{value}</Text>
+                <Text style={[o.cell, multiline ? o.cellValueMultiline : o.cellValue]}>
+                  {value}
+                </Text>
               </View>
             ))}
           </View>
+        </View>
 
-          {/* terms */}
-          <Text style={o.sectionTitle}>Terms &amp; Conditions</Text>
+        <OfferLetterFooter refStr={refStr} pageLabel="Page 1 of 2" />
+      </Page>
+
+      <Page size="A4" style={base.page}>
+        <OfferLetterWatermark />
+
+        <View style={o.accentBar} />
+
+        <View style={o.page2Header}>
+          <View>
+            <Text style={o.page2Title}>
+              Intelli<Text style={o.brandAccent}>Forge</Text> AI — Internship Offer Letter
+            </Text>
+            <Text style={o.page2Sub}>Terms &amp; Conditions &bull; {internName}</Text>
+          </View>
+          <View style={o.refBox}>
+            <Text style={o.refText}>Ref: {refStr}</Text>
+          </View>
+        </View>
+
+        <View style={o.body}>
+          <Text style={[o.sectionTitle, { marginTop: 0 }]}>Terms &amp; Conditions</Text>
           <Text style={o.term}>1. This internship is for the specified duration and may be extended by mutual agreement.</Text>
-          <Text style={o.term}>2. You will be expected to follow IntelliForge AI policies, maintain professionalism, and meet assigned deliverables.</Text>
+          <Text style={o.term}>2. You will be expected to follow {COMPANY.brandName} policies, maintain professionalism, and meet assigned deliverables. On-site days at the registered office may be scheduled by your mentor as required.</Text>
           <Text style={o.term}>3. The stipend will be disbursed monthly upon satisfactory performance.</Text>
           <Text style={o.term}>4. A Certificate of Completion will be issued upon successful completion of the programme.</Text>
           <Text style={o.term}>5. Either party may terminate this engagement with 7 days written notice.</Text>
 
-          {/* acceptance CTA */}
           <View style={o.acceptBox}>
             <Text style={o.acceptText}>
               To accept this offer, please reply to the email with &quot;I Accept&quot; or sign in to the
-              portal at hrms.intelliforge.tech/offer and click &quot;Accept &amp; Sign&quot;.
+              portal at {COMPANY.portalHost}/offer and click &quot;Accept &amp; Sign&quot;.
             </Text>
           </View>
 
-          {/* signatures */}
           <View style={o.sigSection}>
             <View style={o.sigBlock}>
               <View style={o.sigLine}>
-                <Text style={o.sigName}>IntelliForge AI</Text>
+                <Text style={o.sigName}>{COMPANY.legalName}</Text>
                 <Text style={o.sigRole}>Authorized Signatory</Text>
               </View>
             </View>
@@ -213,11 +276,7 @@ export function OfferLetterPDF({
           </View>
         </View>
 
-        {/* footer */}
-        <View style={base.footer}>
-          <Text style={base.footerText}>IntelliForge AI &bull; www.intelliforge.tech &bull; hr@intelliforge.tech</Text>
-          <Text style={base.footerText}>&copy; {new Date().getFullYear()} IntelliForge AI. All rights reserved.  |  {refStr}</Text>
-        </View>
+        <OfferLetterFooter refStr={refStr} pageLabel="Page 2 of 2" />
       </Page>
     </Document>
   );

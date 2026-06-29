@@ -12,6 +12,7 @@ import {
   ExternalLink,
   ShieldCheck,
 } from "lucide-react";
+import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
 
 const signInSuspenseFallback = (
@@ -60,6 +61,8 @@ function SignInForm() {
         return;
       }
       toast.success("Signed in successfully");
+      grantAnalyticsConsent();
+      captureEvent("sign_in", { method: "password" });
       await refresh();
       router.push(redirect);
       router.refresh();

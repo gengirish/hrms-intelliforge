@@ -50,6 +50,7 @@ interface CandidateDetailPanelProps {
   onConvert: () => Promise<void> | void;
   onDelete: () => Promise<void> | void;
   onContact: (subject: string, message: string) => Promise<void>;
+  onSchedule?: () => void;
   busy?: {
     status?: boolean;
     convert?: boolean;
@@ -76,6 +77,7 @@ export function CandidateDetailPanel({
   onConvert,
   onDelete,
   onContact,
+  onSchedule,
   busy,
 }: CandidateDetailPanelProps) {
   const [contactOpen, setContactOpen] = useState(false);
@@ -448,6 +450,16 @@ export function CandidateDetailPanel({
 
         {/* Footer */}
         <footer className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-2 border-t border-slate-800 bg-slate-950/95 backdrop-blur px-5 py-4">
+          {onSchedule && (
+            <button
+              type="button"
+              onClick={onSchedule}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors mr-auto"
+            >
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+              Schedule interview
+            </button>
+          )}
           <button
             type="button"
             onClick={() => void onConvert()}

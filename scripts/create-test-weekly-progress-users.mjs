@@ -9,9 +9,10 @@
  *
  * Usage:
  *   node --env-file=.env scripts/create-test-weekly-progress-users.mjs "Test1234!"
+ *   node --env-file=.env scripts/create-test-weekly-progress-users.mjs --org-id <id> "Test1234!"
  *   HRMS_TEST_USERS_PASSWORD='...' node --env-file=.env scripts/create-test-weekly-progress-users.mjs
  *
- * Requires exactly one Organization (same guard as create-admin.mjs).
+ * When multiple organizations exist, pass --org-id <id> (see create-admin.mjs).
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -30,7 +31,28 @@ const INTERN_EMAIL =
   process.env.INTERN_EMAIL?.trim() ||
   DEFAULT_INTERN_EMAIL;
 
-const cliArgs = process.argv.slice(2);
+function parseOrgIdFlag(argv) {
+  const orgIdIdx = argv.indexOf("--org-id");
+  if (orgIdIdx === -1) return { orgId: null, rest: argv };
+  const orgId = argv[orgIdIdx + 1];
+  if (!orgId) {
+    console.error("--org-id requires a value");
+    process.exit(1);
+  }
+  return {
+    orgId,
+    rest: [...argv.slice(0, orgIdIdx), ...argv.slice(orgIdIdx + 2)],
+  };
+}
+
+function listOrgs(orgs) {
+  console.error("Available organizations:");
+  for (const o of orgs) {
+    console.error(`  ${o.id}  ${o.slug}  (${o.name})`);
+  }
+}
+
+const { orgId: flagOrgId, rest: cliArgs } = parseOrgIdFlag(process.argv.slice(2));
 const password =
   cliArgs[0]?.trim() ||
   process.env.HRMS_TEST_USERS_PASSWORD?.trim() ||
@@ -64,14 +86,26 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  if (orgs.length > 1) {
+
+  let org;
+  if (flagOrgId) {
+    org = orgs.find((o) => o.id === flagOrgId);
+    if (!org) {
+      console.error(`ABORT: no organization with id ${flagOrgId}`);
+      listOrgs(orgs);
+      process.exitCode = 1;
+      return;
+    }
+  } else if (orgs.length === 1) {
+    org = orgs[0];
+  } else {
     console.error(
-      `ABORT: ${orgs.length} organizations. Pick org manually (not implemented) or consolidate.`
+      `ABORT: ${orgs.length} organizations exist. Pass --org-id <id> to select one.`
     );
+    listOrgs(orgs);
     process.exitCode = 1;
     return;
   }
-  const org = orgs[0];
 
   const clashIntern = await prisma.intern.findUnique({
     where: { email: MENTOR_EMAIL },

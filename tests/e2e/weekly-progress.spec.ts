@@ -89,8 +89,8 @@ test.describe("Weekly Progress intern flow (optional credentials)", () => {
     test.skip(!email || !password, "Set E2E_INTERN_EMAIL and E2E_INTERN_PASSWORD to run this test");
 
     await page.goto("/sign-in?redirect=/weekly-progress");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByLabel("Email").fill(email!);
+    await page.getByLabel("Password", { exact: true }).fill(password!);
     await page.getByRole("button", { name: /Sign In/i }).click();
 
     await expect(page).toHaveURL(/\/weekly-progress/, { timeout: 45_000 });
@@ -113,6 +113,7 @@ test.describe("Weekly Progress mentor loop (optional credentials)", () => {
   test(
     "intern submits report then mentor opens review and saves feedback",
     async ({ page }) => {
+      test.setTimeout(120_000);
       const internEmail = process.env.E2E_INTERN_EMAIL?.trim();
       const internPassword = process.env.E2E_INTERN_PASSWORD;
       const mentorEmail = (
@@ -192,7 +193,6 @@ test.describe("Weekly Progress mentor loop (optional credentials)", () => {
       await page.locator("#weekly-progress-mentor-feedback").fill(feedbackText);
       await page.getByRole("button", { name: /Save feedback/i }).click();
       await expect(page.getByText(/Feedback saved/i)).toBeVisible({ timeout: 25_000 });
-    },
-    { timeout: 120_000 }
+    }
   );
 });

@@ -1,27 +1,49 @@
-// Create (or upsert) an admin account for the single Organization.
+// Create (or upsert) an admin account for an Organization.
 //
 // Self-registration in /api/auth/register only creates Interns, so admins
 // must be provisioned out-of-band. This script does that safely:
-//   - refuses to run if the system has 0 or >1 organizations (multi-tenant
-//     ambiguity) so it can't create an org-less admin
+//   - requires an org (single org by default, or --org-id when multiple exist)
 //   - bcrypt-hashes the password
 //   - upserts by email (so re-running just updates the password / orgId)
 //   - leaves emailVerified=true so the admin can log in immediately
 //
 // Run:    node --env-file=.env.local scripts/create-admin.mjs <email> <password> [name]
+//         node --env-file=.env.local scripts/create-admin.mjs --org-id <id> <email> <password> [name]
 // Example: node --env-file=.env.local scripts/create-admin.mjs hr@intelliforge.tech 'StrongPass!23' 'HR Bot'
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const BCRYPT_ROUNDS = 12;
-const args = process.argv.slice(2);
-const [email, password, ...nameParts] = args;
+
+function parseOrgIdFlag(argv) {
+  const orgIdIdx = argv.indexOf("--org-id");
+  if (orgIdIdx === -1) return { orgId: null, rest: argv };
+  const orgId = argv[orgIdIdx + 1];
+  if (!orgId) {
+    console.error("--org-id requires a value");
+    process.exit(1);
+  }
+  return {
+    orgId,
+    rest: [...argv.slice(0, orgIdIdx), ...argv.slice(orgIdIdx + 2)],
+  };
+}
+
+function listOrgs(orgs) {
+  console.error("Available organizations:");
+  for (const o of orgs) {
+    console.error(`  ${o.id}  ${o.slug}  (${o.name})`);
+  }
+}
+
+const { orgId: flagOrgId, rest } = parseOrgIdFlag(process.argv.slice(2));
+const [email, password, ...nameParts] = rest;
 const name = nameParts.join(" ").trim() || null;
 
 if (!email || !password) {
   console.error(
-    "Usage: node --env-file=.env.local scripts/create-admin.mjs <email> <password> [name]"
+    "Usage: node --env-file=.env.local scripts/create-admin.mjs [--org-id <id>] <email> <password> [name]"
   );
   process.exit(1);
 }
@@ -41,14 +63,26 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  if (orgs.length > 1) {
+
+  let org;
+  if (flagOrgId) {
+    org = orgs.find((o) => o.id === flagOrgId);
+    if (!org) {
+      console.error(`ABORT: no organization with id ${flagOrgId}`);
+      listOrgs(orgs);
+      process.exitCode = 1;
+      return;
+    }
+  } else if (orgs.length === 1) {
+    org = orgs[0];
+  } else {
     console.error(
-      `ABORT: ${orgs.length} organizations exist. Pass --org-id explicitly (not implemented yet) or consolidate first.`
+      `ABORT: ${orgs.length} organizations exist. Pass --org-id <id> to select one.`
     );
+    listOrgs(orgs);
     process.exitCode = 1;
     return;
   }
-  const org = orgs[0];
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 

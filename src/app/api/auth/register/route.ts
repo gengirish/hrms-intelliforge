@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return errorResponse(parsed.error.errors[0].message, 400);
     }
 
-    const { email, password, name } = parsed.data;
+    const { email, password, name, orgSlug } = parsed.data;
 
     const existingAdmin = await prisma.admin.findUnique({ where: { email } });
     const existingIntern = await prisma.intern.findUnique({ where: { email } });
@@ -27,24 +27,32 @@ export async function POST(req: Request) {
       return errorResponse("An account with this email already exists", 409);
     }
 
-    // Multi-tenant safety: every Intern must belong to an Organization so that
-    // org-scoped queries (e.g. /api/dashboard) can find them. Today the system
-    // is single-tenant, so we attach new self-signups to the only org. Fail
-    // loudly otherwise — better than silently creating orphan rows.
-    const orgs = await prisma.organization.findMany({ select: { id: true } });
-    if (orgs.length === 0) {
-      return errorResponse(
-        "No organization configured. Contact support before creating an account.",
-        503
-      );
+    let orgId: string;
+    if (orgSlug) {
+      const org = await prisma.organization.findUnique({
+        where: { slug: orgSlug },
+        select: { id: true },
+      });
+      if (!org) {
+        return errorResponse("Organization not found", 404);
+      }
+      orgId = org.id;
+    } else {
+      const orgs = await prisma.organization.findMany({ select: { id: true } });
+      if (orgs.length === 0) {
+        return errorResponse(
+          "No organization configured. Contact support before creating an account.",
+          503
+        );
+      }
+      if (orgs.length > 1) {
+        return errorResponse(
+          "Organization slug is required when multiple organizations exist",
+          400
+        );
+      }
+      orgId = orgs[0].id;
     }
-    if (orgs.length > 1) {
-      return errorResponse(
-        "Multi-tenant self-signup is not supported. Use the org-specific invite flow.",
-        500
-      );
-    }
-    const orgId = orgs[0].id;
 
     const passwordHash = await hashPassword(password);
 

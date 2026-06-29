@@ -55,7 +55,7 @@ interface JobDetail {
   salaryInfo: string | null;
   interviewLink: string | null;
   createdAt: string;
-  org: { name: string; logoUrl: string | null };
+  org: { name: string; slug: string; logoUrl: string | null };
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -411,6 +411,12 @@ export default function CareerDetailPage() {
                 <p className="text-sm text-slate-400 mb-4">
                   We&apos;ll review your application and get back to you soon.
                 </p>
+                <Link
+                  href={`/sign-up?org=${encodeURIComponent(job.org.slug)}&redirect=${encodeURIComponent("/intern-onboarding")}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-5 py-2.5 text-sm font-semibold text-indigo-300 transition-colors mb-4"
+                >
+                  Create an account to complete onboarding
+                </Link>
                 {job.interviewLink && (
                   <a
                     href={job.interviewLink}

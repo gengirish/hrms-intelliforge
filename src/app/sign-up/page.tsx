@@ -1,10 +1,18 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
+
+interface OrgBranding {
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+}
 
 export default function SignUpPage() {
   return (
@@ -24,7 +32,12 @@ function SignUpBody() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
+  const orgSlug = searchParams.get("org")?.trim() || null;
   const { refresh } = useAuth();
+
+  const [org, setOrg] = useState<OrgBranding | null>(null);
+  const [orgLoading, setOrgLoading] = useState(!!orgSlug);
+  const [orgError, setOrgError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -35,6 +48,36 @@ function SignUpBody() {
   const [loading, setLoading] = useState(false);
   const [passwordShortError, setPasswordShortError] = useState<string | null>(null);
   const [passwordMismatchError, setPasswordMismatchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orgSlug) return;
+
+    let cancelled = false;
+    (async () => {
+      setOrgLoading(true);
+      setOrgError(null);
+      try {
+        const res = await fetch(`/api/orgs/${encodeURIComponent(orgSlug)}/public`);
+        if (!res.ok) {
+          if (!cancelled) {
+            setOrgError("Organization not found");
+            setOrg(null);
+          }
+          return;
+        }
+        const data = (await res.json()) as OrgBranding;
+        if (!cancelled) setOrg(data);
+      } catch {
+        if (!cancelled) setOrgError("Failed to load organization");
+      } finally {
+        if (!cancelled) setOrgLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orgSlug]);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -49,6 +92,11 @@ function SignUpBody() {
     e.preventDefault();
     setPasswordShortError(null);
     setPasswordMismatchError(null);
+
+    if (orgSlug && orgError) {
+      toast.error(orgError);
+      return;
+    }
 
     if (form.password.length < 8) {
       toast.error("Password must be at least 8 characters");
@@ -70,6 +118,7 @@ function SignUpBody() {
           name: form.name,
           email: form.email,
           password: form.password,
+          ...(orgSlug ? { orgSlug } : {}),
         }),
       });
       const data = await res.json();
@@ -78,6 +127,8 @@ function SignUpBody() {
         return;
       }
       toast.success("Account created! Check your email to verify.");
+      grantAnalyticsConsent();
+      captureEvent("sign_up", { email: form.email, orgSlug: orgSlug ?? undefined });
       await refresh();
       router.push(redirect);
       router.refresh();
@@ -88,14 +139,36 @@ function SignUpBody() {
     }
   }
 
+  const title = org?.name ?? "IntelliForge HRMS";
+  const subtitle = org
+    ? `Create your account at ${org.name}`
+    : "Create your account";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          {org?.logoUrl && (
+            <div className="mb-4 flex justify-center">
+              <Image
+                src={org.logoUrl}
+                alt={`${org.name} logo`}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-xl object-contain"
+                unoptimized
+              />
+            </div>
+          )}
           <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            IntelliForge HRMS
+            {orgLoading ? "Loading…" : title}
           </h1>
-          <p className="text-slate-400 mt-2">Create your account</p>
+          <p className="text-slate-400 mt-2">{subtitle}</p>
+          {orgError && (
+            <p className="text-sm text-red-400 mt-2" role="alert">
+              {orgError}
+            </p>
+          )}
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
@@ -176,7 +249,7 @@ function SignUpBody() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (Boolean(orgSlug) && orgLoading)}
               className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating account..." : "Create Account"}
@@ -187,7 +260,7 @@ function SignUpBody() {
         <p className="text-center text-sm text-slate-500 mt-6">
           Already have an account?{" "}
           <Link
-            href="/sign-in"
+            href={orgSlug ? `/sign-in?org=${encodeURIComponent(orgSlug)}` : "/sign-in"}
             className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
           >
             Sign in

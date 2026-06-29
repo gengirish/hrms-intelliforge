@@ -4,6 +4,12 @@ export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters").max(128),
   name: z.string().min(1).max(200),
+  orgSlug: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, "Invalid organization slug")
+    .optional(),
 });
 
 export const loginSchema = z.object({

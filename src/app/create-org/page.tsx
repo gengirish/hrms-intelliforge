@@ -8,6 +8,7 @@ import { Loader2, Building2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/lib/auth-context";
+import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 
 export default function CreateOrgPage() {
   const router = useRouter();
@@ -55,6 +56,8 @@ export default function CreateOrgPage() {
       }
 
       toast.success("Organization created! Redirecting to dashboard...");
+      grantAnalyticsConsent();
+      captureEvent("org_created", { slug: form.slug, org_name: form.orgName });
       await refresh();
       router.push("/dashboard");
       router.refresh();

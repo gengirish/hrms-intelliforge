@@ -22,6 +22,7 @@ import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { cn, formatDateIST, formatTimeIST } from "@/lib/utils";
+import { captureEvent } from "@/lib/posthog";
 
 /* ---------- shared types ---------- */
 
@@ -757,6 +758,7 @@ export default function AttendancePage() {
       }
       const data = await res.json();
       setTodayRecord(data.record);
+      captureEvent("attendance_punch", { type, mode: "WFH" });
       toast.success(
         type === "in" ? "Punched in successfully!" : "Punched out successfully!"
       );

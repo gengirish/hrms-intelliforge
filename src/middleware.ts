@@ -31,6 +31,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/webhooks/",
   "/api/cron/",
   "/api/careers",
+  "/api/orgs/",
   "/api/org/admins/invite/",
 ];
 

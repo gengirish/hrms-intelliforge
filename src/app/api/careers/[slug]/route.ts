@@ -29,7 +29,7 @@ export async function GET(
         salaryInfo: true,
         interviewLink: true,
         createdAt: true,
-        org: { select: { name: true, logoUrl: true } },
+        org: { select: { name: true, slug: true, logoUrl: true } },
       },
     });
 

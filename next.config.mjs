@@ -1,9 +1,12 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ["@react-pdf/renderer", "agentmail"],
+    instrumentationHook: true,
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
@@ -37,4 +40,22 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+const hasSentryDsn =
+  process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN;
+
+let config = nextConfig;
+
+if (hasSentryDsn) {
+  config = withSentryConfig(nextConfig, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    widenClientFileUpload: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+    telemetry: false,
+  });
+}
+
+export default config;
