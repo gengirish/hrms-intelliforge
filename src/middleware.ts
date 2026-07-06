@@ -11,20 +11,21 @@ const PUBLIC_PATHS = [
   "/create-org",
   "/accept-admin-invite",
   "/pricing",
+  "/about",
 ];
 
-const PUBLIC_PATH_PREFIXES = [
-  "/careers",
-  // Intern self-service portals: page shells are public; APIs stay JWT-protected.
+const PUBLIC_PATH_PREFIXES = ["/careers"];
+
+const INTERN_PORTAL_PREFIXES = [
   "/intern-onboarding",
   "/attendance",
   "/tasks",
   "/weekly-progress",
   "/offer",
   "/daily-plan",
-  // Dashboard shells load for E2E gates and client-side 401 handling.
-  "/dashboard",
 ];
+
+const PROTECTED_PAGE_PREFIXES = ["/dashboard", ...INTERN_PORTAL_PREFIXES];
 
 const PUBLIC_API_PREFIXES = [
   "/api/auth/",
@@ -40,6 +41,16 @@ function isPublicRoute(pathname: string, method?: string): boolean {
   if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true;
   if (pathname === "/api/org" && method === "POST") return true;
   return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function requiresAuthPage(pathname: string): boolean {
+  return PROTECTED_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function redirectToSignIn(request: NextRequest, pathname: string) {
+  const signInUrl = new URL("/sign-in", request.url);
+  signInUrl.searchParams.set("redirect", pathname);
+  return NextResponse.redirect(signInUrl);
 }
 
 function getJwtSecret() {
@@ -60,7 +71,9 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Page shells render without a session; APIs enforce auth. Unknown routes reach Next.js 404.
+    if (requiresAuthPage(pathname)) {
+      return redirectToSignIn(request, pathname);
+    }
     return NextResponse.next();
   }
 

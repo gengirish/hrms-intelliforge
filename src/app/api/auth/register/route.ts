@@ -4,12 +4,12 @@ import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/auth-email";
 import { registerSchema } from "@/lib/validations";
 import { errorResponse, serverError } from "@/lib/api-utils";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
     const ip = getClientIp(req);
-    if (!rateLimit(ip, 5, 60000)) {
+    if (!(await rateLimitAsync(ip, 5, 60000))) {
       return errorResponse("Too many requests", 429);
     }
 

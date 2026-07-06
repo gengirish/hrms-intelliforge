@@ -203,8 +203,9 @@ export default function AboutPage() {
 
         {/* ───────────────────────  WHAT IS HRMS  ─────────────────────── */}
         <section
+          id="demo"
           aria-labelledby="what-is-hrms-heading"
-          className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20"
+          className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 scroll-mt-20"
         >
           <div className="max-w-3xl">
             <h2

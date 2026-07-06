@@ -43,34 +43,18 @@ test.describe("Weekly Progress API (unauthenticated)", () => {
 });
 
 test.describe("Weekly Progress pages (unauthenticated)", () => {
-  test("/weekly-progress prompts sign-in (middleware redirect or in-page CTA)", async ({
-    page,
-  }) => {
+  test("/weekly-progress redirects unauthenticated users to sign-in", async ({ page }) => {
     await page.goto("/weekly-progress");
-    if (page.url().includes("/sign-in")) {
-      await expect(page.getByLabel("Email")).toBeVisible();
-    } else {
-      const main = page.locator("#main-content");
-      await expect(main.getByRole("heading", { name: /^Weekly progress$/i })).toBeVisible({
-        timeout: 15_000,
-      });
-      await expect(main.getByRole("link", { name: /^Sign in$/i })).toBeVisible();
-    }
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fweekly-progress/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 
-  test("/dashboard/weekly-progress requires auth (redirect or admin gate)", async ({
+  test("/dashboard/weekly-progress redirects unauthenticated users to sign-in", async ({
     page,
   }) => {
     await page.goto("/dashboard/weekly-progress");
-    if (page.url().includes("/sign-in")) {
-      await expect(page.getByLabel("Email")).toBeVisible();
-    } else {
-      await expect(
-        page
-          .locator("#main-content")
-          .getByRole("heading", { name: /Weekly progress review|Admin access required/i })
-      ).toBeVisible({ timeout: 15_000 });
-    }
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fweekly-progress/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 
   test("sign-in with redirect=/weekly-progress shows email field", async ({ page }) => {

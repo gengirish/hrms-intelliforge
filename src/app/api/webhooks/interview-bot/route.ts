@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyInterviewWebhookAuth } from "@/lib/interview-webhook-auth";
 
 interface InterviewCompletePayload {
   candidateId?: string;
@@ -10,12 +11,23 @@ interface InterviewCompletePayload {
   reportUrl?: string;
 }
 
+let devMissingSecretWarned = false;
+
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const expectedKey = process.env.INTERVIEW_BOT_WEBHOOK_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
 
-  if (expectedKey && authHeader !== `Bearer ${expectedKey}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!expectedKey && !isProduction && !devMissingSecretWarned) {
+    console.warn(
+      "[interview-bot-webhook] INTERVIEW_BOT_WEBHOOK_SECRET not set — allowing unauthenticated requests in development"
+    );
+    devMissingSecretWarned = true;
+  }
+
+  const auth = verifyInterviewWebhookAuth(authHeader, expectedKey, isProduction);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.message }, { status: auth.status });
   }
 
   try {

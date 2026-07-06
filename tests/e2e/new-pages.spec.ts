@@ -31,33 +31,17 @@ test.describe("Create Organization Page", () => {
 });
 
 test.describe("Dashboard Hiring Page", () => {
-  test("loads without error", async ({ page }) => {
-    const response = await page.goto("/dashboard/hiring");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-  });
-
-  test("has hiring-related heading", async ({ page }) => {
+  test("redirects unauthenticated users to sign-in", async ({ page }) => {
     await page.goto("/dashboard/hiring");
-    await expect(
-      page.locator("#main-content").getByRole("heading", { name: /Hiring Pipeline/i })
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fhiring/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 });
 
 test.describe("Dashboard Settings Page", () => {
-  test("loads without error", async ({ page }) => {
-    const response = await page.goto("/dashboard/settings");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-  });
-
-  test("has settings-related heading", async ({ page }) => {
+  test("redirects unauthenticated users to sign-in", async ({ page }) => {
     await page.goto("/dashboard/settings");
-    await expect(
-      page
-        .locator("#main-content")
-        .getByRole("heading", { name: /Organization Settings|No Organization/i })
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fsettings/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 });

@@ -1,21 +1,60 @@
-# IntelliForge HRMS — Intern Portal
+# IntelliForge HRMS
 
-Human Resource Management System for the IntelliForge AI internship program.  
+Human Resource Management System for internship programs, hiring pipelines, and team operations.  
 Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
+
+## Architecture
+
+**Next.js 14 monolith** — all UI, API routes, cron jobs, and webhooks run in a single Next.js App Router application. There is no separate FastAPI or Python backend in this repo.
+
+| Layer | Technology |
+|-------|------------|
+| App framework | Next.js 14 (App Router), React 18, TypeScript |
+| Database | Neon (serverless PostgreSQL) |
+| ORM | Prisma |
+| Auth | JWT (jose) + bcrypt passwords, HTTP-only session cookie |
+| File storage | Vercel Blob |
+| Email | AgentMail TypeScript SDK |
+| Messaging | WhatsApp Business Cloud API |
+| Billing | Stripe (subscriptions + checkout) |
+| Payouts | RazorpayX |
+| Learning | IntelliForge Learning API (`learning.intelliforge.tech`) |
+| Interviews | External Interview Bot API (optional integration) |
+| PDF | @react-pdf/renderer (offer letters, certificates) |
+| Analytics | PostHog, Sentry |
+| Deployment | Vercel |
+
+```
+src/
+├── app/                    # Pages + API routes (Route Handlers)
+│   ├── api/                # REST endpoints
+│   ├── dashboard/          # Admin UI
+│   ├── careers/            # Public job board
+│   └── …                   # Intern portal pages
+├── components/             # React components (shadcn-style UI)
+└── lib/                    # Business logic, clients, validations
+prisma/
+├── schema.prisma           # Database schema
+└── migrations/             # Versioned SQL migrations
+```
 
 ## Tech Stack
 
-- **Next.js 14** (App Router)
+- **Next.js 14** (App Router) — monolith (frontend + API)
 - **Neon** (Serverless Postgres)
 - **Prisma ORM**
 - **Tailwind CSS**
 - **Vercel Blob** (file storage)
 - **AgentMail** TypeScript SDK (email automation)
-- **WhatsApp Business Cloud API** (real-time WhatsApp messaging)
+- **WhatsApp Business Cloud API** (real-time WhatsApp messaging + bot)
+- **Stripe** (org billing)
+- **RazorpayX** (stipend payouts)
 - **@react-pdf/renderer** (offer letter & certificate PDF)
 - **Vercel** deployment
 
 ## Features
+
+### Intern portal
 
 | Page | Description |
 |------|-------------|
@@ -26,7 +65,66 @@ Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 | `/offer` | Offer letter view + PDF download, accept offer |
 | `/attendance` | Daily punch in/out with WFH/Office toggle |
 | `/tasks` | Weekly task log with hours tracking |
-| `/dashboard` | Admin panel — manage interns, send/approve offers, deactivate, notification history |
+| `/daily-plan` | Daily task plan (submit morning plan) |
+| `/weekly-progress` | Weekly progress reports + mentor feedback |
+
+### Admin dashboard
+
+| Page | Description |
+|------|-------------|
+| `/dashboard` | Manage interns — offers, analytics, learning, notifications |
+| `/dashboard/hiring` | Job postings, candidates, interview scores, convert to intern |
+| `/dashboard/attendance` | Org-wide attendance overview |
+| `/dashboard/tasks` | Admin task management per intern |
+| `/dashboard/weekly-progress` | Review intern weekly progress |
+| `/dashboard/payouts` | Stipend payout batches (RazorpayX) |
+| `/dashboard/settings` | Org profile, team invites, billing, integrations |
+| `/create-org` | Create a new workspace (org + admin account) |
+
+### Public & billing
+
+| Page | Description |
+|------|-------------|
+| `/careers` | Public job board |
+| `/careers/[slug]` | Job detail + apply |
+| `/pricing` | Subscription plans |
+| `/about` | Product info |
+
+## Hiring Pipeline
+
+End-to-end hiring lives in `/dashboard/hiring` and the public careers pages:
+
+1. **Create job posting** — Admin creates a role with skills, description, and optional Interview Bot link.
+2. **Public apply** — Candidates apply at `/careers/[slug]` (resume upload, cover note).
+3. **Interview Bot** — When configured, candidates receive an AI interview link; scores and reports sync via `/api/webhooks/interview-bot`.
+4. **Review & schedule** — Admins review candidates, schedule Google Calendar events, and contact applicants.
+5. **Convert to intern** — Approved candidates convert to intern records (`POST /api/jobs/[id]/convert`), entering the intern lifecycle.
+
+Key models: `JobPosting`, `Candidate`, `ScheduledEvent`.
+
+## Learning Integration
+
+HRMS provisions course enrollments on **[IntelliForge Learning](https://learning.intelliforge.tech)** via the Learning v1 API:
+
+- **Auto-enroll on onboarding** — Configurable course IDs/slugs (`LEARNING_AUTO_ENROLL_*` env vars).
+- **Admin enroll** — Dashboard enroll modal calls `/api/learning/enroll`.
+- **Progress sync** — `/api/learning/sync` refreshes progress from Learning; stored locally in `LearningEnrollment`.
+- **Catalog** — `/api/learning/courses` lists available courses.
+
+See `src/lib/learning-client.ts`, `src/lib/learning-provision.ts`, and `src/lib/learning-config.ts`.
+
+## Integrations Health
+
+Org-level integration status is visible under **Dashboard → Settings → Integrations**:
+
+- **WhatsApp Business API** — Phone Number ID configured on the org
+- **AgentMail** — HR inbox email configured on the org
+
+Per-org overrides (`whatsappPhoneId`, `agentmailInboxId`, etc.) fall back to global env vars when unset. Webhook endpoints must remain reachable for delivery tracking and inbound replies (see [Webhooks](#6-webhooks)).
+
+## WhatsApp Bot
+
+Interns can interact via WhatsApp for attendance, tasks, offer acceptance, and FAQs. Inbound messages hit `/api/webhooks/whatsapp`; intent parsing and execution live in `src/lib/wa-bot/`. All bot interactions are logged in `BotInteractionLog`.
 
 ## Communication System
 
@@ -113,7 +211,10 @@ npx prisma db seed          # creates the IntelliForge AI org + demo data
 ### 4. Admin Setup
 
 Self-registration via `/api/auth/register` only creates **interns**. Admins
-must be provisioned out-of-band. Use the helper script (refuses to run if
+must be provisioned out-of-band, or created via `/create-org` when spinning up
+a new workspace.
+
+**Single-org bootstrap** — use the helper script (refuses to run if
 0 or >1 organizations exist, to avoid creating an org-less admin):
 
 ```bash
@@ -123,6 +224,9 @@ node --env-file=.env.local scripts/create-admin.mjs hr@intelliforge.tech 'Strong
 The script bcrypt-hashes the password, sets `orgId` to the single
 Organization, and `emailVerified=true` so the admin can log in immediately.
 It upserts by email, so re-running just resets the password.
+
+**New workspace** — visit `/create-org` to create an organization, slug, and
+first admin account in one step (`POST /api/org`).
 
 ### 5. Run Development Server
 
@@ -145,13 +249,42 @@ https://hrms.intelliforge.tech/api/webhooks/whatsapp
 ```
 Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/whatsapp-business-setup-guide.md) for full instructions.
 
+**Stripe** — `/api/webhooks/stripe` for subscription events.  
+**Interview Bot** — `/api/webhooks/interview-bot` for candidate score/report updates.  
+**RazorpayX** — `/api/webhooks/razorpay` for payout status.  
+**Digio** — `/api/webhooks/digio` for e-sign completion.
+
+## Testing
+
+### Unit tests
+
+Vitest tests live in `tests/unit/` (auth helpers, validations, etc.):
+
+```bash
+npm test
+```
+
+### E2E tests (Playwright)
+
+End-to-end specs live in `tests/e2e/`. Run against a dev server on **port 3001** so port 3000 stays free:
+
+```bash
+# Terminal 1 — start app on 3001
+npm run dev -- -p 3001
+
+# Terminal 2 — run Playwright against it
+E2E_BASE_URL=http://localhost:3001 npm run test:e2e
+```
+
+Playwright can also start the dev server automatically when `E2E_BASE_URL` is unset (defaults to port 3000).
+
 ## API Routes
 
 ### Authentication
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | Create intern account (auto-attaches to the single org; fails 503/500 if 0 or >1 orgs exist) |
+| `/api/auth/register` | POST | Create intern account. Auto-attaches to the sole org when only one exists; requires `orgSlug` when multiple orgs exist |
 | `/api/auth/login` | POST | Sign in with email + password |
 | `/api/auth/me` | GET | Get current authenticated user (from JWT cookie) |
 | `/api/auth/logout` | POST | Sign out (clears session cookie) |
@@ -159,6 +292,26 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 | `/api/auth/verify` | GET | Verify email address or consume magic link token |
 | `/api/auth/forgot-password` | POST | Send password reset email |
 | `/api/auth/reset-password` | POST | Reset password with token |
+
+**Intern registration with org slug**
+
+When multiple organizations exist, registration must include an org slug:
+
+```bash
+# UI: /sign-up?org=acme-corp
+curl -X POST /api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane","email":"jane@example.com","password":"secret123","orgSlug":"acme-corp"}'
+```
+
+The sign-up page reads `?org=slug`, fetches branding from `/api/orgs/[slug]/public`, and passes `orgSlug` to the register API.
+
+### Organization
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/org` | POST | Create org + admin (used by `/create-org`) |
+| `/api/orgs/[slug]/public` | GET | Public org name/logo for sign-up branding |
 
 ### Offer & Dashboard
 
@@ -187,6 +340,10 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 | `/api/webhooks/agentmail` | POST | AgentMail inbound — offer acceptance via email |
 | `/api/webhooks/whatsapp` | GET | Meta webhook verification (challenge-response) |
 | `/api/webhooks/whatsapp` | POST | WhatsApp inbound — offer acceptance + delivery status tracking |
+| `/api/webhooks/stripe` | POST | Stripe subscription lifecycle |
+| `/api/webhooks/interview-bot` | POST | Interview Bot score/report updates |
+| `/api/webhooks/razorpay` | POST | RazorpayX payout status |
+| `/api/webhooks/digio` | POST | Digio e-sign completion |
 
 ## Vercel Cron Jobs
 
@@ -196,8 +353,21 @@ Configured in `vercel.json`:
 |------|----------|-------------|
 | `/api/cron/task-reminder` | Monday 9:00 AM IST | Weekly task log reminder (email + WhatsApp) |
 | `/api/cron/attendance-nudge` | Weekdays 10:30 AM IST | Daily attendance nudge (email + WhatsApp) |
+| `/api/cron/daily-plan-nudge` | Weekdays 11:00 AM IST | Daily task plan reminder |
+| `/api/cron/performance-scores` | Daily midnight IST | Compute weekly performance scores |
 
 ## Database Models
+
+### Core
+
+| Model | Purpose |
+|-------|---------|
+| `Organization` | Tenant workspace (slug, billing, integration overrides) |
+| `Intern` | Intern account and lifecycle |
+| `Admin` | Org admin/mentor accounts |
+| `JobPosting` / `Candidate` | Hiring pipeline |
+| `LearningEnrollment` | Learning platform course enrollments |
+| `StipendPayoutBatch` / `StipendPayout` | Monthly stipend disbursements |
 
 ### Notification-Related
 
@@ -209,10 +379,17 @@ Configured in `vercel.json`:
 
 ## Multi-Tenant Model
 
-Every tenant-scoped row belongs to an `Organization`. The system currently
-runs **single-tenant** (one `IntelliForge AI` org), but the schema and
-runtime are written so multi-tenant rollout is a configuration change, not
-a refactor.
+Every tenant-scoped row belongs to an `Organization`. The schema supports
+**multi-tenant** operation: multiple orgs can coexist in one database.
+
+### Workspaces
+
+| Flow | How |
+|------|-----|
+| **New workspace** | `/create-org` → `POST /api/org` creates org + first admin |
+| **Intern sign-up (single org)** | `/sign-up` — auto-attaches to the only org |
+| **Intern sign-up (multi org)** | `/sign-up?org=slug` — requires valid slug; shows org branding |
+| **Admin scope** | All dashboard queries filter by `admin.orgId` |
 
 ### Hard invariants (enforced at the Postgres level)
 
@@ -230,7 +407,8 @@ queries like `/api/dashboard` and `/api/attendance` filter by
 
 | Code path | How it sets `orgId` |
 |-----------|---------------------|
-| `POST /api/auth/register` | Looks up the single Organization; fails fast (503 / 500) if 0 or >1 orgs exist |
+| `POST /api/auth/register` | `orgSlug` lookup when provided; else sole org; fails 400 if multiple orgs and no slug |
+| `POST /api/org` | Creates new org; admin gets new org's id |
 | `POST /api/jobs/[id]/convert` | From `session.orgId` of the authenticated admin |
 | `POST /api/jobs` (create job) | From `session.orgId` of the authenticated admin |
 | `prisma/seed.mjs` | Creates the org first, then attaches admins/interns at create time |

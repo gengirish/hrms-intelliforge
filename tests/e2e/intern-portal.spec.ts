@@ -1,56 +1,81 @@
 import { test, expect } from "@playwright/test";
+import { expectSignInRedirect } from "./helpers/auth";
 
 test.describe("Intern Onboarding Page", () => {
-  test("unauthenticated user sees sign-in gate", async ({ page }) => {
+  test("unauthenticated user redirects to sign-in", async ({ page }) => {
     await page.goto("/intern-onboarding");
-    await expect(
-      page.getByRole("heading", { name: /Sign In Required/i })
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator("#main-content").getByRole("link", { name: /^sign in$/i })).toBeVisible();
+    await expectSignInRedirect(page, "/intern-onboarding");
   });
 });
 
 test.describe("Intern portal gates (unauthenticated)", () => {
-  test("/tasks shows weekly tasks onboarding gate", async ({ page }) => {
+  test("/tasks redirects to sign-in", async ({ page }) => {
     await page.goto("/tasks");
-    const main = page.locator("#main-content");
-    await expect(main.getByRole("heading", { name: /Weekly Tasks/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(main.getByRole("link", { name: /Go to onboarding/i })).toBeVisible();
+    await expectSignInRedirect(page, "/tasks");
   });
 
-  test("/attendance shows attendance onboarding gate", async ({ page }) => {
+  test("/attendance redirects to sign-in", async ({ page }) => {
     await page.goto("/attendance");
-    const main = page.locator("#main-content");
-    await expect(main.getByRole("heading", { name: /^Attendance$/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(main.getByRole("link", { name: /Go to onboarding/i })).toBeVisible();
+    await expectSignInRedirect(page, "/attendance");
   });
 
-  test("/offer resolves without server error", async ({ page }) => {
-    const response = await page.goto("/offer");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-    await expect(page.locator("#main-content")).toBeVisible();
+  test("/offer redirects to sign-in", async ({ page }) => {
+    await page.goto("/offer");
+    await expectSignInRedirect(page, "/offer");
+  });
+
+  test("/weekly-progress redirects to sign-in", async ({ page }) => {
+    await page.goto("/weekly-progress");
+    await expectSignInRedirect(page, "/weekly-progress");
+  });
+
+  test("/daily-plan redirects to sign-in", async ({ page }) => {
+    await page.goto("/daily-plan");
+    await expectSignInRedirect(page, "/daily-plan");
   });
 });
 
 test.describe("Footer quick links", () => {
-  test("footer links reach intern portal pages", async ({ page }) => {
-    await page.goto("/");
+  test("footer links redirect unauthenticated users to sign-in", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
     const footer = page.locator("footer");
 
-    await footer.getByRole("link", { name: "Intern Onboarding" }).click();
-    await expect(page).toHaveURL(/\/intern-onboarding/);
+    for (const { href, redirect } of [
+      { href: "/intern-onboarding", redirect: "%2Fintern-onboarding" },
+      { href: "/attendance", redirect: "%2Fattendance" },
+      { href: "/tasks", redirect: "%2Ftasks" },
+    ]) {
+      await page.goto("/");
+      const link = footer.locator(`a[href="${href}"]`);
+      await link.scrollIntoViewIfNeeded();
+      await Promise.all([
+        page.waitForURL(new RegExp(`/sign-in\\?redirect=${redirect}`)),
+        link.click(),
+      ]);
+    }
+  });
+});
 
-    await page.goto("/");
-    await footer.getByRole("link", { name: "Attendance" }).click();
-    await expect(page).toHaveURL(/\/attendance/);
+test.describe("Intern portal API gates (unauthenticated)", () => {
+  test("GET /api/tasks returns 401", async ({ request }) => {
+    const response = await request.get("/api/tasks");
+    expect(response.status()).toBe(401);
+  });
 
-    await page.goto("/");
-    await footer.getByRole("link", { name: "Tasks" }).click();
-    await expect(page).toHaveURL(/\/tasks/);
+  test("GET /api/attendance returns 401", async ({ request }) => {
+    const response = await request.get("/api/attendance");
+    expect(response.status()).toBe(401);
+  });
+
+  test("GET /api/offer returns 401", async ({ request }) => {
+    const response = await request.get("/api/offer");
+    expect(response.status()).toBe(401);
+  });
+
+  test("POST /api/intern-onboarding returns 401", async ({ request }) => {
+    const response = await request.post("/api/intern-onboarding", {
+      data: { name: "E2E Test" },
+    });
+    expect(response.status()).toBe(401);
   });
 });

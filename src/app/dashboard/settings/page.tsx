@@ -652,6 +652,22 @@ export default function SettingsPage() {
         {activeSection === "integrations" && (
           <div className="space-y-6">
             <div className="glass-card p-6 space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Deployment health</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    View which platform integrations have API keys configured on this server.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/settings/integrations"
+                  className="shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-colors"
+                >
+                  Open health panel
+                </Link>
+              </div>
+            </div>
+            <div className="glass-card p-6 space-y-4">
               <h3 className="text-sm font-semibold text-white">WhatsApp Business API</h3>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-400">Phone Number ID</span>

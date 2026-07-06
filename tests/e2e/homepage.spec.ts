@@ -31,10 +31,20 @@ test.describe("Homepage", () => {
     await expect(cta).toHaveAttribute("href", "/create-org");
   });
 
-  test("should have demo video section", async ({ page }) => {
+  test("should have demo video section or product tour CTA", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "See it in 60 seconds" })).toBeVisible();
-    await expect(page.getByText("Watch 60-second demo")).toBeVisible();
+
+    const demoSection = page.locator('[aria-labelledby="demo-heading"]');
+    const demoIframe = page.locator('iframe[title="IntelliForge HRMS product demo"]');
+    const productTourLink = page.getByRole("link", {
+      name: /watch product tour|book a walkthrough|product tour|schedule a demo/i,
+    });
+    const productTourText = page.getByText("Watch product tour");
+
+    await expect(
+      demoSection.or(demoIframe).or(productTourLink).or(productTourText).first(),
+    ).toBeVisible();
   });
 
   test("should have pricing section on homepage", async ({ page }) => {

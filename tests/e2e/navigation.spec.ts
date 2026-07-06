@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Navigation", () => {
-  test("intern onboarding link navigates from homepage", async ({ page }) => {
+  test("intern onboarding link redirects unauthenticated users to sign-in", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Start onboarding" }).scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "Start onboarding" }).click();
-    await expect(page).toHaveURL(/\/intern-onboarding/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fintern-onboarding/, { timeout: 15_000 });
   });
 
   test("Start free CTA navigates to create-org", async ({ page }) => {
@@ -15,72 +15,50 @@ test.describe("Navigation", () => {
   });
 
   test("navbar brand links to homepage", async ({ page }) => {
-    await page.goto("/intern-onboarding");
+    await page.goto("/about");
     await page.locator("nav").getByRole("link", { name: /IntelliForge/i }).click();
     await expect(page).toHaveURL("/");
   });
 });
 
 test.describe("Page Load", () => {
-  test("/intern-onboarding page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/intern-onboarding");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/intern-onboarding redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/intern-onboarding");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fintern-onboarding/);
   });
 
-  test("/attendance page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/attendance");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/attendance redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/attendance");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fattendance/);
   });
 
-  test("/tasks page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/tasks");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/tasks redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/tasks");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Ftasks/);
   });
 
-  test("/weekly-progress resolves (unauthenticated: sign-in redirect or gate)", async ({
+  test("/weekly-progress redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/weekly-progress");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fweekly-progress/);
+    await expect(page.getByLabel("Email")).toBeVisible();
+  });
+
+  test("/dashboard/weekly-progress redirects unauthenticated users to sign-in", async ({
     page,
   }) => {
-    const response = await page.goto("/weekly-progress");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-    if (page.url().includes("/sign-in")) {
-      await expect(page.getByLabel("Email")).toBeVisible();
-    } else {
-      await expect(page.getByText(/Loading weekly progress/i)).toBeHidden({ timeout: 30_000 });
-      await expect(
-        page.locator("#main-content").getByRole("heading", { name: /^Weekly progress$/i })
-      ).toBeVisible();
-    }
+    await page.goto("/dashboard/weekly-progress");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fweekly-progress/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 
-  test("/dashboard/weekly-progress resolves (unauthenticated: sign-in redirect or gate)", async ({
-    page,
-  }) => {
-    const response = await page.goto("/dashboard/weekly-progress");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-    if (page.url().includes("/sign-in")) {
-      await expect(page.getByLabel("Email")).toBeVisible();
-    } else {
-      await expect(
-        page.getByRole("heading", { name: /Weekly progress review|Admin access required/i }),
-      ).toBeVisible();
-    }
+  test("/offer redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/offer");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Foffer/);
   });
 
-  test("/offer page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/offer");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-  });
-
-  test("/dashboard page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/dashboard");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/dashboard redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard/);
   });
 
   test("/create-org page loads (not 404)", async ({ page }) => {
@@ -95,16 +73,14 @@ test.describe("Page Load", () => {
     expect(response!.status()).toBe(200);
   });
 
-  test("/dashboard/hiring page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/dashboard/hiring");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/dashboard/hiring redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/dashboard/hiring");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fhiring/);
   });
 
-  test("/dashboard/settings page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/dashboard/settings");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/dashboard/settings redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/dashboard/settings");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fsettings/);
   });
 
   test("/reset-password page loads (not 404)", async ({ page }) => {
@@ -119,16 +95,14 @@ test.describe("Page Load", () => {
     expect(response!.status()).toBe(200);
   });
 
-  test("/daily-plan page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/daily-plan");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/daily-plan redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/daily-plan");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdaily-plan/);
   });
 
-  test("/dashboard/attendance page loads (not 404)", async ({ page }) => {
-    const response = await page.goto("/dashboard/attendance");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
+  test("/dashboard/attendance redirects unauthenticated users to sign-in", async ({ page }) => {
+    await page.goto("/dashboard/attendance");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fattendance/);
   });
 
   test("/accept-admin-invite page loads (not 404)", async ({ page }) => {

@@ -1,27 +1,21 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Daily Plan page (unauthenticated)", () => {
-  test("/daily-plan loads with 200", async ({ page }) => {
-    const response = await page.goto("/daily-plan");
-    expect(response).not.toBeNull();
-    expect(response!.status()).toBe(200);
-  });
-
-  test("unauthenticated user sees onboarding gate", async ({ page }) => {
+  test("/daily-plan redirects to sign-in", async ({ page }) => {
     await page.goto("/daily-plan");
-    await expect(page.getByText(/Loading daily plan/i)).toBeHidden({ timeout: 30_000 });
-    await expect(
-      page.locator("#main-content").getByRole("heading", { name: /Daily Task Plan/i })
-    ).toBeVisible({ timeout: 5_000 });
-    await expect(
-      page.getByRole("link", { name: /Go to onboarding/i })
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdaily-plan/);
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 
-  test("footer Daily Plan link navigates to /daily-plan", async ({ page }) => {
+  test("footer Daily Plan link redirects to sign-in", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");
-    await page.locator("footer").getByRole("link", { name: "Daily Plan" }).click();
-    await expect(page).toHaveURL(/\/daily-plan/);
+    const link = page.locator('footer a[href="/daily-plan"]');
+    await link.scrollIntoViewIfNeeded();
+    await Promise.all([
+      page.waitForURL(/\/sign-in\?redirect=%2Fdaily-plan/),
+      link.click(),
+    ]);
   });
 });
 

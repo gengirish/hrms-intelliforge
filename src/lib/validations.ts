@@ -155,3 +155,75 @@ export const weeklyProgressSubmitSchema = weeklyProgressBodySchema.refine(
     data.challenges.trim().length >= 10,
   { message: "Each field must be at least 10 characters after trimming" }
 );
+
+const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/i;
+const UPI_REGEX = /^[\w.-]+@[\w.-]+$/;
+
+/** Intern stipend payout details (bank or UPI) for RazorpayX. */
+export const payoutProfileSchema = z
+  .object({
+    payoutMethod: z.enum(["upi", "bank"]),
+    beneficiaryName: z
+      .string()
+      .max(120)
+      .optional()
+      .transform((s) => s?.trim() ?? ""),
+    accountNumber: z
+      .string()
+      .max(18)
+      .optional()
+      .transform((s) => s?.trim() ?? ""),
+    ifsc: z
+      .string()
+      .max(11)
+      .optional()
+      .transform((s) => s?.trim().toUpperCase() ?? ""),
+    upiId: z
+      .string()
+      .max(100)
+      .optional()
+      .transform((s) => s?.trim().toLowerCase() ?? ""),
+  })
+  .superRefine((data, ctx) => {
+    if (data.payoutMethod === "upi") {
+      if (!data.upiId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "UPI ID is required",
+          path: ["upiId"],
+        });
+      } else if (!UPI_REGEX.test(data.upiId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid UPI ID (e.g. name@upi)",
+          path: ["upiId"],
+        });
+      }
+    }
+
+    if (data.payoutMethod === "bank") {
+      if (!data.beneficiaryName || data.beneficiaryName.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Beneficiary name is required",
+          path: ["beneficiaryName"],
+        });
+      }
+      if (!data.accountNumber || !/^\d{9,18}$/.test(data.accountNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid bank account number (9–18 digits)",
+          path: ["accountNumber"],
+        });
+      }
+      if (!data.ifsc || !IFSC_REGEX.test(data.ifsc)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid IFSC code (e.g. HDFC0001234)",
+          path: ["ifsc"],
+        });
+      }
+    }
+  });
+
+export type PayoutProfileInput = z.infer<typeof payoutProfileSchema>;

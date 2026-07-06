@@ -1,7 +1,9 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
 /**
  * In-memory rate limiter. Resets on serverless cold starts and does not coordinate
- * across instances. For production scale, replace with Redis, Upstash, or edge-based
- * rate limiting (e.g. middleware + shared store).
+ * across instances. Used as fallback when Upstash Redis is not configured.
  */
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
@@ -16,6 +18,26 @@ setInterval(() => {
   });
 }, CLEANUP_INTERVAL_MS).unref?.();
 
+const upstashEnabled =
+  Boolean(process.env.UPSTASH_REDIS_REST_URL) &&
+  Boolean(process.env.UPSTASH_REDIS_REST_TOKEN);
+
+const upstashRatelimitCache = new Map<string, Ratelimit>();
+
+function getUpstashRatelimit(limit: number, windowMs: number): Ratelimit {
+  const key = `${limit}:${windowMs}`;
+  let instance = upstashRatelimitCache.get(key);
+  if (!instance) {
+    const redis = Redis.fromEnv();
+    instance = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
+    });
+    upstashRatelimitCache.set(key, instance);
+  }
+  return instance;
+}
+
 export function rateLimit(ip: string, limit = 10, windowMs = 60000): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
@@ -26,6 +48,19 @@ export function rateLimit(ip: string, limit = 10, windowMs = 60000): boolean {
   if (entry.count >= limit) return false;
   entry.count++;
   return true;
+}
+
+/** Uses Upstash Redis when configured; otherwise falls back to in-memory `rateLimit`. */
+export async function rateLimitAsync(
+  ip: string,
+  limit = 10,
+  windowMs = 60000
+): Promise<boolean> {
+  if (!upstashEnabled) {
+    return rateLimit(ip, limit, windowMs);
+  }
+  const { success } = await getUpstashRatelimit(limit, windowMs).limit(ip);
+  return success;
 }
 
 export function getClientIp(req: Request): string {
