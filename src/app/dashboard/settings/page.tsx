@@ -126,11 +126,21 @@ export default function SettingsPage() {
   const [team, setTeam] = useState<TeamAdminRow[]>([]);
   const [teamLoading, setTeamLoading] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [teamAddMode, setTeamAddMode] = useState<"invite" | "direct">("invite");
   const [inviteForm, setInviteForm] = useState({
     email: "",
     name: "",
     role: "MENTOR" as "MENTOR" | "ADMIN",
   });
+  const [directForm, setDirectForm] = useState({
+    email: "",
+    name: "",
+    role: "MENTOR" as "MENTOR" | "ADMIN",
+    password: "",
+    confirmPassword: "",
+    sendWelcomeEmail: true,
+  });
+  const [directBusy, setDirectBusy] = useState(false);
   const [promoteBusy, setPromoteBusy] = useState(false);
   const [promoteForm, setPromoteForm] = useState({
     internId: "",
@@ -223,6 +233,62 @@ export default function SettingsPage() {
       }
     } catch {
       toast.error("Failed to start checkout");
+    }
+  }
+
+  async function addTeamMemberDirectly() {
+    if (directForm.password !== directForm.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (directForm.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setDirectBusy(true);
+    try {
+      const res = await fetch("/api/org/admins/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: directForm.email.trim(),
+          name: directForm.name.trim() || undefined,
+          role: directForm.role,
+          password: directForm.password,
+          confirmPassword: directForm.confirmPassword,
+          sendWelcomeEmail: directForm.sendWelcomeEmail,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 402 && data.upgrade) {
+          toast.error(data.error || "Plan limit reached");
+          setActiveSection("billing");
+          return;
+        }
+        toast.error(data.error || "Could not add team member");
+        return;
+      }
+      toast.success(data.message || "Team member added.");
+      setDirectForm({
+        email: "",
+        name: "",
+        role: "MENTOR",
+        password: "",
+        confirmPassword: "",
+        sendWelcomeEmail: true,
+      });
+      const tRes = await fetch("/api/org/admins");
+      if (tRes.ok) {
+        const d = await tRes.json();
+        setTeam(d.admins ?? []);
+      }
+      await loadOrg();
+    } catch {
+      toast.error("Could not add team member");
+    } finally {
+      setDirectBusy(false);
     }
   }
 
@@ -477,66 +543,220 @@ export default function SettingsPage() {
         {activeSection === "team" && (
           <div className="space-y-6">
             <div className="glass-card p-6 space-y-4">
-              <h3 className="text-sm font-semibold text-white">Invite teammate</h3>
-              <p className="text-xs text-slate-400">
-                Sends a secure link so they choose their own password. Choose <strong className="text-slate-300">Mentor</strong> for
-                people who guide interns without billing or hiring access, or <strong className="text-slate-300">Full admin</strong> for managers.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="team-invite-email" className="block text-sm text-slate-400 mb-1">
-                    Email
-                  </label>
-                  <input
-                    id="team-invite-email"
-                    type="email"
-                    value={inviteForm.email}
-                    onChange={(e) => setInviteForm((p) => ({ ...p, email: e.target.value }))}
-                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
-                    autoComplete="off"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="team-invite-name" className="block text-sm text-slate-400 mb-1">
-                    Display name (optional)
-                  </label>
-                  <input
-                    id="team-invite-name"
-                    type="text"
-                    value={inviteForm.name}
-                    onChange={(e) => setInviteForm((p) => ({ ...p, name: e.target.value }))}
-                    className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="team-invite-role" className="block text-sm text-slate-400 mb-1">
-                    Workspace role
-                  </label>
-                  <select
-                    id="team-invite-role"
-                    value={inviteForm.role}
-                    onChange={(e) =>
-                      setInviteForm((p) => ({
-                        ...p,
-                        role: e.target.value as "MENTOR" | "ADMIN",
-                      }))
-                    }
-                    className="w-full max-w-md rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h3 className="text-sm font-semibold text-white">Add teammate</h3>
+                <div
+                  className="inline-flex rounded-lg border border-slate-700 bg-slate-900/50 p-1"
+                  role="tablist"
+                  aria-label="Add teammate method"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={teamAddMode === "invite"}
+                    onClick={() => setTeamAddMode("invite")}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      teamAddMode === "invite"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    )}
                   >
-                    <option value="MENTOR">Mentor (interns & attendance)</option>
-                    <option value="ADMIN">Full admin</option>
-                  </select>
+                    Email invite
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={teamAddMode === "direct"}
+                    onClick={() => setTeamAddMode("direct")}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      teamAddMode === "direct"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    )}
+                  >
+                    Add directly
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => void inviteTeamMember()}
-                disabled={inviteBusy || !inviteForm.email}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white inline-flex items-center gap-2"
-              >
-                {inviteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                Send invite email
-              </button>
+
+              {teamAddMode === "invite" ? (
+                <>
+                  <p className="text-xs text-slate-400">
+                    Sends a secure link so they choose their own password. Choose{" "}
+                    <strong className="text-slate-300">Mentor</strong> for people who guide interns
+                    without billing or hiring access, or{" "}
+                    <strong className="text-slate-300">Full admin</strong> for managers.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="team-invite-email" className="block text-sm text-slate-400 mb-1">
+                        Email
+                      </label>
+                      <input
+                        id="team-invite-email"
+                        type="email"
+                        value={inviteForm.email}
+                        onChange={(e) => setInviteForm((p) => ({ ...p, email: e.target.value }))}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="team-invite-name" className="block text-sm text-slate-400 mb-1">
+                        Display name (optional)
+                      </label>
+                      <input
+                        id="team-invite-name"
+                        type="text"
+                        value={inviteForm.name}
+                        onChange={(e) => setInviteForm((p) => ({ ...p, name: e.target.value }))}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label htmlFor="team-invite-role" className="block text-sm text-slate-400 mb-1">
+                        Workspace role
+                      </label>
+                      <select
+                        id="team-invite-role"
+                        value={inviteForm.role}
+                        onChange={(e) =>
+                          setInviteForm((p) => ({
+                            ...p,
+                            role: e.target.value as "MENTOR" | "ADMIN",
+                          }))
+                        }
+                        className="w-full max-w-md rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                      >
+                        <option value="MENTOR">Mentor (interns & attendance)</option>
+                        <option value="ADMIN">Full admin</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void inviteTeamMember()}
+                    disabled={inviteBusy || !inviteForm.email}
+                    className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white inline-flex items-center gap-2"
+                  >
+                    {inviteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                    Send invite email
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-400">
+                    Create the account immediately with a password you set. They can sign in right
+                    away and appear in mentor assignment lists. Share the password securely outside
+                    HRMS.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="team-direct-email" className="block text-sm text-slate-400 mb-1">
+                        Email
+                      </label>
+                      <input
+                        id="team-direct-email"
+                        type="email"
+                        value={directForm.email}
+                        onChange={(e) => setDirectForm((p) => ({ ...p, email: e.target.value }))}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="team-direct-name" className="block text-sm text-slate-400 mb-1">
+                        Display name (optional)
+                      </label>
+                      <input
+                        id="team-direct-name"
+                        type="text"
+                        value={directForm.name}
+                        onChange={(e) => setDirectForm((p) => ({ ...p, name: e.target.value }))}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="team-direct-password" className="block text-sm text-slate-400 mb-1">
+                        Password
+                      </label>
+                      <input
+                        id="team-direct-password"
+                        type="password"
+                        value={directForm.password}
+                        onChange={(e) => setDirectForm((p) => ({ ...p, password: e.target.value }))}
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="team-direct-confirm" className="block text-sm text-slate-400 mb-1">
+                        Confirm password
+                      </label>
+                      <input
+                        id="team-direct-confirm"
+                        type="password"
+                        value={directForm.confirmPassword}
+                        onChange={(e) =>
+                          setDirectForm((p) => ({ ...p, confirmPassword: e.target.value }))
+                        }
+                        className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label htmlFor="team-direct-role" className="block text-sm text-slate-400 mb-1">
+                        Workspace role
+                      </label>
+                      <select
+                        id="team-direct-role"
+                        value={directForm.role}
+                        onChange={(e) =>
+                          setDirectForm((p) => ({
+                            ...p,
+                            role: e.target.value as "MENTOR" | "ADMIN",
+                          }))
+                        }
+                        className="w-full max-w-md rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-white text-sm"
+                      >
+                        <option value="MENTOR">Mentor (interns & attendance)</option>
+                        <option value="ADMIN">Full admin</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="inline-flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={directForm.sendWelcomeEmail}
+                          onChange={(e) =>
+                            setDirectForm((p) => ({ ...p, sendWelcomeEmail: e.target.checked }))
+                          }
+                          className="rounded border-slate-600 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        Email sign-in instructions (password not included)
+                      </label>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void addTeamMemberDirectly()}
+                    disabled={
+                      directBusy ||
+                      !directForm.email ||
+                      !directForm.password ||
+                      !directForm.confirmPassword
+                    }
+                    className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-white inline-flex items-center gap-2"
+                  >
+                    {directBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                    Add team member
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="glass-card p-6 space-y-4">

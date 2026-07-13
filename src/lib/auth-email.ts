@@ -120,6 +120,36 @@ export async function sendAdminInviteEmail(args: {
   });
 }
 
+export async function sendAdminWelcomeEmail(args: {
+  to: string;
+  recipientName?: string | null;
+  orgName: string;
+  workspaceRole: string;
+}) {
+  const signInUrl = `${APP_URL}/sign-in`;
+  const greeting = args.recipientName?.trim()
+    ? `Hi ${escapeHtml(args.recipientName.trim())}`
+    : "Hi";
+  const roleLabel =
+    args.workspaceRole === "MENTOR" ? "mentor" : "full workspace admin";
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: args.to,
+    subject: `Your IntelliForge HRMS account — ${args.orgName}`,
+    html: `
+      <h2>${greeting},</h2>
+      <p>Your workspace admin created a <strong>${escapeHtml(roleLabel)}</strong> account for you at <strong>${escapeHtml(args.orgName)}</strong>.</p>
+      <p>Sign in with the email address this message was sent to and the password your admin shared with you.</p>
+      <p><a href="${signInUrl}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Sign in to HRMS
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">For security, change your password after your first sign-in from the sign-in page.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export async function sendPasswordResetEmail(email: string, name?: string) {
   const token = generateToken();
   await storeToken(email, token, "PASSWORD_RESET");

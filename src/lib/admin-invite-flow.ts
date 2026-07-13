@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
-import { hashToken, sendAdminInviteEmail } from "@/lib/auth-email";
+import { hashToken, sendAdminInviteEmail, sendAdminWelcomeEmail } from "@/lib/auth-email";
 import { normalizeOrgAdminRole, ORG_ADMIN_ROLE, type OrgAdminRole } from "@/lib/org-admin-roles";
 
 export const ADMIN_INVITE_EXPIRY_DAYS = 7;
@@ -55,6 +55,99 @@ export async function issueAdminInvite(params: {
 export type AcceptInviteResult =
   | { ok: true; adminId: string; email: string }
   | { ok: false; error: string; status: number };
+
+export type CreateAdminDirectResult =
+  | { ok: true; adminId: string; email: string; welcomeEmailSent: boolean }
+  | { ok: false; error: string; status: number };
+
+export async function createOrgAdminDirect(params: {
+  orgId: string;
+  orgName: string;
+  email: string;
+  name?: string | null;
+  role: OrgAdminRole;
+  password: string;
+  sendWelcomeEmail?: boolean;
+}): Promise<CreateAdminDirectResult> {
+  if (params.password.length < 8 || params.password.length > 128) {
+    return {
+      ok: false,
+      error: "Password must be between 8 and 128 characters.",
+      status: 400,
+    };
+  }
+
+  const orgRole = normalizeOrgAdminRole(params.role);
+  if (orgRole !== ORG_ADMIN_ROLE.ADMIN && orgRole !== ORG_ADMIN_ROLE.MENTOR) {
+    return { ok: false, error: "Invalid workspace role.", status: 400 };
+  }
+
+  const existingAdmin = await prisma.admin.findUnique({
+    where: { email: params.email },
+  });
+  if (existingAdmin) {
+    return {
+      ok: false,
+      error: "An account with this email already exists.",
+      status: 409,
+    };
+  }
+
+  const internClash = await prisma.intern.findUnique({
+    where: { email: params.email },
+  });
+  if (internClash) {
+    return {
+      ok: false,
+      error:
+        "This email is registered as an intern. Promote them from Settings → Team instead of creating a duplicate account.",
+      status: 409,
+    };
+  }
+
+  const passwordHash = await hashPassword(params.password);
+  const displayName = params.name?.trim() || params.email.split("@")[0];
+
+  const admin = await prisma.$transaction(async (tx) => {
+    await tx.adminInvite.deleteMany({
+      where: { orgId: params.orgId, email: params.email },
+    });
+
+    return tx.admin.create({
+      data: {
+        orgId: params.orgId,
+        email: params.email,
+        passwordHash,
+        name: displayName,
+        role: orgRole,
+        emailVerified: true,
+      },
+      select: { id: true, email: true },
+    });
+  });
+
+  let welcomeEmailSent = false;
+  if (params.sendWelcomeEmail !== false) {
+    try {
+      await sendAdminWelcomeEmail({
+        to: params.email,
+        recipientName: displayName,
+        orgName: params.orgName,
+        workspaceRole: orgRole,
+      });
+      welcomeEmailSent = true;
+    } catch (e) {
+      console.error("sendAdminWelcomeEmail:", e);
+    }
+  }
+
+  return {
+    ok: true,
+    adminId: admin.id,
+    email: admin.email,
+    welcomeEmailSent,
+  };
+}
 
 export async function acceptAdminInvite(
   rawToken: string,

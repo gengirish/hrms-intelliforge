@@ -31,6 +31,23 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+export const directAdminSchema = z
+  .object({
+    email: z.string().email(),
+    name: z.string().min(1).max(200).optional(),
+    role: z.enum(["ADMIN", "MENTOR"]).default("MENTOR"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirmPassword: z.string().min(8).max(128),
+    sendWelcomeEmail: z.boolean().optional().default(true),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export const actionSchema = z
   .object({
     internId: z.string().min(1),

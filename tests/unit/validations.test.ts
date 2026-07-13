@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loginSchema, registerSchema } from "@/lib/validations";
+import { directAdminSchema, loginSchema, registerSchema } from "@/lib/validations";
 
 describe("registerSchema", () => {
   const validBase = {
@@ -62,6 +62,42 @@ describe("registerSchema", () => {
     const result = registerSchema.safeParse({
       ...validBase,
       orgSlug: "a",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("directAdminSchema", () => {
+  const validBase = {
+    email: "mentor@example.com",
+    password: "password123",
+    confirmPassword: "password123",
+    role: "MENTOR" as const,
+  };
+
+  it("accepts valid direct admin input", () => {
+    const result = directAdminSchema.safeParse(validBase);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects mismatched passwords", () => {
+    const result = directAdminSchema.safeParse({
+      ...validBase,
+      confirmPassword: "different-password",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path.includes("confirmPassword"))).toBe(
+        true
+      );
+    }
+  });
+
+  it("rejects short password", () => {
+    const result = directAdminSchema.safeParse({
+      ...validBase,
+      password: "short",
+      confirmPassword: "short",
     });
     expect(result.success).toBe(false);
   });

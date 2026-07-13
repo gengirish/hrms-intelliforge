@@ -118,6 +118,7 @@ export async function middleware(request: NextRequest) {
         /^\/api\/org\/admins\/(?!promote-intern)[^/]+\/?$/.test(pathname);
       const isOrgAdminsMutation =
         (pathname === "/api/org/admins" && request.method === "POST") ||
+        (pathname === "/api/org/admins/direct" && request.method === "POST") ||
         teamMemberPatch ||
         (pathname === "/api/org/admins/promote-intern" && request.method === "POST");
       if (isOrgAdminsMutation) {
