@@ -30,21 +30,21 @@ const stats = [
 const features = [
   {
     icon: Search,
-    title: "Mentor discovery",
+    title: "Mentor roster",
     description:
-      "Browse verified mentors by skill, industry, and availability — or invite your own network into one workspace.",
+      "Invite your program mentors, organize them by skill and availability, and assign them to cohorts from one workspace.",
   },
   {
     icon: Briefcase,
-    title: "Internship listings",
+    title: "Cohort listings",
     description:
-      "Publish cohort openings with stipend details, duration, and mentor assignments. Share a careers page in one link.",
+      "Publish internship openings with stipend details, duration, and mentor assignments. Share your org careers page in one link.",
   },
   {
     icon: Star,
     title: "Ratings & accountability",
     description:
-      "Two-way reviews after each cohort. Mentor and intern scores build trust across the marketplace.",
+      "Two-way reviews after each cohort. Mentor and intern scores build accountability across your program.",
   },
   {
     icon: Wallet,
@@ -71,13 +71,13 @@ const steps = [
     step: "01",
     title: "Create your workspace",
     description:
-      "Sign up free, list internships, and invite mentors. No sales call — live in minutes.",
+      "Sign up free, set up your program, and invite mentors. No sales call — live in minutes.",
   },
   {
     step: "02",
-    title: "Match & onboard",
+    title: "Onboard your cohort",
     description:
-      "Discover mentors or bring your own. Interns apply, accept offers, and self-onboard in one flow.",
+      "Assign mentors to interns. Candidates apply, accept offers, and self-onboard in one flow.",
   },
   {
     step: "03",
@@ -115,7 +115,7 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="badge-trust mb-6 animate-stat-reveal inline-flex">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Mentor marketplace · Cohort ops · Built in India</span>
+                <span>Internal programs · Cohort ops · Built in India</span>
               </div>
 
               <h1
@@ -128,8 +128,8 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl leading-relaxed">
-                Discover mentors, publish internship listings, and run mentor-led
-                cohorts in one auditable workspace. Track attendance, collect
+                Run your mentor-led internship program in one auditable workspace.
+                Invite mentors, onboard interns, track attendance, collect
                 ratings, and process stipend payouts with a transparent platform
                 fee. Self-serve signup — live in minutes.
               </p>
@@ -222,17 +222,17 @@ export default function HomePage() {
         >
           <div className="max-w-2xl mb-12">
             <p className="text-sm font-semibold uppercase tracking-wider text-brand-400 mb-3">
-              Marketplace + operations
+              Program operations
             </p>
             <h2
               id="features-heading"
               className="text-3xl sm:text-4xl font-bold text-white text-balance"
             >
-              From mentor discovery to stipend payout
+              From mentor roster to stipend payout
             </h2>
             <p className="mt-4 text-slate-400 leading-relaxed">
               Stop duct-taping spreadsheets, WhatsApp groups, and manual payouts.
-              One platform for listing internships, matching mentors, tracking
+              One platform for running cohorts, assigning mentors, tracking
               accountability, and paying stipends.
             </p>
           </div>

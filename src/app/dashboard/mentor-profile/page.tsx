@@ -178,10 +178,11 @@ export default function MentorProfilePage() {
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
               <UserCircle className="h-7 w-7 text-indigo-400" />
-              Public Mentor Profile
+              Mentor Profile
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              List yourself on the mentor marketplace so interns and candidates can book sessions.
+              Set up your mentor profile so admins can assign you to interns and
+              track cohort reviews.
             </p>
           </div>
           {profile?.isPublic && profile.slug && (
@@ -191,7 +192,7 @@ export default function MentorProfilePage() {
               className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs font-medium text-indigo-300 hover:bg-indigo-500/20"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              View public page
+              View program page
             </Link>
           )}
         </div>
@@ -205,7 +206,7 @@ export default function MentorProfilePage() {
         <form onSubmit={handleSave} className="space-y-6">
           <div className="glass-card p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white">Public listing</span>
+              <span className="text-sm font-medium text-white">Program directory</span>
               <button
                 type="button"
                 role="switch"

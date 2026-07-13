@@ -16,7 +16,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const SITE_DESCRIPTION =
-  "Mentor Internship Platform — discover mentors, run accountability-driven cohorts, and process stipend payouts. Start free with 5 interns and 2 mentors.";
+  "Mentor Internship Platform — run internal mentor-led internship programs, track accountability, and process stipend payouts. Start free with 5 interns and 2 mentors.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hrms.intelliforge.tech"),
@@ -36,12 +36,12 @@ export const metadata: Metadata = {
   publisher: "IntelliForge AI",
   keywords: [
     "mentor internship platform",
-    "mentor marketplace",
+    "internal internship program",
     "internship management",
     "mentor-led cohorts",
     "stipend payouts",
     "intern program software",
-    "mentor discovery",
+    "mentor roster",
     "onboarding",
     "attendance tracking",
     "cohort analytics",
@@ -114,7 +114,7 @@ const organizationJsonLd = {
       applicationCategory: "BusinessApplication",
       url: "https://hrms.intelliforge.tech",
       description:
-        "Mentor marketplace and cohort operations platform — discover mentors, publish internship listings, track accountability, and process stipend payouts.",
+        "Internal mentor-led internship program platform — invite mentors, run cohorts, track accountability, and process stipend payouts.",
       operatingSystem: "Web",
       publisher: {
         "@id": "https://www.intelliforge.tech/#organization",

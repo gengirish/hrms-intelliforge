@@ -68,16 +68,16 @@ export default async function InternshipsPage() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="text-xs font-medium text-emerald-400">
-                Internship Marketplace
+                Program openings
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
-              Discover Your Next{" "}
-              <span className="gradient-text">Internship</span>
+              Open internship{" "}
+              <span className="gradient-text">cohorts</span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Browse active openings from organizations on IntelliForge. Find
-              roles in AI, engineering, and product — apply in minutes.
+              View active cohort openings from organizations running internal
+              internship programs on IntelliForge. Apply in minutes.
             </p>
 
             <InternshipsSearch />

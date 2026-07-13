@@ -92,7 +92,7 @@ export async function extractMentorDraftFromLinkedIn(input: {
     }
   }
 
-  const system = `You extract mentor marketplace profile fields from LinkedIn profile information.
+  const system = `You extract mentor profile fields for an internal internship program from LinkedIn profile information.
 Return JSON only with keys: name, headline, bio, expertise, yearsExperience, linkedinUrl, githubUrl, avatarUrl.
 Rules:
 - name: full display name

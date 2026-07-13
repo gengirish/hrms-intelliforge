@@ -8,7 +8,7 @@ test.describe("Responsive Design", () => {
     await expect(hamburger).toBeVisible();
   });
 
-  test("mobile hamburger menu opens and shows marketplace navigation links", async ({
+  test("mobile hamburger menu opens and shows primary navigation links", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -30,11 +30,11 @@ test.describe("Responsive Design", () => {
     await expect(hamburger).not.toBeVisible();
   });
 
-  test("tablet viewport renders homepage marketplace features", async ({ page }) => {
+  test("tablet viewport renders homepage program features", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Mentor discovery", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Internship listings", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mentor roster", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cohort listings", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Stipend payouts", exact: true })).toBeVisible();
   });
 });

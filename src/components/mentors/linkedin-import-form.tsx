@@ -332,7 +332,7 @@ export function LinkedInMentorImportForm({
             onChange={(e) => setIsPublic(e.target.checked)}
             className="rounded border-slate-600"
           />
-          List on public mentor marketplace
+          Show on program mentor directory
         </label>
 
         <button

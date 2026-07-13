@@ -36,11 +36,11 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     price: "$29",
     period: "/mo",
     interns: "500",
-    tagline: "Grow your mentor marketplace",
+    tagline: "Grow your internship program",
     features: [
       "10 mentors",
       "Everything in Free",
-      "Mentor discovery & ratings",
+      "Mentor roster & ratings",
       "WhatsApp nudges & reminders",
       "Stipend payouts (5% platform fee)",
     ],
@@ -70,7 +70,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     price: "Custom",
     period: "",
     interns: "Unlimited",
-    tagline: "Custom marketplace & payout terms",
+    tagline: "Custom program & payout terms",
     features: [
       "Unlimited mentors",
       "Everything in Growth",

@@ -33,7 +33,7 @@ const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/dashboard/mentor-profile", label: "Mentor profile", icon: UserCircle },
   { href: "/dashboard/mentors/import", label: "Import mentor", icon: UserPlus },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
-  { href: "/dashboard/marketplace", label: "Marketplace", icon: Wallet },
+  { href: "/dashboard/marketplace", label: "Platform fees", icon: Wallet },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

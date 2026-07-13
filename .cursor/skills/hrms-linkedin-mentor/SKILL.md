@@ -1,6 +1,6 @@
 ---
 name: hrms-linkedin-mentor
-description: Import LinkedIn profiles into IntelliForge mentor marketplace accounts. Use when building or debugging LinkedIn-to-mentor workflows, /api/mentors/import-linkedin, or onboarding mentors from social profiles.
+description: Import LinkedIn profiles into IntelliForge mentor accounts for internal internship programs. Use when building or debugging LinkedIn-to-mentor workflows, /api/mentors/import-linkedin, or onboarding mentors from social profiles.
 ---
 
 # LinkedIn → Mentor Profile Workflow

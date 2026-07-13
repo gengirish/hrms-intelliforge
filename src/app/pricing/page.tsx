@@ -9,7 +9,7 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for mentor-led internship programs. Start free with 5 interns and 2 mentors — scale as your marketplace grows.",
+    "Simple, transparent pricing for internal mentor-led internship programs. Start free with 5 interns and 2 mentors — scale as your cohort grows.",
 };
 
 const faqs = [
@@ -45,10 +45,10 @@ export default function PricingPage() {
           <div className="absolute inset-0 gradient-hero opacity-80" aria-hidden="true" />
           <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-white text-balance">
-              Pricing that scales with your marketplace
+              Pricing that scales with your program
             </h1>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              One platform for mentor discovery, cohort accountability, and
+              One platform for mentor roster, cohort accountability, and
               stipend payouts. Pay per intern and mentor capacity — not per
               feature gate.
             </p>

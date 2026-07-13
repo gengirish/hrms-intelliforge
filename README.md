@@ -1,6 +1,6 @@
 # Mentor Internship Platform
 
-Mentor-led internship marketplace and cohort management platform — mentor discovery, internship listings, accountability tracking, and monetized stipend payouts.  
+Internal mentor-led internship program and cohort management platform — mentor roster, cohort listings, accountability tracking, and stipend payouts.  
 Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 
 ## Architecture

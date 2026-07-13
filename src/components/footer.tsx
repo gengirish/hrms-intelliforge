@@ -69,9 +69,9 @@ export function Footer() {
               <BrandMark href="/" />
             </div>
             <p className="text-sm text-slate-400 max-w-xs">
-              The Mentor Internship Platform — discover mentors, run
-              accountability-driven cohorts, and process stipend payouts. A
-              product of{" "}
+              The Mentor Internship Platform — run internal mentor-led
+              internship programs, track accountability, and process stipend
+              payouts. A product of{" "}
               <a
                 href="https://www.intelliforge.tech"
                 target="_blank"

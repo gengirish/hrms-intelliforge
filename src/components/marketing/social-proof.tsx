@@ -44,8 +44,8 @@ export function SocialProof() {
           Built in production for our own cohort
         </h2>
         <p className="mt-3 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-          Dogfooded on IntelliForge&apos;s 500+ intern program — now opening to a
-          small number of design partners who run real cohorts.
+          Dogfooded on IntelliForge&apos;s 500+ intern program — built for teams
+          running real internal internship cohorts.
         </p>
       </div>
 

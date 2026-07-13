@@ -126,16 +126,17 @@ export default async function MentorsPage({
             <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 mb-6">
               <Users className="h-3.5 w-3.5 text-indigo-400" />
               <span className="text-xs font-medium text-indigo-400">
-                Mentor Marketplace
+                Program mentors
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
-              Find Your{" "}
-              <span className="gradient-text">Perfect Mentor</span>
+              Meet your{" "}
+              <span className="gradient-text">program mentors</span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Browse verified mentors by skill, industry, and availability.
-              Book 1:1 sessions to accelerate your career.
+              Browse mentors in your organization&apos;s internship program by
+              skill and expertise. Book 1:1 sessions with mentors assigned to
+              your cohort.
             </p>
           </div>
         </section>

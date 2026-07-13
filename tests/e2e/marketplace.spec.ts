@@ -45,10 +45,10 @@ test.describe("Marketplace admin flows (optional credentials)", () => {
 
     await signInWithCredentials(page, creds!.email, creds!.password);
     await page.goto("/dashboard/mentor-profile");
-    await expect(page.getByRole("heading", { name: "Public Mentor Profile" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Mentor Profile" })).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText("Public listing")).toBeVisible();
+    await expect(page.getByText("Program directory")).toBeVisible();
     await expect(page.getByLabel("Headline")).toBeVisible();
   });
 
@@ -60,7 +60,7 @@ test.describe("Marketplace admin flows (optional credentials)", () => {
 
     await signInWithCredentials(page, creds!.email, creds!.password);
     await page.goto("/dashboard/marketplace");
-    await expect(page.getByRole("heading", { name: /Marketplace revenue/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /Platform fees/i })).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByText(/Platform fees|Gross payouts/i).first()).toBeVisible();

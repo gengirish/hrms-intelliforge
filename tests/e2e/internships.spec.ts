@@ -8,10 +8,10 @@ test.describe("Internships directory (public)", () => {
     await expect(page).not.toHaveURL(/\/sign-in/);
   });
 
-  test("renders marketplace hero", async ({ page }) => {
+  test("renders program openings hero", async ({ page }) => {
     await page.goto("/internships");
-    await expect(page.locator("h1")).toContainText("Internship");
-    await expect(page.getByText("Internship Marketplace")).toBeVisible();
+    await expect(page.locator("h1")).toContainText("cohorts");
+    await expect(page.getByText("Program openings")).toBeVisible();
   });
 
   test("has search input for filtering listings", async ({ page }) => {

@@ -8,12 +8,12 @@ test.describe("Mentors directory (public)", () => {
     await expect(page).not.toHaveURL(/\/sign-in/);
   });
 
-  test("renders marketplace hero", async ({ page }) => {
+  test("renders program mentors hero", async ({ page }) => {
     await page.goto("/mentors");
-    await expect(page.locator("#main-content h1")).toContainText("Perfect Mentor", {
+    await expect(page.locator("#main-content h1")).toContainText("program mentors", {
       timeout: 15_000,
     });
-    await expect(page.getByText("Mentor Marketplace")).toBeVisible();
+    await expect(page.getByText("Program mentors")).toBeVisible();
   });
 
   test("has mentor search input", async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe("Mentors directory (public)", () => {
 
   test("shows mentor cards or empty state", async ({ page }) => {
     await page.goto("/mentors");
-    await expect(page.locator("#main-content h1")).toContainText("Perfect Mentor", {
+    await expect(page.locator("#main-content h1")).toContainText("program mentors", {
       timeout: 15_000,
     });
     const hasMentors = await page.getByText(/\d+ mentors? available/i).isVisible();

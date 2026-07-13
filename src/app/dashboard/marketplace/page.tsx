@@ -60,7 +60,7 @@ export default function MarketplacePage() {
         return;
       }
       if (!res.ok) {
-        toast.error("Failed to load marketplace transactions");
+        toast.error("Failed to load platform fee transactions");
         setBootState("error");
         return;
       }
@@ -79,13 +79,13 @@ export default function MarketplacePage() {
         <Breadcrumbs
           items={[
             { label: "Dashboard", href: "/dashboard" },
-            { label: "Marketplace" },
+            { label: "Platform fees" },
           ]}
         />
         <div className="mt-4 mb-6">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Wallet className="h-7 w-7 text-indigo-400" aria-hidden="true" />
-            Marketplace revenue
+            Platform fees
           </h1>
           <p className="mt-1 text-sm text-slate-400">
             Platform fees collected on stipend payouts through your workspace.
@@ -102,7 +102,7 @@ export default function MarketplacePage() {
 
         {bootState === "forbidden" && (
           <div className="glass-card p-8 text-center text-slate-400">
-            Only full workspace admins can view marketplace transactions.
+            Only full workspace admins can view platform fee transactions.
           </div>
         )}
 
@@ -138,7 +138,7 @@ export default function MarketplacePage() {
 
             {transactions.length === 0 ? (
               <div className="glass-card p-8 text-center text-slate-400">
-                No marketplace transactions yet. Fees are recorded when stipend
+                No platform fee transactions yet. Fees are recorded when stipend
                 batches are processed.
               </div>
             ) : (

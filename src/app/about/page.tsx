@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About the Mentor Internship Platform",
     description:
-      "A mentor marketplace and cohort ops platform from IntelliForge AI — founded by Girish Hiremath, an AI Practitioner with 14+ years of enterprise experience.",
+      "An internal mentor-led internship program platform from IntelliForge AI — founded by Girish Hiremath, an AI Practitioner with 14+ years of enterprise experience.",
     type: "website",
   },
 };
@@ -49,9 +49,9 @@ const FOUNDER_EMAIL = "gen.girish@gmail.com";
 const productPillars = [
   {
     icon: UserPlus,
-    title: "Mentor marketplace",
+    title: "Mentor program management",
     description:
-      "Discover verified mentors, publish internship listings, and match cohorts — with ratings that build trust over time.",
+      "Invite your mentors, assign them to cohorts, and publish program openings — with ratings that track accountability over time.",
   },
   {
     icon: Clock,
@@ -164,15 +164,14 @@ export default function AboutPage() {
                 id="about-hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance text-white"
               >
-                The mentor marketplace{" "}
-                <span className="gradient-text">built for cohort programs</span>
+                The internal program platform{" "}
+                <span className="gradient-text">built for mentor-led cohorts</span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                The Mentor Internship Platform is the marketplace and operations
-                layer for{" "}
+                The Mentor Internship Platform is the operations layer for{" "}
                 <span className="text-white font-medium">IntelliForge AI</span>{" "}
-                — discover mentors, run accountability-driven cohorts, and
+                — invite mentors, run accountability-driven cohorts, and
                 process stipend payouts. Engineered in India, aligned with the{" "}
                 <span className="text-white font-medium">
                   Bharat AI Mission
@@ -216,17 +215,17 @@ export default function AboutPage() {
               What is the Mentor Internship Platform?
             </h2>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              The Mentor Internship Platform is a multi-tenant marketplace and
-              cohort operations system for mentor-led programs. We replace the
+              The Mentor Internship Platform is a multi-tenant internal program
+              management system for mentor-led internships. We replace the
               spreadsheet sprawl of traditional internship management with a
-              single workspace — mentor discovery, internship listings, ratings,
+              single workspace — mentor roster, cohort listings, ratings,
               attendance tracking, and stipend payouts with a transparent
               platform fee.
             </p>
             <p className="mt-3 text-slate-400 leading-relaxed">
               It powers the IntelliForge AI internship cohort and serves as a
-              reference for how a modern, India-first mentor marketplace should
-              feel — from listing to payout.
+              reference for how a modern, India-first internal internship
+              program should run — from onboarding to payout.
             </p>
           </div>
 

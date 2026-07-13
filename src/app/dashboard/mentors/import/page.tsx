@@ -34,7 +34,7 @@ export default function ImportMentorPage() {
             Import mentor from LinkedIn
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Turn a LinkedIn profile into a workspace mentor account and marketplace listing in one step.
+            Turn a LinkedIn profile into a workspace mentor account — ready to assign to cohorts.
           </p>
         </div>
 

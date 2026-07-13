@@ -1,16 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Homepage", () => {
-  test("should render hero section with marketplace positioning", async ({ page }) => {
+  test("should render hero section with internal program positioning", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toContainText("Mentor Internship Platform");
     await expect(page.locator("h1")).toContainText("get paid");
   });
 
-  test("should display marketplace feature section", async ({ page }) => {
+  test("should display program operations feature section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Mentor discovery", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Internship listings", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mentor roster", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cohort listings", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Ratings & accountability", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Stipend payouts", exact: true })).toBeVisible();
   });
@@ -93,7 +93,7 @@ test.describe("Pricing page", () => {
   test("loads and shows plan cards with mentor seats", async ({ page }) => {
     await page.goto("/pricing");
     await expect(
-      page.getByRole("heading", { name: /Pricing that scales with your marketplace/i }),
+      page.getByRole("heading", { name: /Pricing that scales with your program/i }),
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
     await expect(page.getByText("Are mentor seats included?")).toBeVisible();

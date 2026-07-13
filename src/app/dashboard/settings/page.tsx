@@ -937,8 +937,8 @@ export default function SettingsPage() {
                   <span className="text-slate-400">Platform fee</span>
                   <p className="text-white font-medium mt-0.5">{platformFeePercent}%</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Applied to marketplace transactions
-                    {org.marketplaceEnabled ? "" : " (marketplace disabled)"}
+                    Applied to stipend payout transactions
+                    {org.marketplaceEnabled ? "" : " (payouts disabled)"}
                   </p>
                 </div>
                 <div>
