@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 import { ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
 import { serverError } from "@/lib/api-utils";
+import { getOrgUsage } from "@/lib/plan-limits";
 import { z } from "zod";
 
 const createOrgSchema = z.object({
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const result = await prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
-        data: { name: orgName, slug },
+        data: { name: orgName, slug, maxInterns: 5, maxMentors: 2 },
       });
 
       const admin = await tx.admin.create({
@@ -94,28 +95,44 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await prisma.organization.findUnique({
-      where: { id: session.orgId },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        domain: true,
-        logoUrl: true,
-        plan: true,
-        maxInterns: true,
-        whatsappPhoneId: true,
-        agentmailEmail: true,
-        createdAt: true,
-        _count: { select: { interns: true, admins: true } },
-      },
-    });
+    const [org, usage] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: session.orgId },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          domain: true,
+          logoUrl: true,
+          plan: true,
+          maxInterns: true,
+          maxMentors: true,
+          platformFeeBps: true,
+          marketplaceEnabled: true,
+          whatsappPhoneId: true,
+          agentmailEmail: true,
+          createdAt: true,
+          _count: { select: { interns: true, admins: true } },
+        },
+      }),
+      getOrgUsage(session.orgId),
+    ]);
 
-    if (!org) {
+    if (!org || !usage) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ org });
+    return NextResponse.json({
+      org: {
+        ...org,
+        usage: {
+          internCount: usage.internCount,
+          mentorCount: usage.mentorCount,
+          maxInterns: usage.maxInterns,
+          maxMentors: usage.maxMentors,
+        },
+      },
+    });
   } catch (err) {
     return serverError(err, "Get org error");
   }

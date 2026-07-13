@@ -3,10 +3,11 @@ import {
   ArrowRight,
   Sparkles,
   ShieldCheck,
-  UserPlus,
   Clock,
-  FileSignature,
-  Bell,
+  Search,
+  Star,
+  Wallet,
+  Briefcase,
   BarChart3,
   Zap,
   CheckCircle2,
@@ -21,47 +22,47 @@ import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 const stats = [
-  { value: "500+", label: "Intern cohort we run on HRMS" },
-  { value: "< 2 min", label: "Workspace setup" },
+  { value: "500+", label: "Mentor-led internships run" },
+  { value: "< 2 min", label: "List your first cohort" },
   { value: "60s", label: "Per-intern onboarding" },
 ];
 
 const features = [
   {
-    icon: UserPlus,
-    title: "Self-serve onboarding",
+    icon: Search,
+    title: "Mentor discovery",
     description:
-      "Interns submit documents, accept offers, and get activated — without HR chasing spreadsheets.",
+      "Browse verified mentors by skill, industry, and availability — or invite your own network into one workspace.",
+  },
+  {
+    icon: Briefcase,
+    title: "Internship listings",
+    description:
+      "Publish cohort openings with stipend details, duration, and mentor assignments. Share a careers page in one link.",
+  },
+  {
+    icon: Star,
+    title: "Ratings & accountability",
+    description:
+      "Two-way reviews after each cohort. Mentor and intern scores build trust across the marketplace.",
+  },
+  {
+    icon: Wallet,
+    title: "Stipend payouts",
+    description:
+      "Collect stipends upfront, pay mentors and interns on schedule — with a transparent platform fee.",
   },
   {
     icon: Clock,
-    title: "Attendance that sticks",
+    title: "Attendance & task tracking",
     description:
-      "One-tap punch in/out with WFH mode. Automated weekday nudges via email and WhatsApp.",
-  },
-  {
-    icon: FileSignature,
-    title: "Offer letters on autopilot",
-    description:
-      "Generate PDF offers, track acceptance on email or WhatsApp, and activate in one click.",
-  },
-  {
-    icon: Bell,
-    title: "Dual-channel notifications",
-    description:
-      "AgentMail + WhatsApp Business with delivery tracking and audit-ready history.",
+      "One-tap punch in/out, weekly task logs, and automated nudges via email and WhatsApp.",
   },
   {
     icon: BarChart3,
-    title: "Weekly progress & analytics",
+    title: "Cohort analytics",
     description:
-      "Task logs, mentor reviews, and score dashboards — see who's thriving before demo day.",
-  },
-  {
-    icon: MessageSquare,
-    title: "WhatsApp-native ops",
-    description:
-      "Attendance nudges, offer acceptances, and cohort reminders where interns already are — not lost in email threads.",
+      "Progress dashboards, attrition alerts, and mentor review scores — see who's thriving before demo day.",
   },
 ];
 
@@ -69,26 +70,27 @@ const steps = [
   {
     step: "01",
     title: "Create your workspace",
-    description: "Sign up free, name your org, invite mentors. No sales call.",
+    description:
+      "Sign up free, list internships, and invite mentors. No sales call — live in minutes.",
   },
   {
     step: "02",
-    title: "Hire & onboard",
+    title: "Match & onboard",
     description:
-      "Publish your careers page. Send offers on WhatsApp or email; interns self-onboard in one flow.",
+      "Discover mentors or bring your own. Interns apply, accept offers, and self-onboard in one flow.",
   },
   {
     step: "03",
-    title: "Run the cohort",
+    title: "Run cohorts & get paid",
     description:
-      "Attendance, tasks, and weekly scores on autopilot — with nudges on WhatsApp and email.",
+      "Track accountability, collect ratings, and process stipend payouts — all from one dashboard.",
   },
 ];
 
 const logos = [
+  "Mentor networks",
   "AI bootcamps",
   "Startup accelerators",
-  "Consulting firms",
   "University programs",
   "Enterprise L&D",
 ];
@@ -113,24 +115,23 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="badge-trust mb-6 animate-stat-reveal inline-flex">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Internship OS · WhatsApp-native · Built in India</span>
+                <span>Mentor marketplace · Cohort ops · Built in India</span>
               </div>
 
               <h1
                 id="hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance"
               >
-                <span className="text-white">Run intern cohorts on WhatsApp + email</span>
+                <span className="text-white">The Mentor Internship Platform</span>
                 <br />
-                <span className="gradient-text">without the spreadsheet chaos</span>
+                <span className="gradient-text">run cohorts, track accountability, get paid</span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl leading-relaxed">
-                IntelliForge HRMS is the internship OS for cohort-based programs —
-                hire, onboard, track attendance, and score weekly progress in one
-                auditable workspace. Nudges and offers go out on WhatsApp and
-                email. Spot attrition risk before demo day. Self-serve signup;
-                live in minutes.
+                Discover mentors, publish internship listings, and run mentor-led
+                cohorts in one auditable workspace. Track attendance, collect
+                ratings, and process stipend payouts with a transparent platform
+                fee. Self-serve signup — live in minutes.
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
@@ -150,11 +151,11 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Attrition alerts before demo day
+                  Mentor ratings & reviews
                 </li>
                 <li className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Email + WhatsApp
+                  Stipend payouts built in
                 </li>
               </ul>
             </div>
@@ -221,18 +222,18 @@ export default function HomePage() {
         >
           <div className="max-w-2xl mb-12">
             <p className="text-sm font-semibold uppercase tracking-wider text-brand-400 mb-3">
-              Everything in one product
+              Marketplace + operations
             </p>
             <h2
               id="features-heading"
               className="text-3xl sm:text-4xl font-bold text-white text-balance"
             >
-              Replace five tools with one internship OS
+              From mentor discovery to stipend payout
             </h2>
             <p className="mt-4 text-slate-400 leading-relaxed">
-              Stop duct-taping Google Sheets, WhatsApp groups, and manual PDFs.
-              HRMS gives program managers a single source of truth — and gives
-              interns a polished self-serve portal.
+              Stop duct-taping spreadsheets, WhatsApp groups, and manual payouts.
+              One platform for listing internships, matching mentors, tracking
+              accountability, and paying stipends.
             </p>
           </div>
 
@@ -362,11 +363,11 @@ export default function HomePage() {
               id="final-cta-heading"
               className="text-2xl sm:text-3xl font-bold text-white text-balance"
             >
-              Your next cohort deserves better than spreadsheets
+              Your next cohort deserves mentors, not spreadsheets
             </h2>
             <p className="mt-4 text-slate-300">
-              Join teams running internship programs on IntelliForge HRMS.
-              Free forever for up to 5 interns.
+              Join teams running mentor-led internships on the Mentor Internship
+              Platform. Free forever for up to 5 interns and 2 mentors.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-8 py-3 text-base">
               Start free today

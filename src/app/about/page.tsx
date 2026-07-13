@@ -33,11 +33,11 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Meet the team behind IntelliForge HRMS — a product of IntelliForge AI, founded by Girish Hiremath in Hyderabad, India. Aligned with the Bharat AI Mission to democratize AI for India.",
+    "Meet the team behind the Mentor Internship Platform — a product of IntelliForge AI, founded by Girish Hiremath in Hyderabad, India. Aligned with the Bharat AI Mission to democratize AI for India.",
   openGraph: {
-    title: "About IntelliForge HRMS",
+    title: "About the Mentor Internship Platform",
     description:
-      "A product of IntelliForge AI — founded by Girish Hiremath, an AI Practitioner with 14+ years of enterprise experience. Aligned with the Bharat AI Mission.",
+      "A mentor marketplace and cohort ops platform from IntelliForge AI — founded by Girish Hiremath, an AI Practitioner with 14+ years of enterprise experience.",
     type: "website",
   },
 };
@@ -49,21 +49,21 @@ const FOUNDER_EMAIL = "gen.girish@gmail.com";
 const productPillars = [
   {
     icon: UserPlus,
-    title: "Onboarding",
+    title: "Mentor marketplace",
     description:
-      "Self-serve intern onboarding with document uploads, e-signed offer letters and audit-ready trails.",
+      "Discover verified mentors, publish internship listings, and match cohorts — with ratings that build trust over time.",
   },
   {
     icon: Clock,
-    title: "Attendance",
+    title: "Accountability tracking",
     description:
-      "One-tap punch in / out, WFH or office mode, with weekly summaries and exception alerts.",
+      "Attendance, weekly task logs, and mentor reviews — one auditable workspace instead of scattered spreadsheets.",
   },
   {
     icon: ClipboardList,
-    title: "Hiring & Tasks",
+    title: "Stipend payouts",
     description:
-      "Job postings, candidate pipelines, and weekly task logs — all wired into the same tenant.",
+      "Collect stipends upfront, pay mentors and interns on schedule, with a transparent platform fee.",
   },
 ];
 
@@ -157,22 +157,23 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="badge-trust mb-6 animate-stat-reveal">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>About · IntelliForge HRMS</span>
+                <span>About · Mentor Internship Platform</span>
               </div>
 
               <h1
                 id="about-hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance text-white"
               >
-                A Human Resource platform{" "}
-                <span className="gradient-text">Built for the AI age</span>
+                The mentor marketplace{" "}
+                <span className="gradient-text">built for cohort programs</span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                IntelliForge HRMS is the people-operations layer for{" "}
+                The Mentor Internship Platform is the marketplace and operations
+                layer for{" "}
                 <span className="text-white font-medium">IntelliForge AI</span>{" "}
-                — purpose-built to onboard, manage and empower the next
-                generation of AI builders. Engineered in India, aligned with the{" "}
+                — discover mentors, run accountability-driven cohorts, and
+                process stipend payouts. Engineered in India, aligned with the{" "}
                 <span className="text-white font-medium">
                   Bharat AI Mission
                 </span>
@@ -212,20 +213,20 @@ export default function AboutPage() {
               id="what-is-hrms-heading"
               className="text-2xl sm:text-3xl font-bold text-white"
             >
-              What is IntelliForge HRMS?
+              What is the Mentor Internship Platform?
             </h2>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              IntelliForge HRMS is a multi-tenant Human Resource Management
-              System designed for AI-first teams. We replace the spreadsheet
-              sprawl of traditional internship and HR programs with a single,
-              auditable workspace — onboarding, attendance, task management,
-              hiring and offer-letter automation — wired together with the same
-              AI agents we ship for enterprise clients.
+              The Mentor Internship Platform is a multi-tenant marketplace and
+              cohort operations system for mentor-led programs. We replace the
+              spreadsheet sprawl of traditional internship management with a
+              single workspace — mentor discovery, internship listings, ratings,
+              attendance tracking, and stipend payouts with a transparent
+              platform fee.
             </p>
             <p className="mt-3 text-slate-400 leading-relaxed">
-              It is the operating system for the IntelliForge AI internship
-              cohort, and a reference implementation of how a modern,
-              India-first SaaS product should feel.
+              It powers the IntelliForge AI internship cohort and serves as a
+              reference for how a modern, India-first mentor marketplace should
+              feel — from listing to payout.
             </p>
           </div>
 
@@ -357,7 +358,7 @@ export default function AboutPage() {
                 ))}
                 <li className="inline-flex items-center gap-1.5 rounded-full bg-accent-500/10 border border-accent-500/40 px-3 py-1 text-xs font-semibold text-accent-300">
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  IntelliForge HRMS
+                  Mentor Internship Platform
                   <span className="text-accent-400/80">(this product)</span>
                 </li>
               </ul>
@@ -678,7 +679,7 @@ export default function AboutPage() {
             </div>
 
             <p className="mt-6 text-xs text-slate-500">
-              IntelliForge HRMS · A product of{" "}
+              Mentor Internship Platform · A product of{" "}
               <a
                 href={PARENT_URL}
                 target="_blank"

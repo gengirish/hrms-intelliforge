@@ -16,16 +16,16 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const SITE_DESCRIPTION =
-  "IntelliForge HRMS — internship OS dogfooded on our 500+ intern cohort. Self-serve onboarding, attendance, offer letters, and cohort analytics. Start free with 5 interns.";
+  "Mentor Internship Platform — discover mentors, run accountability-driven cohorts, and process stipend payouts. Start free with 5 interns and 2 mentors.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hrms.intelliforge.tech"),
   title: {
-    default: "IntelliForge HRMS — Internship OS for Modern Teams",
-    template: "%s | IntelliForge HRMS",
+    default: "Mentor Internship Platform — Run Cohorts, Track Accountability, Get Paid",
+    template: "%s | Mentor Internship Platform",
   },
   description: SITE_DESCRIPTION,
-  applicationName: "IntelliForge HRMS",
+  applicationName: "Mentor Internship Platform",
   authors: [
     {
       name: "Girish Hiremath",
@@ -35,35 +35,35 @@ export const metadata: Metadata = {
   creator: "Girish Hiremath",
   publisher: "IntelliForge AI",
   keywords: [
-    "HRMS",
+    "mentor internship platform",
+    "mentor marketplace",
     "internship management",
+    "mentor-led cohorts",
+    "stipend payouts",
     "intern program software",
-    "micro SaaS",
-    "startup HR",
+    "mentor discovery",
     "onboarding",
     "attendance tracking",
-    "offer letter automation",
-    "WhatsApp HR",
-    "multi-tenant SaaS",
+    "cohort analytics",
   ],
   category: "Business · Human Resources",
   openGraph: {
-    title: "IntelliForge HRMS — Internship OS for Modern Teams",
+    title: "Mentor Internship Platform — Run Cohorts, Track Accountability, Get Paid",
     description: SITE_DESCRIPTION,
-    siteName: "IntelliForge HRMS",
+    siteName: "Mentor Internship Platform",
     locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "IntelliForge HRMS — Internship OS for Modern Teams",
+    title: "Mentor Internship Platform — Run Cohorts, Track Accountability, Get Paid",
     description: SITE_DESCRIPTION,
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "HRMS",
+    title: "Mentor",
   },
   icons: {
     icon: [
@@ -110,11 +110,11 @@ const organizationJsonLd = {
     {
       "@type": "SoftwareApplication",
       "@id": "https://hrms.intelliforge.tech/#software",
-      name: "IntelliForge HRMS",
+      name: "Mentor Internship Platform",
       applicationCategory: "BusinessApplication",
       url: "https://hrms.intelliforge.tech",
       description:
-        "Micro SaaS for running internship programs — self-serve onboarding, attendance, offer letters, WhatsApp nudges, and cohort analytics.",
+        "Mentor marketplace and cohort operations platform — discover mentors, publish internship listings, track accountability, and process stipend payouts.",
       operatingSystem: "Web",
       publisher: {
         "@id": "https://www.intelliforge.tech/#organization",

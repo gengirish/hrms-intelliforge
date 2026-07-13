@@ -14,7 +14,7 @@ const PUBLIC_PATHS = [
   "/about",
 ];
 
-const PUBLIC_PATH_PREFIXES = ["/careers"];
+const PUBLIC_PATH_PREFIXES = ["/careers", "/internships", "/mentors"];
 
 const INTERN_PORTAL_PREFIXES = [
   "/intern-onboarding",
@@ -32,6 +32,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/webhooks/",
   "/api/cron/",
   "/api/careers",
+  "/api/internships",
+  "/api/mentors",
   "/api/orgs/",
   "/api/org/admins/invite/",
 ];

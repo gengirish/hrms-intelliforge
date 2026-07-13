@@ -83,12 +83,16 @@ model Organization {
   stripeCustomerId  String?
   stripeSubId       String?
   maxInterns        Int      @default(5)
+  maxMentors        Int      @default(2)
+  platformFeeBps    Int      @default(1000)
+  marketplaceEnabled Boolean @default(true)
   createdAt         DateTime @default(now())
 
   admins       Admin[]
   interns      Intern[]
   jobPostings  JobPosting[]
   adminInvites AdminInvite[]
+  marketplaceTransactions MarketplaceTransaction[]
 
   @@map("organizations")
 }
@@ -202,6 +206,7 @@ model Admin {
   mentees       Intern[] @relation("InternMentor")
   enrolledLearners LearningEnrollment[] @relation("AdminEnrolledLearners")
   weeklyProgressFeedback WeeklyProgressReport[] @relation("WeeklyProgressFeedbackAuthor")
+  mentorProfile MentorProfile?
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -511,11 +516,14 @@ model StipendPayout {
   batchId          String
   internId         String
   amountPaise      Int
+  platformFeePaise Int                 @default(0)
+  netAmountPaise   Int?
   status           StipendPayoutStatus @default(DRAFT)
   razorpayPayoutId String?
   failureReason    String?
   createdAt        DateTime            @default(now())
   batch            StipendPayoutBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  marketplaceTransaction MarketplaceTransaction?
 
   @@index([batchId])
   @@index([internId])
@@ -561,4 +569,140 @@ model ScheduledEvent {
   @@index([orgId])
   @@index([candidateId])
   @@map("scheduled_events")
+}
+
+enum MentorBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+/// Public marketplace profile for mentors (Admin with MENTOR role).
+model MentorProfile {
+  id                String   @id @default(cuid())
+  adminId           String   @unique
+  orgId             String
+  slug              String   @unique
+  headline          String?
+  bio               String?
+  expertise         String[]
+  yearsExperience   Int?
+  linkedinUrl       String?
+  githubUrl         String?
+  avatarUrl         String?
+  hourlyRatePaise   Int?
+  isPublic          Boolean  @default(false)
+  isPremium         Boolean  @default(false)
+  avgRating         Float    @default(0)
+  ratingCount       Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  admin         Admin                @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  availability  MentorAvailability[]
+  ratings       MentorRating[]
+  bookings      MentorBooking[]
+
+  @@index([orgId])
+  @@index([isPublic, isPremium])
+  @@map("mentor_profiles")
+}
+
+model MentorAvailability {
+  id              String @id @default(cuid())
+  mentorProfileId String
+  dayOfWeek       Int
+  startTime       String
+  endTime         String
+  timezone        String @default("Asia/Kolkata")
+
+  mentorProfile MentorProfile @relation(fields: [mentorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([mentorProfileId])
+  @@map("mentor_availability")
+}
+
+model MentorRating {
+  id              String   @id @default(cuid())
+  mentorProfileId String
+  internId        String
+  rating          Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  mentorProfile MentorProfile @relation(fields: [mentorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([mentorProfileId, internId])
+  @@index([mentorProfileId])
+  @@map("mentor_ratings")
+}
+
+model MentorBooking {
+  id              String              @id @default(cuid())
+  mentorProfileId String
+  orgId           String
+  internId        String?
+  requesterName   String
+  requesterEmail  String
+  title           String
+  notes           String?
+  startAt         DateTime
+  endAt           DateTime
+  timezone        String              @default("Asia/Kolkata")
+  status          MentorBookingStatus @default(PENDING)
+  googleEventId   String?
+  meetLink        String?
+  createdAt       DateTime            @default(now())
+
+  mentorProfile MentorProfile @relation(fields: [mentorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([mentorProfileId])
+  @@index([orgId])
+  @@index([internId])
+  @@map("mentor_bookings")
+}
+
+/// RazorpayX recipient profile for mentor honorarium payouts.
+model MentorPayoutProfile {
+  id                    String   @id @default(cuid())
+  adminId               String   @unique
+  razorpayContactId     String?
+  razorpayFundAccountId String?
+  recipientJson         String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([adminId])
+  @@map("mentor_payout_profiles")
+}
+
+enum MarketplaceTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+/// Platform fee ledger for marketplace stipend/honorarium payouts.
+model MarketplaceTransaction {
+  id               String                       @id @default(cuid())
+  orgId            String
+  payoutId         String?                      @unique
+  recipientType    String
+  recipientId      String
+  grossAmountPaise Int
+  platformFeePaise Int
+  netAmountPaise   Int
+  feeBps           Int
+  status           MarketplaceTransactionStatus @default(PENDING)
+  razorpayPayoutId String?
+  createdAt        DateTime                     @default(now())
+
+  org    Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  payout StipendPayout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([recipientType, recipientId])
+  @@map("marketplace_transactions")
 }

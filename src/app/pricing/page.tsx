@@ -9,7 +9,7 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for internship program management. Start free with 5 interns — scale to hundreds as your cohort grows.",
+    "Simple, transparent pricing for mentor-led internship programs. Start free with 5 interns and 2 mentors — scale as your marketplace grows.",
 };
 
 const faqs = [
@@ -26,8 +26,12 @@ const faqs = [
     a: "You'll see an upgrade prompt in settings. Existing interns stay active; you can't add new ones until you upgrade or deactivate someone.",
   },
   {
-    q: "Is WhatsApp included on every plan?",
-    a: "WhatsApp nudges and templates are on Starter and above. Email notifications work on all plans via AgentMail.",
+    q: "Are mentor seats included?",
+    a: "Yes. Every plan includes mentor seats — 2 on Free, 10 on Starter, 50 on Growth, and unlimited on Enterprise. Mentors get their own dashboard for reviews and cohort management.",
+  },
+  {
+    q: "How do stipend payouts work?",
+    a: "Collect stipends upfront when interns enroll. The platform processes payouts to mentors and interns on your schedule, with a transparent platform fee shown at checkout.",
   },
 ];
 
@@ -41,11 +45,12 @@ export default function PricingPage() {
           <div className="absolute inset-0 gradient-hero opacity-80" aria-hidden="true" />
           <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-white text-balance">
-              Pricing that scales with your cohort
+              Pricing that scales with your marketplace
             </h1>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              One product replaces spreadsheets, WhatsApp groups, and manual offer
-              letters. Pay per active intern capacity — not per feature gate.
+              One platform for mentor discovery, cohort accountability, and
+              stipend payouts. Pay per intern and mentor capacity — not per
+              feature gate.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-6 py-3 text-base">
               Create free workspace

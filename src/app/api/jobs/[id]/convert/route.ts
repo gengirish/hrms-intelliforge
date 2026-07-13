@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { serverError } from "@/lib/api-utils";
+import { assertCanAddIntern, PlanLimitError } from "@/lib/plan-limits";
 import { z } from "zod";
 
 const convertSchema = z.object({
@@ -48,6 +49,8 @@ export async function POST(
       return NextResponse.json({ error: "An intern with this email already exists" }, { status: 409 });
     }
 
+    await assertCanAddIntern(session.orgId);
+
     const [intern] = await prisma.$transaction([
       prisma.intern.create({
         data: {
@@ -72,6 +75,12 @@ export async function POST(
 
     return NextResponse.json({ intern });
   } catch (err) {
+    if (err instanceof PlanLimitError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, upgrade: true },
+        { status: 402 }
+      );
+    }
     return serverError(err, "Convert candidate error");
   }
 }

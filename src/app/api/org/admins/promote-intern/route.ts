@@ -5,6 +5,7 @@ import { serverError } from "@/lib/api-utils";
 import { z } from "zod";
 import { isFullOrgAdminRole, ORG_ADMIN_ROLE, type OrgAdminRole } from "@/lib/org-admin-roles";
 import { issueAdminInvite } from "@/lib/admin-invite-flow";
+import { assertCanAddMentor, PlanLimitError } from "@/lib/plan-limits";
 
 const promoteSchema = z.object({
   internId: z.string().min(1),
@@ -54,6 +55,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
+    if (orgRole === ORG_ADMIN_ROLE.MENTOR) {
+      await assertCanAddMentor(admin.orgId);
+    }
+
     const { expiresAt } = await issueAdminInvite({
       orgId: admin.orgId,
       orgName: org.name,
@@ -72,6 +77,12 @@ export async function POST(req: NextRequest) {
         "Promotion invite sent. They will set their password from the email link; their intern login stays active until they accept.",
     });
   } catch (err) {
+    if (err instanceof PlanLimitError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, upgrade: true },
+        { status: 402 }
+      );
+    }
     return serverError(err, "Promote intern to admin");
   }
 }

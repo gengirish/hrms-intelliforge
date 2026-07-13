@@ -14,6 +14,7 @@ import {
   Sparkles,
   Info,
   CreditCard,
+  Users,
 } from "lucide-react";
 
 export type AccountType = "admin" | "intern";
@@ -38,10 +39,18 @@ export const NAV_ITEMS: NavItem[] = [
     group: "primary",
   },
   {
-    href: "/careers",
-    label: "Careers",
+    href: "/internships",
+    label: "Internships",
     icon: Sparkles,
-    description: "Open roles at IntelliForge",
+    description: "Discover internship openings across organizations",
+    audience: ["public", "intern", "admin"],
+    group: "primary",
+  },
+  {
+    href: "/mentors",
+    label: "Mentors",
+    icon: Users,
+    description: "Find mentors to guide your internship journey",
     audience: ["public", "intern", "admin"],
     group: "primary",
   },
@@ -57,7 +66,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/about",
     label: "About",
     icon: Info,
-    description: "About IntelliForge HRMS, parent company & founder",
+    description: "About Mentor Internship Platform, parent company & founder",
     audience: ["public", "intern", "admin"],
     group: "primary",
   },

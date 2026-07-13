@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
               plan,
               stripeSubId: subId,
               maxInterns: limits.maxInterns,
+              maxMentors: limits.maxMentors,
             },
           });
           console.info(`[stripe] Org ${orgId} upgraded to ${plan}`);
@@ -62,12 +63,14 @@ export async function POST(req: NextRequest) {
           where: { stripeSubId: sub.id },
         });
         if (org) {
+          const limits = getPlanLimits("free");
           await prisma.organization.update({
             where: { id: org.id },
             data: {
               plan: "free",
               stripeSubId: null,
-              maxInterns: 5,
+              maxInterns: limits.maxInterns,
+              maxMentors: limits.maxMentors,
             },
           });
           console.info(`[stripe] Org ${org.id} downgraded to free (subscription cancelled)`);

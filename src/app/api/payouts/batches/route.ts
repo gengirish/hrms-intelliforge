@@ -46,6 +46,8 @@ export async function GET(req: NextRequest) {
             id: true,
             internId: true,
             amountPaise: true,
+            platformFeePaise: true,
+            netAmountPaise: true,
             status: true,
             failureReason: true,
           },
@@ -143,6 +145,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // amountPaise on each payout is gross; platform fee is applied at process time.
     const totalPaise = eligible.reduce((sum, i) => sum + i.stipendPaise, 0);
 
     const batch = await prisma.stipendPayoutBatch.create({
@@ -155,6 +158,7 @@ export async function POST(req: NextRequest) {
           create: eligible.map((intern) => ({
             internId: intern.id,
             amountPaise: intern.stipendPaise,
+            platformFeePaise: 0,
           })),
         },
       },

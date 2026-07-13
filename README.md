@@ -1,6 +1,6 @@
-# IntelliForge HRMS
+# Mentor Internship Platform
 
-Human Resource Management System for internship programs, hiring pipelines, and team operations.  
+Mentor-led internship marketplace and cohort management platform — mentor discovery, internship listings, accountability tracking, and monetized stipend payouts.  
 Deployed at **[hrms.intelliforge.tech](https://hrms.intelliforge.tech)**
 
 ## Architecture

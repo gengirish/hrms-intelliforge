@@ -23,6 +23,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { DASHBOARD_PLANS } from "@/lib/pricing";
 
+interface OrgUsage {
+  internCount: number;
+  mentorCount: number;
+  maxInterns: number;
+  maxMentors: number;
+}
+
 interface OrgData {
   id: string;
   name: string;
@@ -31,12 +38,65 @@ interface OrgData {
   logoUrl: string | null;
   plan: string;
   maxInterns: number;
+  maxMentors: number;
+  platformFeeBps: number;
+  marketplaceEnabled: boolean;
   whatsappPhoneId: string | null;
   agentmailEmail: string | null;
   createdAt: string;
   _count: { interns: number; admins: number };
+  usage: OrgUsage;
 }
 
+function formatLimit(max: number): string {
+  return max >= 999999 ? "Unlimited" : String(max);
+}
+
+function usagePercent(count: number, max: number): number {
+  if (max >= 999999) return 0;
+  return Math.min(100, Math.round((count / max) * 100));
+}
+
+function isNearLimit(count: number, max: number): boolean {
+  if (max >= 999999) return false;
+  return count >= max || count / max >= 0.8;
+}
+
+function UsageBar({
+  label,
+  count,
+  max,
+}: {
+  label: string;
+  count: number;
+  max: number;
+}) {
+  const pct = usagePercent(count, max);
+  const atLimit = max < 999999 && count >= max;
+  const nearLimit = isNearLimit(count, max);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-slate-400">{label}</span>
+        <span className={cn("font-medium", atLimit ? "text-amber-400" : "text-white")}>
+          {count} / {formatLimit(max)}
+        </span>
+      </div>
+      {max < 999999 && (
+        <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              atLimit ? "bg-amber-500" : nearLimit ? "bg-amber-400/80" : "bg-indigo-500"
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface TeamAdminRow {
   id: string;
@@ -180,6 +240,11 @@ export default function SettingsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 402 && data.upgrade) {
+          toast.error(data.error || "Plan limit reached");
+          setActiveSection("billing");
+          return;
+        }
         toast.error(data.error || "Invite failed");
         return;
       }
@@ -215,6 +280,11 @@ export default function SettingsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 402 && data.upgrade) {
+          toast.error(data.error || "Plan limit reached");
+          setActiveSection("billing");
+          return;
+        }
         toast.error(data.error || "Promotion failed");
         return;
       }
@@ -309,6 +379,13 @@ export default function SettingsPage() {
     );
   }
 
+  const usage = org.usage;
+  const showUpgradeCta =
+    org.plan === "free" ||
+    isNearLimit(usage.internCount, usage.maxInterns) ||
+    isNearLimit(usage.mentorCount, usage.maxMentors);
+  const platformFeePercent = org.platformFeeBps / 100;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -381,9 +458,8 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4 text-sm text-slate-400">
                   <span className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    {org._count.interns} interns (unlimited)
+                    {usage.internCount} interns · {org._count.admins} team member(s)
                   </span>
-                  <span>{org._count.admins} admin(s)</span>
                 </div>
                 <button
                   onClick={saveOrg}
@@ -596,6 +672,30 @@ export default function SettingsPage() {
 
         {activeSection === "billing" && (
           <div className="space-y-6">
+            {showUpgradeCta && (
+              <div className="glass-card p-4 border border-amber-500/30 bg-amber-950/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-amber-200">Approaching plan limits</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Upgrade to add more interns or mentors to your workspace.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCheckout("starter")}
+                  className="shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-colors"
+                >
+                  View upgrade options
+                </button>
+              </div>
+            )}
+
+            <div className="glass-card p-6 space-y-4">
+              <h3 className="text-sm font-semibold text-white">Plan usage</h3>
+              <UsageBar label="Active interns" count={usage.internCount} max={usage.maxInterns} />
+              <UsageBar label="Mentors" count={usage.mentorCount} max={usage.maxMentors} />
+            </div>
+
             <div className="glass-card p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -611,6 +711,22 @@ export default function SettingsPage() {
                     Manage Billing
                   </button>
                 )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800 text-sm">
+                <div>
+                  <span className="text-slate-400">Platform fee</span>
+                  <p className="text-white font-medium mt-0.5">{platformFeePercent}%</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Applied to marketplace transactions
+                    {org.marketplaceEnabled ? "" : " (marketplace disabled)"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-slate-400">Plan limits</span>
+                  <p className="text-white font-medium mt-0.5">
+                    {formatLimit(usage.maxInterns)} interns · {formatLimit(usage.maxMentors)} mentors
+                  </p>
+                </div>
               </div>
             </div>
 

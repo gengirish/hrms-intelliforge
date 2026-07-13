@@ -4,6 +4,7 @@ import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/auth-email";
 import { registerSchema } from "@/lib/validations";
 import { errorResponse, serverError } from "@/lib/api-utils";
+import { assertCanAddIntern, PlanLimitError } from "@/lib/plan-limits";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password);
 
+    await assertCanAddIntern(orgId);
+
     const intern = await prisma.intern.create({
       data: {
         orgId,
@@ -89,6 +92,12 @@ export async function POST(req: Request) {
     setAuthCookie(response, token);
     return response;
   } catch (err) {
+    if (err instanceof PlanLimitError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, upgrade: true },
+        { status: 402 }
+      );
+    }
     return serverError(err, "register");
   }
 }

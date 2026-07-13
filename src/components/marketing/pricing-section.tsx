@@ -32,11 +32,11 @@ export function PricingSection({
             id="pricing-heading"
             className="text-3xl sm:text-4xl font-bold text-white text-balance"
           >
-            Start free. Scale when your cohort grows.
+            Start free. Scale mentors and interns together.
           </h2>
           <p className="mt-4 text-slate-400 leading-relaxed">
-            No sales call required. Create your workspace in under two minutes —
-            upgrade only when you need more seats.
+            No sales call required. List internships, invite mentors, and upgrade
+            only when you need more seats.
           </p>
         </div>
       )}
@@ -90,7 +90,7 @@ export function PricingSection({
             <div className="mt-6 pt-2">
               {plan.key === "enterprise" ? (
                 <a
-                  href="mailto:hr@intelliforge.tech?subject=IntelliForge%20HRMS%20Enterprise"
+                  href="mailto:hr@intelliforge.tech?subject=Mentor%20Internship%20Platform%20Enterprise"
                   className="btn-secondary w-full border-slate-600 text-slate-200 hover:border-brand-500/50"
                 >
                   {plan.cta}
@@ -113,8 +113,9 @@ export function PricingSection({
       </div>
 
       <p className="mt-8 text-center text-xs text-slate-500">
-        All plans include multi-tenant isolation, audit logs, and IST timezone
-        defaults. Cancel anytime from workspace settings.
+        All plans include mentor dashboards, audit logs, and IST timezone
+        defaults. Stipend payouts subject to platform fee — cancel anytime from
+        workspace settings.
       </p>
     </section>
   );

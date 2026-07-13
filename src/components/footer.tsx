@@ -69,8 +69,9 @@ export function Footer() {
               <BrandMark href="/" />
             </div>
             <p className="text-sm text-slate-400 max-w-xs">
-              The internship OS for modern teams — onboarding, attendance,
-              offers, and cohort analytics in one workspace. A product of{" "}
+              The Mentor Internship Platform — discover mentors, run
+              accountability-driven cohorts, and process stipend payouts. A
+              product of{" "}
               <a
                 href="https://www.intelliforge.tech"
                 target="_blank"

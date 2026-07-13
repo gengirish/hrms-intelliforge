@@ -17,15 +17,15 @@ export function getStripe(): Stripe {
 }
 
 export const PLANS = {
-  free: { name: "Free", maxInterns: 5, priceId: null },
-  starter: { name: "Starter", maxInterns: 25, priceId: process.env.STRIPE_STARTER_PRICE_ID ?? "" },
-  growth: { name: "Growth", maxInterns: 100, priceId: process.env.STRIPE_GROWTH_PRICE_ID ?? "" },
-  enterprise: { name: "Enterprise", maxInterns: 999999, priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID ?? "" },
+  free: { name: "Free", maxInterns: 5, maxMentors: 2, priceId: null },
+  starter: { name: "Starter", maxInterns: 25, maxMentors: 10, priceId: process.env.STRIPE_STARTER_PRICE_ID ?? "" },
+  growth: { name: "Growth", maxInterns: 100, maxMentors: 50, priceId: process.env.STRIPE_GROWTH_PRICE_ID ?? "" },
+  enterprise: { name: "Enterprise", maxInterns: 999999, maxMentors: 999999, priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID ?? "" },
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
 
-export function getPlanLimits(plan: string): { maxInterns: number } {
+export function getPlanLimits(plan: string): { maxInterns: number; maxMentors: number } {
   const p = PLANS[plan as PlanKey];
-  return { maxInterns: p?.maxInterns ?? 5 };
+  return { maxInterns: p?.maxInterns ?? 5, maxMentors: p?.maxMentors ?? 2 };
 }

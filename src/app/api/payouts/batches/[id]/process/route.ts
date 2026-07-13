@@ -7,11 +7,10 @@ import {
   isRazorpayConfigured,
   createContact,
   createFundAccount,
-  createPayout,
-  payoutModeForRecipient,
   parseRecipientJson,
   RazorpayApiError,
 } from "@/lib/razorpay";
+import { processInternPayoutWithFee } from "@/lib/marketplace-payouts";
 
 const ORPHAN_ADMIN_MSG =
   "Your admin account isn't attached to an organization. Contact support.";
@@ -68,6 +67,15 @@ export async function POST(req: NextRequest, context: RouteContext) {
       );
     }
 
+    const org = await prisma.organization.findUnique({
+      where: { id: admin.orgId },
+      select: { platformFeeBps: true },
+    });
+    if (!org) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+    const feeBps = org.platformFeeBps;
+
     await prisma.stipendPayoutBatch.update({
       where: { id },
       data: { status: "PROCESSING" },
@@ -77,6 +85,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
       payoutId: string;
       status: string;
       razorpayPayoutId?: string;
+      platformFeePaise?: number;
+      netAmountPaise?: number;
       error?: string;
     }> = [];
 
@@ -170,27 +180,24 @@ export async function POST(req: NextRequest, context: RouteContext) {
           });
         }
 
-        const rzPayout = await createPayout({
-          fundAccountId: profile.razorpayFundAccountId!,
-          amountPaise: payout.amountPaise,
-          referenceId: payout.id,
-          mode: payoutModeForRecipient(recipient),
-          narration: `Stipend ${batch.month}`,
-        });
-
-        await prisma.stipendPayout.update({
-          where: { id: payout.id },
-          data: {
-            status: "PROCESSING",
-            razorpayPayoutId: rzPayout.id,
-            failureReason: null,
-          },
-        });
+        const { razorpayPayout, platformFeePaise, netAmountPaise } =
+          await processInternPayoutWithFee({
+            payoutId: payout.id,
+            orgId: admin.orgId,
+            internId: payout.internId,
+            grossAmountPaise: payout.amountPaise,
+            feeBps,
+            fundAccountId: profile.razorpayFundAccountId!,
+            recipient,
+            batchMonth: batch.month,
+          });
 
         results.push({
           payoutId: payout.id,
           status: "PROCESSING",
-          razorpayPayoutId: rzPayout.id,
+          razorpayPayoutId: razorpayPayout.id,
+          platformFeePaise,
+          netAmountPaise,
         });
       } catch (err) {
         const message =

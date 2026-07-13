@@ -33,7 +33,7 @@ function MarkInner({
           sizeClasses[size]
         )}
       >
-        IF
+        Mi
       </span>
       {showText && (
         <span
@@ -42,8 +42,8 @@ function MarkInner({
             textSizeClasses[size]
           )}
         >
-          IntelliForge{" "}
-          <span className="text-slate-400 font-normal">AI</span>
+          Mentor{" "}
+          <span className="text-slate-400 font-normal">Internship Platform</span>
         </span>
       )}
     </>
@@ -66,7 +66,7 @@ export function BrandMark({
       <Link
         href={href}
         className={wrapperClass}
-        aria-label="IntelliForge HRMS — Home"
+        aria-label="Mentor Internship Platform — Home"
       >
         <MarkInner size={size} showText={showText} />
       </Link>

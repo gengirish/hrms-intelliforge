@@ -9,6 +9,8 @@ import {
   ClipboardSignature,
   ClipboardList,
   Settings,
+  UserCircle,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,7 +29,9 @@ const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
     label: "Weekly tasks",
     icon: ClipboardList,
   },
+  { href: "/dashboard/mentor-profile", label: "Mentor profile", icon: UserCircle },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
+  { href: "/dashboard/marketplace", label: "Marketplace", icon: Wallet },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -38,7 +42,10 @@ export function DashboardSubnav({ className }: { className?: string }) {
     user?.accountType === "admin" && user?.orgAdminRole === "MENTOR";
   const tabs = isMentorOnly
     ? ADMIN_TABS.filter(
-        (t) => t.href !== "/dashboard/hiring" && t.href !== "/dashboard/settings"
+        (t) =>
+          t.href !== "/dashboard/hiring" &&
+          t.href !== "/dashboard/settings" &&
+          t.href !== "/dashboard/marketplace"
       )
     : ADMIN_TABS;
 
