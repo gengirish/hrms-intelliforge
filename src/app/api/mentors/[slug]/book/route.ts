@@ -92,6 +92,7 @@ export async function POST(
       },
     });
   } catch (err) {
-    return serverError(err, "Mentor booking POST error");
+    console.error("Mentor booking POST error:", err);
+    return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
   }
 }

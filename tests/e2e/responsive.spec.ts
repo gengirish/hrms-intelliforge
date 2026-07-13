@@ -8,7 +8,9 @@ test.describe("Responsive Design", () => {
     await expect(hamburger).toBeVisible();
   });
 
-  test("mobile hamburger menu opens and shows navigation links", async ({ page }) => {
+  test("mobile hamburger menu opens and shows marketplace navigation links", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/");
     const hamburger = page.getByLabel(/open navigation menu/i);
@@ -16,7 +18,8 @@ test.describe("Responsive Design", () => {
     const mobileNav = page.locator("#mobile-nav-drawer");
     await expect(mobileNav).toBeVisible();
     await expect(mobileNav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
-    await expect(mobileNav.getByRole("link", { name: "Careers", exact: true })).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: "Internships", exact: true })).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: "Mentors", exact: true })).toBeVisible();
     await expect(mobileNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
   });
 
@@ -27,11 +30,11 @@ test.describe("Responsive Design", () => {
     await expect(hamburger).not.toBeVisible();
   });
 
-  test("tablet viewport renders homepage feature section", async ({ page }) => {
+  test("tablet viewport renders homepage marketplace features", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await expect(page.getByText("Self-serve onboarding")).toBeVisible();
-    await expect(page.getByText("Attendance that sticks")).toBeVisible();
-    await expect(page.getByText("Offer letters on autopilot")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mentor discovery", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Internship listings", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Stipend payouts", exact: true })).toBeVisible();
   });
 });

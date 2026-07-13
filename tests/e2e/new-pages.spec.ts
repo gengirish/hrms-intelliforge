@@ -45,3 +45,19 @@ test.describe("Dashboard Settings Page", () => {
     await expect(page.getByLabel("Email")).toBeVisible();
   });
 });
+
+test.describe("Dashboard Marketplace Pages", () => {
+  test("/dashboard/marketplace redirects unauthenticated users to sign-in", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard/marketplace");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fmarketplace/);
+  });
+
+  test("/dashboard/mentor-profile redirects unauthenticated users to sign-in", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard/mentor-profile");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fmentor-profile/);
+  });
+});

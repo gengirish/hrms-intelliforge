@@ -5,73 +5,84 @@ import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { MentorDirectory } from "@/components/mentors/mentor-directory";
 import type { MentorListing } from "@/components/mentors/mentor-card";
-
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 12;
 
 async function getMentors(page: number, expertise?: string) {
-  const where = {
-    isPublic: true,
-    ...(expertise ? { expertise: { has: expertise } } : {}),
-  };
-
-  const [profiles, total] = await Promise.all([
-    prisma.mentorProfile.findMany({
-      where,
-      orderBy: [
-        { isPremium: "desc" },
-        { avgRating: "desc" },
-        { createdAt: "desc" },
-      ],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        slug: true,
-        headline: true,
-        bio: true,
-        expertise: true,
-        yearsExperience: true,
-        avatarUrl: true,
-        hourlyRatePaise: true,
-        isPremium: true,
-        avgRating: true,
-        ratingCount: true,
-        admin: {
-          select: {
-            name: true,
-            org: { select: { name: true } },
-          },
-        },
-      },
-    }),
-    prisma.mentorProfile.count({ where }),
-  ]);
-
-  const mentors: MentorListing[] = profiles.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.admin.name ?? "Mentor",
-    headline: p.headline,
-    bio: p.bio,
-    expertise: p.expertise,
-    yearsExperience: p.yearsExperience,
-    avatarUrl: p.avatarUrl,
-    hourlyRatePaise: p.hourlyRatePaise,
-    isPremium: p.isPremium,
-    avgRating: p.avgRating,
-    ratingCount: p.ratingCount,
-    orgName: p.admin.org.name,
-  }));
-
-  return {
-    mentors,
-    total,
+  const empty = {
+    mentors: [] as MentorListing[],
+    total: 0,
     page,
     limit: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
+    totalPages: 0,
   };
+
+  try {
+    const where = {
+      isPublic: true,
+      ...(expertise ? { expertise: { has: expertise } } : {}),
+    };
+
+    const [profiles, total] = await Promise.all([
+      prisma.mentorProfile.findMany({
+        where,
+        orderBy: [
+          { isPremium: "desc" },
+          { avgRating: "desc" },
+          { createdAt: "desc" },
+        ],
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: {
+          id: true,
+          slug: true,
+          headline: true,
+          bio: true,
+          expertise: true,
+          yearsExperience: true,
+          avatarUrl: true,
+          hourlyRatePaise: true,
+          isPremium: true,
+          avgRating: true,
+          ratingCount: true,
+          admin: {
+            select: {
+              name: true,
+              org: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      prisma.mentorProfile.count({ where }),
+    ]);
+
+    const mentors: MentorListing[] = profiles.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.admin.name ?? "Mentor",
+      headline: p.headline,
+      bio: p.bio,
+      expertise: p.expertise,
+      yearsExperience: p.yearsExperience,
+      avatarUrl: p.avatarUrl,
+      hourlyRatePaise: p.hourlyRatePaise,
+      isPremium: p.isPremium,
+      avgRating: p.avgRating,
+      ratingCount: p.ratingCount,
+      orgName: p.admin.org.name,
+    }));
+
+    return {
+      mentors,
+      total,
+      page,
+      limit: PAGE_SIZE,
+      totalPages: Math.ceil(total / PAGE_SIZE),
+    };
+  } catch {
+    return empty;
+  }
 }
 
 async function getExpertiseOptions(): Promise<string[]> {

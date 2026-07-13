@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -85,6 +84,13 @@ export async function GET(req: NextRequest) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (err) {
-    return serverError(err, "Public mentors GET error");
+    console.error("Public mentors GET error:", err);
+    return NextResponse.json({
+      mentors: [],
+      total: 0,
+      page: 1,
+      limit: 12,
+      totalPages: 0,
+    });
   }
 }

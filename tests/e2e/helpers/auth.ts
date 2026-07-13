@@ -1,5 +1,25 @@
 import { expect, type Page } from "@playwright/test";
 
+/** Sign in via the /sign-in form and wait for redirect away from sign-in. */
+export async function signInWithCredentials(
+  page: Page,
+  email: string,
+  password: string,
+): Promise<void> {
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: /Sign In/i }).click();
+  await expect(page).not.toHaveURL(/\/sign-in/, { timeout: 20_000 });
+}
+
+export function getAdminCredentials(): { email: string; password: string } | null {
+  const email = process.env.E2E_ADMIN_EMAIL?.trim();
+  const password = process.env.E2E_ADMIN_PASSWORD;
+  if (!email || !password) return null;
+  return { email, password };
+}
+
 /** Unauthenticated dashboard visit: middleware redirect or legacy in-page gate. */
 export async function expectDashboardRequiresAuth(page: Page): Promise<void> {
   if (page.url().includes("/sign-in")) {

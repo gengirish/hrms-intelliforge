@@ -16,7 +16,10 @@ test.describe("Navigation", () => {
 
   test("navbar brand links to homepage", async ({ page }) => {
     await page.goto("/about");
-    await page.locator("nav").getByRole("link", { name: /IntelliForge/i }).click();
+    await page
+      .locator("nav")
+      .getByRole("link", { name: /Mentor Internship Platform — Home/i })
+      .click();
     await expect(page).toHaveURL("/");
   });
 });
@@ -109,6 +112,34 @@ test.describe("Page Load", () => {
     const response = await page.goto("/accept-admin-invite");
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
+  });
+
+  test("/mentors is public without authentication", async ({ page }) => {
+    const response = await page.goto("/mentors");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+    await expect(page).not.toHaveURL(/\/sign-in/);
+  });
+
+  test("/internships is public without authentication", async ({ page }) => {
+    const response = await page.goto("/internships");
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
+    await expect(page).not.toHaveURL(/\/sign-in/);
+  });
+
+  test("/dashboard/marketplace redirects unauthenticated users to sign-in", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard/marketplace");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fmarketplace/);
+  });
+
+  test("/dashboard/mentor-profile redirects unauthenticated users to sign-in", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard/mentor-profile");
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fdashboard%2Fmentor-profile/);
   });
 });
 

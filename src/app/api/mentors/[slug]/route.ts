@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { serverError } from "@/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
@@ -82,6 +81,7 @@ export async function GET(
 
     return NextResponse.json({ mentor });
   } catch (err) {
-    return serverError(err, "Public mentor detail GET error");
+    console.error("Public mentor detail GET error:", err);
+    return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
   }
 }

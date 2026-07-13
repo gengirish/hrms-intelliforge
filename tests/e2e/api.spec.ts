@@ -244,6 +244,27 @@ test.describe("Jobs API (unauthenticated)", () => {
   });
 });
 
+test.describe("Marketplace API", () => {
+  test("GET /api/mentors is public", async ({ request }) => {
+    const response = await request.get("/api/mentors");
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveProperty("mentors");
+  });
+
+  test("GET /api/internships is public", async ({ request }) => {
+    const response = await request.get("/api/internships");
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveProperty("jobs");
+  });
+
+  test("GET /api/marketplace/transactions requires auth", async ({ request }) => {
+    const response = await request.get("/api/marketplace/transactions");
+    expect(response.status()).toBe(401);
+  });
+});
+
 test.describe("Documents API (unauthenticated)", () => {
   test("POST /api/documents/verify blocks unauthenticated access", async ({ request }) => {
     const response = await request.post("/api/documents/verify", {

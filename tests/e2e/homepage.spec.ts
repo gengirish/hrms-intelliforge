@@ -1,17 +1,18 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Homepage", () => {
-  test("should render hero section with SaaS positioning", async ({ page }) => {
+  test("should render hero section with marketplace positioning", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Run internship programs");
-    await expect(page.locator("h1")).toContainText("spreadsheet chaos");
+    await expect(page.locator("h1")).toContainText("Mentor Internship Platform");
+    await expect(page.locator("h1")).toContainText("get paid");
   });
 
-  test("should display feature section", async ({ page }) => {
+  test("should display marketplace feature section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Self-serve onboarding")).toBeVisible();
-    await expect(page.getByText("Attendance that sticks")).toBeVisible();
-    await expect(page.getByText("Offer letters on autopilot")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mentor discovery", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Internship listings", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ratings & accountability", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Stipend payouts", exact: true })).toBeVisible();
   });
 
   test("should have working navigation links in navbar", async ({ page }) => {
@@ -19,8 +20,9 @@ test.describe("Homepage", () => {
     await page.goto("/");
     const topNav = page.locator("nav[aria-label='Primary']");
     await expect(topNav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    await expect(topNav.getByRole("link", { name: "Internships", exact: true })).toBeVisible();
+    await expect(topNav.getByRole("link", { name: "Mentors", exact: true })).toBeVisible();
     await expect(topNav.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
-    await expect(topNav.getByRole("link", { name: "Careers", exact: true })).toBeVisible();
     await expect(topNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
   });
 
@@ -50,7 +52,9 @@ test.describe("Homepage", () => {
   test("should have pricing section on homepage", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#pricing")).toBeVisible();
-    await expect(page.getByText("Start free. Scale when your cohort grows.")).toBeVisible();
+    await expect(
+      page.getByText("Start free. Scale mentors and interns together."),
+    ).toBeVisible();
   });
 
   test("should show Sign In and Start free when not authenticated", async ({ page }) => {
@@ -65,10 +69,10 @@ test.describe("Homepage", () => {
     await expect(page.locator("footer")).toBeVisible();
   });
 
-  test("should display social proof testimonials", async ({ page }) => {
+  test("should display social proof section", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Trusted by teams running intern programs" }),
+      page.getByRole("heading", { name: "Built in production for our own cohort" }),
     ).toBeVisible();
     await expect(
       page.getByText(/Onboarding dropped from 3 days of back-and-forth emails/),
@@ -86,9 +90,12 @@ test.describe("Homepage", () => {
 });
 
 test.describe("Pricing page", () => {
-  test("loads and shows plan cards", async ({ page }) => {
+  test("loads and shows plan cards with mentor seats", async ({ page }) => {
     await page.goto("/pricing");
-    await expect(page.getByRole("heading", { name: /Pricing that scales/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Pricing that scales with your marketplace/i }),
+    ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
+    await expect(page.getByText("Are mentor seats included?")).toBeVisible();
   });
 });
