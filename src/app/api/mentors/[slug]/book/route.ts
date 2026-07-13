@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthIntern } from "@/lib/auth";
-import { serverError } from "@/lib/api-utils";
 import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 
 const bookSchema = z.object({
