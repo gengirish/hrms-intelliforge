@@ -20,7 +20,7 @@ export function getPlanLimits(plan: string): PlanLimits {
   const key = plan as PlanKey;
   const p = PLANS[key];
   return {
-    maxInterns: p?.maxInterns ?? 5,
+    maxInterns: p?.maxInterns ?? 500,
     maxMentors: PLAN_MENTOR_LIMITS[key] ?? 2,
     platformFeeBps: DEFAULT_PLATFORM_FEE_BPS,
   };

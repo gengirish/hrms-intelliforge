@@ -9,13 +9,13 @@ async function main() {
   // 1. Organization (must exist before admins / interns reference it)
   const org = await prisma.organization.upsert({
     where: { slug: "intelliforge-ai" },
-    update: {},
+    update: { maxInterns: 500 },
     create: {
       name: "IntelliForge AI",
       slug: "intelliforge-ai",
       domain: "intelliforge.tech",
       plan: "growth",
-      maxInterns: 20,
+      maxInterns: 500,
     },
   });
   console.log("Organization:", org.name);

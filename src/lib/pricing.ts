@@ -18,7 +18,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Free",
     price: "$0",
     period: "/mo",
-    interns: "5",
+    interns: "500",
     tagline: "Launch your first mentor-led cohort",
     features: [
       "2 mentors",
@@ -35,7 +35,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Starter",
     price: "$29",
     period: "/mo",
-    interns: "25",
+    interns: "500",
     tagline: "Grow your mentor marketplace",
     features: [
       "10 mentors",
@@ -52,7 +52,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Growth",
     price: "$79",
     period: "/mo",
-    interns: "100",
+    interns: "500",
     tagline: "Scale cohorts without ops overhead",
     features: [
       "50 mentors",

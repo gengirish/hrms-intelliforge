@@ -82,7 +82,7 @@ model Organization {
   plan              String   @default("free")
   stripeCustomerId  String?
   stripeSubId       String?
-  maxInterns        Int      @default(5)
+  maxInterns        Int      @default(500)
   maxMentors        Int      @default(2)
   platformFeeBps    Int      @default(1000)
   marketplaceEnabled Boolean @default(true)
