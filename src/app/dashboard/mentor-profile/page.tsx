@@ -17,6 +17,7 @@ import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { AvailabilityEditor } from "@/components/mentors/availability-editor";
+import { LinkedInMentorImportForm } from "@/components/mentors/linkedin-import-form";
 import type { AvailabilitySlot } from "@/components/mentors/availability-display";
 
 interface MentorProfile {
@@ -37,6 +38,7 @@ interface MentorProfile {
 export default function MentorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileKey, setProfileKey] = useState(0);
   const [profile, setProfile] = useState<MentorProfile | null>(null);
   const [expertiseInput, setExpertiseInput] = useState("");
   const [form, setForm] = useState({
@@ -83,7 +85,12 @@ export default function MentorProfilePage() {
       })
       .catch(() => toast.error("Failed to load mentor profile"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [profileKey]);
+
+  function reloadProfile() {
+    setLoading(true);
+    setProfileKey((k) => k + 1);
+  }
 
   function addExpertise() {
     const tag = expertiseInput.trim();
@@ -188,6 +195,12 @@ export default function MentorProfilePage() {
             </Link>
           )}
         </div>
+
+        <LinkedInMentorImportForm
+          mode="self"
+          className="mb-6"
+          onSelfApplied={reloadProfile}
+        />
 
         <form onSubmit={handleSave} className="space-y-6">
           <div className="glass-card p-6 space-y-4">

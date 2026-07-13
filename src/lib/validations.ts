@@ -31,6 +31,35 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+export const linkedInImportPreviewSchema = z.object({
+  linkedinUrl: z.string().min(1, "LinkedIn URL is required"),
+  profileText: z.string().max(50_000).optional(),
+});
+
+export const linkedInImportApplySchema = linkedInImportPreviewSchema.extend({
+  headline: z.string().max(200).optional().nullable(),
+  bio: z.string().max(5000).optional().nullable(),
+  expertise: z.array(z.string().min(1).max(80)).max(20).optional(),
+  yearsExperience: z.number().int().min(0).max(60).optional().nullable(),
+  githubUrl: z.string().url().optional().nullable().or(z.literal("")),
+  avatarUrl: z.string().url().optional().nullable().or(z.literal("")),
+  isPublic: z.boolean().optional(),
+});
+
+export const linkedInImportCreateSchema = linkedInImportApplySchema.extend({
+  email: z.string().email(),
+  name: z.string().min(1).max(200).optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128),
+  confirmPassword: z.string().min(8).max(128),
+  sendWelcomeEmail: z.boolean().optional().default(true),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 export const directAdminSchema = z
   .object({
     email: z.string().email(),

@@ -11,6 +11,7 @@ import {
   Settings,
   UserCircle,
   Wallet,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
     icon: ClipboardList,
   },
   { href: "/dashboard/mentor-profile", label: "Mentor profile", icon: UserCircle },
+  { href: "/dashboard/mentors/import", label: "Import mentor", icon: UserPlus },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
   { href: "/dashboard/marketplace", label: "Marketplace", icon: Wallet },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
@@ -45,7 +47,8 @@ export function DashboardSubnav({ className }: { className?: string }) {
         (t) =>
           t.href !== "/dashboard/hiring" &&
           t.href !== "/dashboard/settings" &&
-          t.href !== "/dashboard/marketplace"
+          t.href !== "/dashboard/marketplace" &&
+          t.href !== "/dashboard/mentors/import"
       )
     : ADMIN_TABS;
 
