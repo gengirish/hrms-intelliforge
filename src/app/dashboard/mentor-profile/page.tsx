@@ -11,11 +11,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import Link from "next/link";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { AvailabilityEditor } from "@/components/mentors/availability-editor";
 import { LinkedInMentorImportForm } from "@/components/mentors/linkedin-import-form";
 import type { AvailabilitySlot } from "@/components/mentors/availability-display";
@@ -151,30 +147,23 @@ export default function MentorProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
-        </main>
-        <Footer />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main id="main-content" className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumbs
-          className="mb-4"
-          items={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Mentor Profile" },
-          ]}
-        />
-        <DashboardSubnav className="mb-8" />
+    <div className="mx-auto w-full max-w-3xl">
+      <Breadcrumbs
+        className="mb-4"
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Mentor Profile" },
+        ]}
+      />
 
-        <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
               <UserCircle className="h-7 w-7 text-indigo-400" />
@@ -411,9 +400,6 @@ export default function MentorProfilePage() {
             Save Profile
           </button>
         </form>
-      </main>
-      <Footer />
-      <MobileBottomNav />
     </div>
   );
 }
