@@ -30,7 +30,7 @@ test.describe("Mentors directory (public)", () => {
     });
     const hasMentors = await page.getByText(/\d+ mentors? available/i).isVisible();
     const hasEmpty = await page
-      .getByText(/No mentors found/i)
+      .getByText(/No mentors found|Mentors exist but none are listed yet/i)
       .isVisible();
     expect(hasMentors || hasEmpty).toBe(true);
   });

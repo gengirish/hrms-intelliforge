@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       githubUrl: data.githubUrl || null,
       avatarUrl: data.avatarUrl || null,
       hourlyRatePaise: data.hourlyRatePaise ?? null,
-      isPublic: data.isPublic ?? false,
+      isPublic: data.isPublic ?? true,
     };
 
     let profileId: string;

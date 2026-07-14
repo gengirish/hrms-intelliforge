@@ -16,6 +16,8 @@ async function getMentors(page: number, expertise?: string) {
     page,
     limit: PAGE_SIZE,
     totalPages: 0,
+    profileCount: 0,
+    publicCount: 0,
   };
 
   try {
@@ -24,7 +26,7 @@ async function getMentors(page: number, expertise?: string) {
       ...(expertise ? { expertise: { has: expertise } } : {}),
     };
 
-    const [profiles, total] = await Promise.all([
+    const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
         where,
         orderBy: [
@@ -55,6 +57,8 @@ async function getMentors(page: number, expertise?: string) {
         },
       }),
       prisma.mentorProfile.count({ where }),
+      prisma.mentorProfile.count(),
+      prisma.mentorProfile.count({ where: { isPublic: true } }),
     ]);
 
     const mentors: MentorListing[] = profiles.map((p) => ({
@@ -79,6 +83,8 @@ async function getMentors(page: number, expertise?: string) {
       page,
       limit: PAGE_SIZE,
       totalPages: Math.ceil(total / PAGE_SIZE),
+      profileCount,
+      publicCount,
     };
   } catch {
     return empty;

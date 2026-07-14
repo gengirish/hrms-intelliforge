@@ -65,7 +65,11 @@ async function upsertMentorProfileForAdmin(
     linkedinUrl: fields.linkedinUrl,
     githubUrl: fields.githubUrl || null,
     avatarUrl: fields.avatarUrl || null,
-    isPublic: fields.isPublic ?? false,
+    ...(fields.isPublic !== undefined
+      ? { isPublic: fields.isPublic }
+      : existing
+        ? {}
+        : { isPublic: true }),
   };
 
   if (existing) {
@@ -282,7 +286,7 @@ export async function POST(req: NextRequest) {
         linkedinUrl,
         githubUrl: payload.githubUrl ?? extracted.draft.githubUrl,
         avatarUrl: payload.avatarUrl ?? extracted.draft.avatarUrl,
-        isPublic: payload.isPublic ?? false,
+        isPublic: payload.isPublic ?? true,
       }
     );
 

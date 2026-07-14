@@ -41,7 +41,7 @@ export function LinkedInMentorImportForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
 
   async function handlePreview() {
     if (!linkedinUrl.trim()) {

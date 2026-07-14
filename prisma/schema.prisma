@@ -592,7 +592,7 @@ model MentorProfile {
   githubUrl         String?
   avatarUrl         String?
   hourlyRatePaise   Int?
-  isPublic          Boolean  @default(false)
+  isPublic          Boolean  @default(true)
   isPremium         Boolean  @default(false)
   avgRating         Float    @default(0)
   ratingCount       Int      @default(0)

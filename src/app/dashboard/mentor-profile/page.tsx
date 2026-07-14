@@ -50,7 +50,7 @@ export default function MentorProfilePage() {
     githubUrl: "",
     avatarUrl: "",
     hourlyRateRupees: "",
-    isPublic: false,
+    isPublic: true,
     availability: [] as AvailabilitySlot[],
   });
 

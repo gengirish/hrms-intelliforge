@@ -8,6 +8,7 @@ import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { LinkedInMentorImportForm } from "@/components/mentors/linkedin-import-form";
+import { PublishMentorsPanel } from "@/components/mentors/publish-mentors-panel";
 
 export default function ImportMentorPage() {
   const router = useRouter();
@@ -37,6 +38,8 @@ export default function ImportMentorPage() {
             Turn a LinkedIn profile into a workspace mentor account — ready to assign to cohorts.
           </p>
         </div>
+
+        <PublishMentorsPanel />
 
         <LinkedInMentorImportForm
           mode="create"

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         : {}),
     };
 
-    const [profiles, total] = await Promise.all([
+    const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
         where,
         orderBy: [
@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.mentorProfile.count({ where }),
+      prisma.mentorProfile.count(),
+      prisma.mentorProfile.count({ where: { isPublic: true } }),
     ]);
 
     const mentors = profiles.map((p) => ({
@@ -82,6 +84,8 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      profileCount,
+      publicCount,
     });
   } catch (err) {
     console.error("Public mentors GET error:", err);
@@ -91,6 +95,8 @@ export async function GET(req: NextRequest) {
       page: 1,
       limit: 12,
       totalPages: 0,
+      profileCount: 0,
+      publicCount: 0,
     });
   }
 }
