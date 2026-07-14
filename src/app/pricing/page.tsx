@@ -9,7 +9,7 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for internal mentor-led internship programs. Start free with 5 interns and 2 mentors — scale as your cohort grows.",
+    "Simple, transparent pricing for internal mentor-led internship programs. Start free with 500 interns and 20 mentors — scale as your cohort grows.",
 };
 
 const faqs = [
@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: "Are mentor seats included?",
-    a: "Yes. Every plan includes mentor seats — 2 on Free, 10 on Starter, 50 on Growth, and unlimited on Enterprise. Mentors get their own dashboard for reviews and cohort management.",
+    a: "Yes. Every plan includes 20 mentor seats on Free, Starter, and Growth — unlimited on Enterprise. Mentors get their own dashboard for reviews and cohort management.",
   },
   {
     q: "How do stipend payouts work?",

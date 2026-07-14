@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { openai } from "@/lib/openai";
+import { chatJsonCompletion, hasAnyLlmProvider } from "@/lib/ai/llm-json-completion";
 
 const LINKEDIN_PROFILE_RE =
   /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?(\?.*)?$/i;
@@ -75,8 +75,10 @@ export async function extractMentorDraftFromLinkedIn(input: {
     throw new Error("Enter a valid LinkedIn profile URL (linkedin.com/in/username).");
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not configured — cannot parse LinkedIn profiles.");
+  if (!hasAnyLlmProvider()) {
+    throw new Error(
+      "No LLM API key configured — set GROQ_API_KEY, GOOGLE_API_KEY, NIM_API_KEY, or OPENAI_API_KEY."
+    );
   }
 
   let sourceText = input.profileText?.trim() ?? "";
@@ -110,17 +112,13 @@ Do not invent employers, degrees, or contact details not supported by the source
       ? `LinkedIn URL: ${linkedinUrl}\n\nProfile source text:\n${sourceText}`
       : `LinkedIn URL: ${linkedinUrl}\n\nNo profile body was available (LinkedIn often blocks automated fetch). Infer only a minimal draft: use the slug from the URL as a tentative name (title-cased, hyphen to space), leave headline/bio sparse, and expertise empty.`;
 
-  const res = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-    messages: [
+  const raw = await chatJsonCompletion(
+    [
       { role: "system", content: system },
       { role: "user", content: userContent },
     ],
-  });
-
-  const raw = res.choices[0]?.message?.content;
+    0.2
+  );
   if (!raw) {
     throw new Error("AI did not return profile data. Try pasting the LinkedIn About section.");
   }

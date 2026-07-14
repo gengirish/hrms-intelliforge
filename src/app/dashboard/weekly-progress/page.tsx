@@ -11,12 +11,7 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
-import { InstallPrompt } from "@/components/install-prompt";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn, formatDateIST, getCurrentISOWeek } from "@/lib/utils";
 
 interface ReviewIntern {
@@ -158,44 +153,29 @@ export default function DashboardWeeklyProgressPage() {
 
   if (forbidden) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main
-          id="main-content"
-          className="flex-1 flex items-center justify-center px-4"
-        >
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <BookOpen className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
-            <h1 className="text-2xl font-bold text-white">Admin access required</h1>
-            <p className="text-sm text-slate-400 mt-2">
-              Sign in with an admin or mentor account to review weekly progress.
-            </p>
-            <Link
-              href="/dashboard"
-              className="mt-6 inline-flex rounded-lg bg-indigo-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-indigo-500"
-            >
-              Back to dashboard
-            </Link>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
-        <InstallPrompt />
+      <div className="flex items-center justify-center py-24 px-4">
+        <div className="glass-card p-8 max-w-md w-full text-center">
+          <BookOpen className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold text-white">Admin access required</h1>
+          <p className="text-sm text-slate-400 mt-2">
+            Sign in with an admin or mentor account to review weekly progress.
+          </p>
+          <Link
+            href="/dashboard"
+            className="mt-6 inline-flex rounded-lg bg-indigo-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-indigo-500"
+          >
+            Back to dashboard
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main
-        id="main-content"
-        className="flex-1 mx-auto max-w-6xl w-full px-4 py-8"
-      >
-        <Breadcrumbs className="mb-4" />
-        <DashboardSubnav className="mb-6" />
+    <>
+      <Breadcrumbs className="mb-4" />
 
-        <div className="mb-8">
+      <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Weekly progress review</h1>
           <p className="mt-1 text-slate-400">
             Read intern reports for a week and leave mentor feedback.
@@ -387,7 +367,6 @@ export default function DashboardWeeklyProgressPage() {
             </div>
           </div>
         )}
-      </main>
 
       {modalItem && (
         <div
@@ -473,10 +452,7 @@ export default function DashboardWeeklyProgressPage() {
         </div>
       )}
 
-      <Footer />
-      <MobileBottomNav />
-      <InstallPrompt />
-    </div>
+    </>
   );
 }
 

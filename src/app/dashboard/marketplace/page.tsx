@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Wallet, TrendingUp } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn, formatINR, formatDateIST } from "@/lib/utils";
 
 interface MarketplaceTransaction {
@@ -73,16 +69,14 @@ export default function MarketplacePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumbs
-          items={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Platform fees" },
-          ]}
-        />
-        <div className="mt-4 mb-6">
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Platform fees" },
+        ]}
+      />
+      <div className="mt-4 mb-6">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Wallet className="h-7 w-7 text-indigo-400" aria-hidden="true" />
             Platform fees
@@ -92,9 +86,7 @@ export default function MarketplacePage() {
           </p>
         </div>
 
-        <DashboardSubnav className="mb-6" />
-
-        {bootState === "loading" && (
+      {bootState === "loading" && (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
           </div>
@@ -201,9 +193,6 @@ export default function MarketplacePage() {
             )}
           </>
         )}
-      </main>
-      <Footer />
-      <MobileBottomNav />
-    </div>
+    </>
   );
 }

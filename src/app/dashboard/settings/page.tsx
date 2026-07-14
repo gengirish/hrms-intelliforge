@@ -14,11 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { DASHBOARD_PLANS } from "@/lib/pricing";
@@ -414,33 +410,25 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main id="main-content" className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
-        </main>
-        <Footer />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
       </div>
     );
   }
 
   if (!org) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main id="main-content" className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <Building2 className="h-12 w-12 text-slate-500 mx-auto mb-3" />
-            <h1 className="text-xl font-bold text-white">No Organization</h1>
-            <p className="text-sm text-slate-400 mt-2">
-              You need to be part of an organization to access settings.
-            </p>
-            <Link href="/create-org" className="inline-block mt-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-colors">
-              Create Organization
-            </Link>
-          </div>
-        </main>
-        <Footer />
+      <div className="flex items-center justify-center py-24 px-4">
+        <div className="glass-card p-8 max-w-md w-full text-center">
+          <Building2 className="h-12 w-12 text-slate-500 mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-white">No Organization</h1>
+          <p className="text-sm text-slate-400 mt-2">
+            You need to be part of an organization to access settings.
+          </p>
+          <Link href="/create-org" className="inline-block mt-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-colors">
+            Create Organization
+          </Link>
+        </div>
       </div>
     );
   }
@@ -453,12 +441,9 @@ export default function SettingsPage() {
   const platformFeePercent = org.platformFeeBps / 100;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
-        <Breadcrumbs className="mb-4" />
-        <DashboardSubnav className="mb-6" />
-        <div className="flex items-center gap-3 mb-8">
+    <>
+      <Breadcrumbs className="mb-4" />
+      <div className="flex items-center gap-3 mb-8">
           <Link
             href="/dashboard"
             aria-label="Back to dashboard"
@@ -1019,9 +1004,6 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </main>
-      <Footer />
-      <MobileBottomNav />
-    </div>
+    </>
   );
 }

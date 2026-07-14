@@ -18,11 +18,7 @@ import {
   Calendar,
 } from "lucide-react";
 import Link from "next/link";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { CandidateDetailPanel } from "@/components/hiring/candidate-detail-panel";
 import { ScheduleInterviewModal } from "@/components/hiring/schedule-interview-modal";
 import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge";
@@ -307,32 +303,25 @@ export default function HiringPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main id="main-content" className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
-        </main>
-        <Footer />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
       </div>
     );
   }
 
   if (selectedJob) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
-          <Breadcrumbs
-            className="mb-4"
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Dashboard", href: "/dashboard" },
-              { label: "Hiring", href: "/dashboard/hiring" },
-              { label: selectedJob.title },
-            ]}
-          />
-          <DashboardSubnav className="mb-6" />
-          <button
+      <>
+        <Breadcrumbs
+          className="mb-4"
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Hiring", href: "/dashboard/hiring" },
+            { label: selectedJob.title },
+          ]}
+        />
+        <button
             onClick={() => {
               setSelectedJob(null);
               setCandidates([]);
@@ -508,7 +497,6 @@ export default function HiringPage() {
               </div>
             )}
           </div>
-        </main>
         {selectedCandidate && (
           <CandidateDetailPanel
             candidate={selectedCandidate}
@@ -534,19 +522,14 @@ export default function HiringPage() {
             jobTitle={selectedJob.title}
           />
         )}
-        <Footer />
-        <MobileBottomNav />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
-        <Breadcrumbs className="mb-4" />
-        <DashboardSubnav className="mb-6" />
-        <div className="flex items-center justify-between mb-8">
+    <>
+      <Breadcrumbs className="mb-4" />
+      <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
@@ -726,9 +709,6 @@ export default function HiringPage() {
             ))}
           </div>
         )}
-      </main>
-      <Footer />
-      <MobileBottomNav />
-    </div>
+    </>
   );
 }

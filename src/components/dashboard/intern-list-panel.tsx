@@ -14,7 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn, formatDateIST, getStatusColor } from "@/lib/utils";
 import type { Intern, AttendanceSummary, DashboardStats } from "./types";
 
@@ -58,7 +57,6 @@ export function InternListPanel({
   return (
     <>
       <Breadcrumbs className="mb-4" />
-      <DashboardSubnav className="mb-6" />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>

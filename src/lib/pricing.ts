@@ -21,7 +21,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     interns: "500",
     tagline: "Launch your first mentor-led cohort",
     features: [
-      "2 mentors",
+      "20 mentors",
       "Internship listings & careers page",
       "Self-serve intern onboarding",
       "Attendance & weekly task logs",
@@ -38,7 +38,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     interns: "500",
     tagline: "Grow your internship program",
     features: [
-      "10 mentors",
+      "20 mentors",
       "Everything in Free",
       "Mentor roster & ratings",
       "WhatsApp nudges & reminders",
@@ -55,7 +55,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     interns: "500",
     tagline: "Scale cohorts without ops overhead",
     features: [
-      "50 mentors",
+      "20 mentors",
       "Everything in Starter",
       "Weekly mentor reviews & analytics",
       "Priority payout processing",

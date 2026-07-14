@@ -367,7 +367,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-slate-300">
               Join teams running mentor-led internships on the Mentor Internship
-              Platform. Free forever for up to 5 interns and 2 mentors.
+              Platform. Free forever for up to 500 interns and 20 mentors.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-8 py-3 text-base">
               Start free today

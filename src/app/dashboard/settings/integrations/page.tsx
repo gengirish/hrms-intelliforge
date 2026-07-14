@@ -10,11 +10,7 @@ import {
   Plug,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn } from "@/lib/utils";
 import type { IntegrationHealth } from "@/lib/integrations-health";
 
@@ -52,13 +48,10 @@ export default function IntegrationsHealthPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main id="main-content" className="flex-1 mx-auto max-w-5xl w-full px-4 py-8">
-        <Breadcrumbs className="mb-4" />
-        <DashboardSubnav className="mb-6" />
+    <>
+      <Breadcrumbs className="mb-4" />
 
-        <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-2">
           <Link
             href="/dashboard/settings"
             aria-label="Back to settings"
@@ -168,9 +161,6 @@ export default function IntegrationsHealthPage() {
             </p>
           </>
         )}
-      </main>
-      <Footer />
-      <MobileBottomNav />
-    </div>
+    </>
   );
 }

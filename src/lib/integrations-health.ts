@@ -39,9 +39,14 @@ const INTEGRATIONS: Array<Omit<IntegrationHealth, "configured">> = [
   },
   {
     id: "openai",
-    name: "OpenAI",
-    description: "LLM features, document OCR, and WhatsApp bot replies.",
-    envVars: ["OPENAI_API_KEY"],
+    name: "LLM (AI features)",
+    description: "LinkedIn import, document OCR, reviews, and WhatsApp bot replies.",
+    envVars: [
+      "OPENAI_API_KEY",
+      "GROQ_API_KEY",
+      "GOOGLE_API_KEY",
+      "NIM_API_KEY",
+    ],
   },
   {
     id: "learning",
@@ -121,6 +126,9 @@ export function getIntegrationsHealth(): IntegrationHealth[] {
         break;
       case "interview-bot":
         configured = envSet("INTERVIEW_BOT_API_KEY");
+        break;
+      case "openai":
+        configured = envAnySet(...integration.envVars);
         break;
       default:
         configured = envSet(...integration.envVars);

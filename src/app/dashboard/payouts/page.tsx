@@ -9,11 +9,7 @@ import {
   Play,
   RefreshCw,
 } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 import { cn, formatINR, formatDateIST } from "@/lib/utils";
 
 interface PayoutRow {
@@ -132,56 +128,38 @@ export default function PayoutsPage() {
 
   if (bootState === "loading") {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
-        </main>
-        <Footer />
-        <MobileBottomNav />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
       </div>
     );
   }
 
   if (bootState === "forbidden") {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <IndianRupee className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
-            <h1 className="text-2xl font-bold text-white">Admin access required</h1>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
+      <div className="flex items-center justify-center py-24 px-4">
+        <div className="glass-card p-8 max-w-md w-full text-center">
+          <IndianRupee className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold text-white">Admin access required</h1>
+        </div>
       </div>
     );
   }
 
   if (bootState === "error") {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <div className="glass-card p-8 max-w-md w-full text-center">
-            <p className="text-white font-semibold">Unable to load payouts</p>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
+      <div className="flex items-center justify-center py-24 px-4">
+        <div className="glass-card p-8 max-w-md w-full text-center">
+          <p className="text-white font-semibold">Unable to load payouts</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main id="main-content" className="flex-1 mx-auto max-w-6xl w-full px-4 py-8">
-        <Breadcrumbs className="mb-4" />
-        <DashboardSubnav className="mb-6" />
+    <>
+      <Breadcrumbs className="mb-4" />
 
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Stipend Payouts</h1>
             <p className="mt-1 text-slate-400">
@@ -295,9 +273,6 @@ export default function PayoutsPage() {
             </table>
           </div>
         </div>
-      </main>
-      <Footer />
-      <MobileBottomNav />
-    </div>
+    </>
   );
 }

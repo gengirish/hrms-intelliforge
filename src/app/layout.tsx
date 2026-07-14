@@ -16,7 +16,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const SITE_DESCRIPTION =
-  "Mentor Internship Platform — run internal mentor-led internship programs, track accountability, and process stipend payouts. Start free with 5 interns and 2 mentors.";
+  "Mentor Internship Platform — run internal mentor-led internship programs, track accountability, and process stipend payouts. Start free with 500 interns and 20 mentors.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hrms.intelliforge.tech"),

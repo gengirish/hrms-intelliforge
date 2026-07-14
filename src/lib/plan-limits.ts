@@ -8,9 +8,9 @@ export interface PlanLimits {
 }
 
 const PLAN_MENTOR_LIMITS: Record<PlanKey, number> = {
-  free: 2,
-  starter: 10,
-  growth: 50,
+  free: 20,
+  starter: 20,
+  growth: 20,
   enterprise: 999999,
 };
 
@@ -21,7 +21,7 @@ export function getPlanLimits(plan: string): PlanLimits {
   const p = PLANS[key];
   return {
     maxInterns: p?.maxInterns ?? 500,
-    maxMentors: PLAN_MENTOR_LIMITS[key] ?? 2,
+    maxMentors: PLAN_MENTOR_LIMITS[key] ?? 20,
     platformFeeBps: DEFAULT_PLATFORM_FEE_BPS,
   };
 }

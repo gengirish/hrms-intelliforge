@@ -83,7 +83,7 @@ model Organization {
   stripeCustomerId  String?
   stripeSubId       String?
   maxInterns        Int      @default(500)
-  maxMentors        Int      @default(2)
+  maxMentors        Int      @default(20)
   platformFeeBps    Int      @default(1000)
   marketplaceEnabled Boolean @default(true)
   createdAt         DateTime @default(now())

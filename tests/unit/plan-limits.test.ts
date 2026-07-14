@@ -6,9 +6,9 @@ import {
 
 describe("getPlanLimits", () => {
   it("returns mentor limits per plan", () => {
-    expect(getPlanLimits("free").maxMentors).toBe(2);
-    expect(getPlanLimits("starter").maxMentors).toBe(10);
-    expect(getPlanLimits("growth").maxMentors).toBe(50);
+    expect(getPlanLimits("free").maxMentors).toBe(20);
+    expect(getPlanLimits("starter").maxMentors).toBe(20);
+    expect(getPlanLimits("growth").maxMentors).toBe(20);
   });
 });
 
