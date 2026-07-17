@@ -14,6 +14,7 @@ const availabilitySlotSchema = z.object({
 });
 
 const profileSchema = z.object({
+  name: z.string().max(200).optional().nullable(),
   headline: z.string().max(200).optional().nullable(),
   bio: z.string().max(5000).optional().nullable(),
   expertise: z.array(z.string().min(1).max(80)).max(20).optional(),
@@ -110,6 +111,15 @@ export async function POST(
     }
 
     const data = parsed.data;
+    
+    if (data.name !== undefined) {
+      await prisma.admin.update({
+        where: { id: targetAdmin.id },
+        data: { name: data.name },
+      });
+      targetAdmin.name = data.name;
+    }
+
     const existing = await prisma.mentorProfile.findUnique({
       where: { adminId: targetAdmin.id },
       select: { id: true, slug: true },

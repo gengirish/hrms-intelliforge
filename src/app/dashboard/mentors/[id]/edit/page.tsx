@@ -39,6 +39,7 @@ export default function AdminEditMentorProfilePage() {
   const [profile, setProfile] = useState<MentorProfile | null>(null);
   const [expertiseInput, setExpertiseInput] = useState("");
   const [form, setForm] = useState({
+    name: "",
     headline: "",
     bio: "",
     expertise: [] as string[],
@@ -66,23 +67,22 @@ export default function AdminEditMentorProfilePage() {
         setTargetAdmin(data.admin);
         const p = data.profile as MentorProfile | null;
         setProfile(p);
-        if (p) {
-          setForm({
-            headline: p.headline ?? "",
-            bio: p.bio ?? "",
-            expertise: p.expertise ?? [],
-            yearsExperience: p.yearsExperience?.toString() ?? "",
-            linkedinUrl: p.linkedinUrl ?? "",
-            githubUrl: p.githubUrl ?? "",
-            avatarUrl: p.avatarUrl ?? "",
-            hourlyRateRupees:
-              p.hourlyRatePaise != null
-                ? String(p.hourlyRatePaise / 100)
-                : "",
-            isPublic: p.isPublic,
-            availability: p.availability ?? [],
-          });
-        }
+        setForm({
+          name: data.admin?.name ?? "",
+          headline: p?.headline ?? "",
+          bio: p?.bio ?? "",
+          expertise: p?.expertise ?? [],
+          yearsExperience: p?.yearsExperience?.toString() ?? "",
+          linkedinUrl: p?.linkedinUrl ?? "",
+          githubUrl: p?.githubUrl ?? "",
+          avatarUrl: p?.avatarUrl ?? "",
+          hourlyRateRupees:
+            p?.hourlyRatePaise != null
+              ? String(p.hourlyRatePaise / 100)
+              : "",
+          isPublic: p?.isPublic ?? true,
+          availability: p?.availability ?? [],
+        });
       })
       .catch(() => toast.error("Failed to load mentor profile"))
       .finally(() => setLoading(false));
@@ -115,6 +115,7 @@ export default function AdminEditMentorProfilePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: form.name || null,
           headline: form.headline || null,
           bio: form.bio || null,
           expertise: form.expertise,
@@ -224,18 +225,33 @@ export default function AdminEditMentorProfilePage() {
             </button>
           </div>
 
-          <div>
-            <label htmlFor="headline" className="block text-xs font-medium text-slate-400 mb-1">
-              Headline
-            </label>
-            <input
-              id="headline"
-              value={form.headline}
-              onChange={(e) => setForm((p) => ({ ...p, headline: e.target.value }))}
-              className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none"
-              placeholder="e.g. Senior ML Engineer · Ex-Google"
-              maxLength={200}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="name" className="block text-xs font-medium text-slate-400 mb-1">
+                Name
+              </label>
+              <input
+                id="name"
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none"
+                placeholder="e.g. Jane Doe"
+                maxLength={200}
+              />
+            </div>
+            <div>
+              <label htmlFor="headline" className="block text-xs font-medium text-slate-400 mb-1">
+                Headline
+              </label>
+              <input
+                id="headline"
+                value={form.headline}
+                onChange={(e) => setForm((p) => ({ ...p, headline: e.target.value }))}
+                className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none"
+                placeholder="e.g. Senior ML Engineer · Ex-Google"
+                maxLength={200}
+              />
+            </div>
           </div>
 
           <div>
