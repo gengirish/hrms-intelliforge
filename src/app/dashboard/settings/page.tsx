@@ -841,29 +841,37 @@ export default function SettingsPage() {
                           </td>
                           <td className="py-2 pr-4 text-slate-400">{m.menteeCount}</td>
                           <td className="py-2">
-                            {m.id === user?.id ? (
-                              <span className="text-xs text-slate-500">Signed in as you</span>
-                            ) : (
-                              <div className="flex flex-wrap gap-2">
-                                {m.role !== "MENTOR" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => void updateMemberRole(m.id, "MENTOR")}
-                                    className="text-xs rounded border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-800"
-                                  >
-                                    Make mentor
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => void updateMemberRole(m.id, "ADMIN")}
-                                    className="text-xs rounded border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-800"
-                                  >
-                                    Make full admin
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                            <div className="flex flex-wrap gap-2 items-center">
+                              {m.id === user?.id ? (
+                                <span className="text-xs text-slate-500">Signed in as you</span>
+                              ) : (
+                                <>
+                                  {m.role !== "MENTOR" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => void updateMemberRole(m.id, "MENTOR")}
+                                      className="text-xs rounded border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-800"
+                                    >
+                                      Make mentor
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => void updateMemberRole(m.id, "ADMIN")}
+                                      className="text-xs rounded border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-800"
+                                    >
+                                      Make full admin
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                              <Link
+                                href={`/dashboard/mentors/${m.id}/edit`}
+                                className="text-xs rounded border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-indigo-300 hover:bg-indigo-500/20"
+                              >
+                                Edit Profile
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}
