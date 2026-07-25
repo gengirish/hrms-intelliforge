@@ -173,6 +173,40 @@ export async function sendPasswordResetEmail(email: string, name?: string) {
   });
 }
 
+/**
+ * Sent when an org-admin approves a mentor application. The applicant's Admin
+ * account already exists (with a throwaway password), so we issue a
+ * PASSWORD_RESET token and point them at `/reset-password` to choose their own
+ * password and activate their login. If the 15-minute link expires, they can
+ * request a fresh one via "Forgot password" on the sign-in page.
+ */
+export async function sendMentorApprovalEmail(
+  email: string,
+  name: string,
+  orgName: string
+) {
+  const token = generateToken();
+  await storeToken(email, token, "PASSWORD_RESET");
+
+  const link = `${APP_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: `You're approved as a mentor — ${orgName}`,
+    html: `
+      <h2>Congratulations, ${escapeHtml(name)}!</h2>
+      <p>Your application to mentor with <strong>${escapeHtml(orgName)}</strong> on IntelliForge has been approved.</p>
+      <p>Set your password to activate your mentor account and go live in the directory:</p>
+      <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+        Set your password
+      </a></p>
+      <p style="color:#94a3b8;font-size:13px;">This link expires in ${TOKEN_EXPIRY_MINUTES} minutes. If it expires, go to <a href="${APP_URL}/sign-in">${APP_URL}/sign-in</a> and use "Forgot password" with this email address (${escapeHtml(email)}) to get a fresh link.</p>
+      <br/><p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export async function consumeToken(
   email: string,
   rawToken: string,

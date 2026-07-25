@@ -60,6 +60,40 @@ export const linkedInImportCreateSchema = linkedInImportApplySchema.extend({
   path: ["confirmPassword"],
 });
 
+/**
+ * Public "Apply as a mentor" submission. No password is collected here — the
+ * applicant's Admin login is minted on approval and they set their password via
+ * the set-password email. Empty strings on optional URL fields are tolerated.
+ */
+export const mentorApplicationSchema = z.object({
+  name: z.string().min(2, "Please enter your full name").max(100),
+  email: z.string().email("Please provide a valid email"),
+  phone: z.string().max(20).optional().or(z.literal("")),
+  headline: z.string().max(200).optional().or(z.literal("")),
+  bio: z.string().max(5000).optional().or(z.literal("")),
+  expertise: z.array(z.string().min(1).max(80)).max(20).optional(),
+  yearsExperience: z.number().int().min(0).max(60).optional().nullable(),
+  linkedinUrl: z
+    .string()
+    .url("Enter a valid LinkedIn URL")
+    .optional()
+    .or(z.literal("")),
+  githubUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+  portfolioUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+  orgSlug: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, "Invalid organization slug")
+    .optional(),
+});
+
+/** Org-admin decision on a pending mentor application. */
+export const mentorApplicationReviewSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+  reviewNote: z.string().max(2000).optional(),
+});
+
 export const directAdminSchema = z
   .object({
     email: z.string().email(),

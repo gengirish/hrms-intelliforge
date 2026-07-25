@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { Users } from "lucide-react";
+import Link from "next/link";
+import { Users, GraduationCap } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
@@ -144,6 +145,15 @@ export default async function MentorsPage({
               skill and expertise. Book 1:1 sessions with mentors assigned to
               your cohort.
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/mentors/apply"
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+              >
+                <GraduationCap className="h-4 w-4" />
+                Apply to become a mentor
+              </Link>
+            </div>
           </div>
         </section>
 

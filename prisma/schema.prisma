@@ -93,6 +93,7 @@ model Organization {
   jobPostings  JobPosting[]
   adminInvites AdminInvite[]
   marketplaceTransactions MarketplaceTransaction[]
+  mentorApplications MentorApplication[]
 
   @@map("organizations")
 }
@@ -675,6 +676,39 @@ model MentorPayoutProfile {
 
   @@index([adminId])
   @@map("mentor_payout_profiles")
+}
+
+/// Public "Apply as a mentor" submissions awaiting org-admin review.
+/// On approval an Admin(role MENTOR) + MentorProfile are created from this record.
+model MentorApplication {
+  id               String   @id @default(cuid())
+  orgId            String
+  name             String
+  email            String
+  phone            String?
+  headline         String?
+  bio              String?
+  expertise        String[]
+  yearsExperience  Int?
+  linkedinUrl      String?
+  githubUrl        String?
+  portfolioUrl     String?
+  avatarUrl        String?
+  hourlyRatePaise  Int?
+  /// bcrypt hash of the applicant-chosen password, used to mint their Admin login on approval.
+  passwordHash     String
+  status           String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote       String?
+  reviewedByAdminId String?
+  reviewedAt       DateTime?
+  resultingAdminId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@map("mentor_applications")
 }
 
 enum MarketplaceTransactionStatus {

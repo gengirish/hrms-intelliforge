@@ -319,4 +319,100 @@ export async function sendWeeklyProgressFeedbackToIntern({
   });
 }
 
+export async function sendMentorApplicationReceived(
+  email: string,
+  name: string
+) {
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: "We received your mentor application — IntelliForge",
+    html: `
+      <h2>Hi ${escapeHtml(name)},</h2>
+      <p>Thanks for applying to mentor with <strong>IntelliForge AI</strong>. We've received your application and it's now with our team for review.</p>
+      <p>Here's what happens next:</p>
+      <ol>
+        <li>Our team reviews your background and expertise</li>
+        <li>If it's a fit, you'll get an email to <strong>set your password</strong> and activate your mentor account</li>
+        <li>Your profile goes live in the mentor directory and interns can book sessions with you</li>
+      </ol>
+      <p>In the meantime, you can browse the current mentors here:</p>
+      <p><a href="${APP_URL}/mentors">${APP_URL}/mentors</a></p>
+      <br/>
+      <p>— IntelliForge AI</p>
+    `,
+  });
+}
+
+export async function sendNewMentorApplicationAlert({
+  applicantName,
+  applicantEmail,
+  applicantPhone,
+  headline,
+  expertise,
+  linkedinUrl,
+  githubUrl,
+  portfolioUrl,
+}: {
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone?: string | null;
+  headline?: string | null;
+  expertise?: string[] | null;
+  linkedinUrl?: string | null;
+  githubUrl?: string | null;
+  portfolioUrl?: string | null;
+}) {
+  const inboxId = await getHRInboxId();
+  const links = [
+    linkedinUrl ? `<a href="${escapeHtml(linkedinUrl)}">LinkedIn</a>` : null,
+    githubUrl ? `<a href="${escapeHtml(githubUrl)}">GitHub</a>` : null,
+    portfolioUrl ? `<a href="${escapeHtml(portfolioUrl)}">Portfolio</a>` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const skills =
+    expertise && expertise.length
+      ? expertise.map((e) => escapeHtml(e)).join(", ")
+      : null;
+
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: "hr@intelliforge.tech",
+    subject: `New Mentor Application: ${applicantName}`,
+    html: `
+      <h2>New Mentor Application</h2>
+      <p><strong>Name:</strong> ${escapeHtml(applicantName)}</p>
+      <p><strong>Email:</strong> <a href="mailto:${escapeHtml(applicantEmail)}">${escapeHtml(applicantEmail)}</a></p>
+      ${applicantPhone ? `<p><strong>Phone:</strong> ${escapeHtml(applicantPhone)}</p>` : ""}
+      ${headline ? `<p><strong>Headline:</strong> ${escapeHtml(headline)}</p>` : ""}
+      ${skills ? `<p><strong>Expertise:</strong> ${skills}</p>` : ""}
+      ${links ? `<p><strong>Links:</strong> ${links}</p>` : ""}
+      <br/>
+      <p><a href="${APP_URL}/dashboard/mentor-applications">→ Review in Mentor Applications</a></p>
+      <p>— IntelliForge HRMS</p>
+    `,
+  });
+}
+
+export async function sendMentorApplicationDeclined(
+  email: string,
+  name: string,
+  note?: string | null
+) {
+  const inboxId = await getHRInboxId();
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: email,
+    subject: "Update on your IntelliForge mentor application",
+    html: `
+      <h2>Hi ${escapeHtml(name)},</h2>
+      <p>Thank you for your interest in mentoring with IntelliForge AI, and for the time you took to apply.</p>
+      <p>After review, we won't be moving forward with your application at this time.</p>
+      ${note ? `<blockquote style="border-left:4px solid #6366f1;padding-left:12px;margin:12px 0;color:#334155;">${escapeHtml(note)}</blockquote>` : ""}
+      <p>We genuinely appreciate your interest and encourage you to apply again in the future.</p>
+      <br/>
+      <p>— IntelliForge AI</p>
+    `,
+  });
+}
+
 export { getHRInboxId };

@@ -103,7 +103,8 @@ export async function middleware(request: NextRequest) {
     if (payload.role === "admin" && adminOrgRole === "MENTOR") {
       if (
         pathname.startsWith("/dashboard/settings") ||
-        pathname.startsWith("/dashboard/hiring")
+        pathname.startsWith("/dashboard/hiring") ||
+        pathname.startsWith("/dashboard/mentor-applications")
       ) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }

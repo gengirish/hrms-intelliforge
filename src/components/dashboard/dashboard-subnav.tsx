@@ -13,6 +13,7 @@ import {
   UserCircle,
   Wallet,
   UserPlus,
+  Inbox,
   ChevronDown,
   PanelLeft,
   type LucideIcon,
@@ -35,6 +36,7 @@ export const ADMIN_TABS: Array<{ href: string; label: string; icon: LucideIcon }
   },
   { href: "/dashboard/mentor-profile", label: "Mentor profile", icon: UserCircle },
   { href: "/dashboard/mentors/import", label: "Import mentor", icon: UserPlus },
+  { href: "/dashboard/mentor-applications", label: "Mentor apps", icon: Inbox },
   { href: "/dashboard/hiring", label: "Hiring", icon: Briefcase },
   { href: "/dashboard/marketplace", label: "Platform fees", icon: Wallet },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
@@ -59,7 +61,8 @@ export function DashboardSubnav({ className }: { className?: string }) {
           t.href !== "/dashboard/hiring" &&
           t.href !== "/dashboard/settings" &&
           t.href !== "/dashboard/marketplace" &&
-          t.href !== "/dashboard/mentors/import"
+          t.href !== "/dashboard/mentors/import" &&
+          t.href !== "/dashboard/mentor-applications"
       )
     : ADMIN_TABS;
 
