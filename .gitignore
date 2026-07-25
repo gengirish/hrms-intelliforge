@@ -48,3 +48,4 @@ next-env.d.ts
 # python bytecode (from .cursor skills)
 __pycache__/
 *.pyc
+.env*
