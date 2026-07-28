@@ -57,6 +57,19 @@ All outbound intern communication goes through the single orchestrator `notify(i
 
 Offer acceptance is dual-channel: interns can reply "I Accept" by email (AgentMail webhook) or "ACCEPT"/"Yes"/"Agree"/"Confirm" on WhatsApp (WhatsApp webhook) — both paths must stay in sync if the acceptance logic changes.
 
+### WhatsApp transport: hub or direct Meta
+
+`src/lib/whatsapp.ts` keeps one public API (`sendWhatsAppTemplate` / `sendWhatsAppText`) over **two transports**, chosen at call time by `isWhatsAppHubConfigured()`:
+
+- **Central hub** (preferred) — `src/lib/whatsapp-hub.ts` posts to the shared Fly service as tenant `hrms` with `Authorization: Bearer` + `X-Tenant-Id`. The hub owns the WABA/token/app-secret. Requires an `hrms:if_live_…` pair in the hub's `WHATSAPP_API_KEYS`, and note the hub **requires opt-in before it will send** to a contact.
+- **Direct Meta Graph** (fallback) — used only when `WHATSAPP_HUB_API_KEY` is unset, so setting/unsetting that one variable is the cutover and the rollback.
+
+`/api/webhooks/whatsapp` accepts both transports and shares one handler. The hub identifies itself with `X-WhatsApp-Hub-Tenant` and forwards a **normalised** payload (`{ type, message?, status? }` where message is `{ fromE164, text, waMessageId, … }`); Meta sends its own signed `entry[].changes[].value` shape. Tenant mismatch is 403; a malformed hub forward returns 200 so the hub does not retry forever.
+
+### WhatsApp OTP login
+
+`/api/auth/otp/request` and `/api/auth/otp/verify` (`src/lib/otp.ts`) let an intern sign in with a WhatsApp code instead of a password. Verification issues the same `hrms-session` cookie via `signJWT` + `setAuthCookie`, so nothing downstream knows the difference. Unlike other IntelliForge products this does **not** delegate identity to Clerk — HRMS mints its own session, so a verified number is mapped onto an existing `Intern` row and **never creates an account**. `Intern.phone` is not unique, so a number matching more than one intern is refused (409) rather than guessed. `/request` only sends to a number that already belongs to an intern but responds identically either way, so it cannot be used to enumerate intern phone numbers.
+
 ### Intern lifecycle
 
 ```
