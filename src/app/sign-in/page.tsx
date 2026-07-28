@@ -11,9 +11,11 @@ import {
   Sparkles,
   ExternalLink,
   ShieldCheck,
+  MessageCircle,
 } from "lucide-react";
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
+import { WhatsAppOtpForm } from "@/components/auth/whatsapp-otp-form";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -42,6 +44,7 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [useWhatsApp, setUseWhatsApp] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -153,6 +156,13 @@ function SignInForm() {
           )}
 
           <div className="rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md p-7 sm:p-8 shadow-trust-card">
+            {useWhatsApp ? (
+              <WhatsAppOtpForm
+                redirect={redirect}
+                onBack={() => setUseWhatsApp(false)}
+              />
+            ) : (
+              <>
             <form onSubmit={handleLogin} className="space-y-5" noValidate>
               <div>
                 <label
@@ -267,6 +277,17 @@ function SignInForm() {
                 </>
               )}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setUseWhatsApp(true)}
+              className="btn-secondary mt-3 w-full py-2.5"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              Sign in with WhatsApp
+            </button>
+              </>
+            )}
           </div>
 
           <p className="text-center text-sm text-slate-400 mt-6">

@@ -85,3 +85,55 @@ test.describe("POST /api/auth/otp/verify", () => {
     expect(setCookie).not.toContain("hrms-session");
   });
 });
+
+test.describe("sign-in page — WhatsApp option", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/sign-in");
+  });
+
+  test("offers WhatsApp alongside password and magic link", async ({ page }) => {
+    await expect(
+      page.getByRole("button", { name: /Sign in with WhatsApp/i })
+    ).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
+  });
+
+  test("switches to the phone step and back", async ({ page }) => {
+    await page.getByRole("button", { name: /Sign in with WhatsApp/i }).click();
+
+    await expect(page.getByLabel("WhatsApp number")).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeHidden();
+
+    await page.getByRole("button", { name: /Back to email sign-in/i }).click();
+    await expect(page.getByLabel("Email")).toBeVisible();
+  });
+
+  test("shows an inline error for an invalid number", async ({ page }) => {
+    await page.getByRole("button", { name: /Sign in with WhatsApp/i }).click();
+    await page.getByLabel("WhatsApp number").fill("12345");
+    await page.getByRole("button", { name: /Send code on WhatsApp/i }).click();
+
+    // 400 from /request — never reaches the OTP API, so nothing is sent.
+    await expect(page.locator("#wa-error")).toContainText(/valid phone number/i);
+    await expect(page.getByLabel("WhatsApp number")).toBeVisible();
+  });
+
+  test("requires a number before submitting", async ({ page }) => {
+    await page.getByRole("button", { name: /Sign in with WhatsApp/i }).click();
+    await page.getByRole("button", { name: /Send code on WhatsApp/i }).click();
+
+    await expect(page.locator("#wa-error")).toContainText(/Enter your WhatsApp number/i);
+  });
+
+  test("surfaces the unavailable message when OTP is unconfigured", async ({
+    page,
+  }) => {
+    test.skip(HAS_OTP_KEY, "only meaningful when the OTP API is unconfigured");
+
+    await page.getByRole("button", { name: /Sign in with WhatsApp/i }).click();
+    await page.getByLabel("WhatsApp number").fill("+919999999999");
+    await page.getByRole("button", { name: /Send code on WhatsApp/i }).click();
+
+    await expect(page.locator("#wa-error")).toContainText(/unavailable right now/i);
+  });
+});
