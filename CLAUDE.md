@@ -33,7 +33,7 @@ CI (`.github/workflows/ci.yml`) runs, in order: lint → typecheck → unit test
 
 ## Architecture
 
-Single **Next.js 14 App Router monolith** — no separate backend service. All API logic lives in Route Handlers under `src/app/api/`; business logic/clients live in `src/lib/`. Deployed on Vercel; DB is Neon Postgres via Prisma.
+Single **Next.js 14 App Router monolith** — no separate backend service. All API logic lives in Route Handlers under `src/app/api/`; business logic/clients live in `src/lib/`. Deployed on Vercel at **https://hrms.intelliforge.tech**; DB is Neon Postgres via Prisma.
 
 ### Auth & session
 
@@ -61,7 +61,11 @@ Offer acceptance is dual-channel: interns can reply "I Accept" by email (AgentMa
 
 `src/lib/whatsapp.ts` keeps one public API (`sendWhatsAppTemplate` / `sendWhatsAppText`) over **two transports**, chosen at call time by `isWhatsAppHubConfigured()`:
 
-- **Central hub** (preferred) — `src/lib/whatsapp-hub.ts` posts to the shared Fly service as tenant `hrms` with `Authorization: Bearer` + `X-Tenant-Id`. The hub owns the WABA/token/app-secret. Requires an `hrms:if_live_…` pair in the hub's `WHATSAPP_API_KEYS`, and note the hub **requires opt-in before it will send** to a contact.
+- **Central hub** (preferred) — `src/lib/whatsapp-hub.ts` posts to the shared Fly service as tenant `hrms` with `Authorization: Bearer` + `X-Tenant-Id`. The hub owns the WABA/token/app-secret. Requires an `hrms:if_live_…` pair in the hub's `WHATSAPP_API_KEYS`, plus this entry in its `WHATSAPP_TENANT_WEBHOOKS` so inbound replies come back:
+  ```
+  hrms:https://hrms.intelliforge.tech/api/webhooks/whatsapp
+  ```
+  Note the hub **requires opt-in before it will send** to a contact (`hubOptIn()`).
 - **Direct Meta Graph** (fallback) — used only when `WHATSAPP_HUB_API_KEY` is unset, so setting/unsetting that one variable is the cutover and the rollback.
 
 `/api/webhooks/whatsapp` accepts both transports and shares one handler. The hub identifies itself with `X-WhatsApp-Hub-Tenant` and forwards a **normalised** payload (`{ type, message?, status? }` where message is `{ fromE164, text, waMessageId, … }`); Meta sends its own signed `entry[].changes[].value` shape. Tenant mismatch is 403; a malformed hub forward returns 200 so the hub does not retry forever.
