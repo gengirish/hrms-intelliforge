@@ -6,6 +6,7 @@ import {
   sendWhatsAppTemplate,
   sendWhatsAppText,
 } from "@/lib/whatsapp";
+import { whatsAppHubTenantId } from "@/lib/whatsapp-hub";
 import { formatDateIST } from "@/lib/utils";
 import { parseIntent } from "@/lib/wa-bot/intent-parser";
 import { executeIntent } from "@/lib/wa-bot/executor";
@@ -55,7 +56,138 @@ type WaTextMessage = {
   id?: string;
 };
 
+/** One inbound text, from either transport. */
+async function handleInboundText(e164: string, bodyText: string): Promise<void> {
+  const last10 = e164.replace(/^\+/, "").slice(-10);
+
+  const intern = await prisma.intern.findFirst({
+    where: { phone: { contains: last10 } },
+  });
+
+  if (!intern) return;
+
+  if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
+    await prisma.intern.update({
+      where: { id: intern.id },
+      data: { status: "ACTIVE", acceptedAt: new Date() },
+    });
+    scheduleLearningProvision(intern.id);
+    await sendWhatsAppTemplate(e164, "offer_accepted", "en", [
+      intern.name,
+      formatDateIST(intern.startDate),
+    ]);
+    console.info(
+      `[whatsapp-webhook] Intern ${intern.name} auto-accepted via WhatsApp`
+    );
+    return;
+  }
+
+  const startMs = Date.now();
+  const intent = await parseIntent(bodyText);
+  const response = await executeIntent(intern, intent);
+  const latencyMs = Date.now() - startMs;
+
+  await Promise.all([
+    sendWhatsAppText(e164, response),
+    prisma.botInteractionLog.create({
+      data: {
+        internId: intern.id,
+        channel: "WHATSAPP",
+        input: bodyText,
+        intent: intent.action,
+        response,
+        success: intent.action !== "UNKNOWN",
+        latencyMs,
+      },
+    }),
+  ]);
+
+  console.info(
+    `[wa-bot] ${intern.name}: "${bodyText}" → ${intent.action} (${latencyMs}ms)`
+  );
+}
+
+/** One delivery-status update, from either transport. */
+async function applyStatusUpdate(
+  waMessageId: string,
+  statusRaw: string,
+  at: Date,
+  errors?: unknown
+): Promise<void> {
+  const st = statusRaw.toLowerCase();
+
+  if (st === "sent") {
+    await prisma.notificationLog.updateMany({
+      where: { externalId: waMessageId },
+      data: { status: "SENT", sentAt: at },
+    });
+  } else if (st === "delivered") {
+    await prisma.notificationLog.updateMany({
+      where: { externalId: waMessageId },
+      data: { status: "DELIVERED", deliveredAt: at },
+    });
+  } else if (st === "read") {
+    await prisma.notificationLog.updateMany({
+      where: { externalId: waMessageId },
+      data: { status: "READ", readAt: at },
+    });
+  } else if (st === "failed") {
+    await prisma.notificationLog.updateMany({
+      where: { externalId: waMessageId },
+      data: {
+        status: "FAILED",
+        errorDetail: JSON.stringify(errors !== undefined ? errors : null),
+      },
+    });
+  }
+}
+
+/**
+ * Events forwarded by the central hub, which normalises Meta's payload to
+ * { type, tenantId, message?, status? } and identifies itself by header rather
+ * than by Meta's signature — the hub holds the app secret, we never see it.
+ */
+async function handleHubForward(req: NextRequest): Promise<NextResponse> {
+  const tenantId = req.headers.get("x-whatsapp-hub-tenant");
+  if (tenantId !== whatsAppHubTenantId()) {
+    return NextResponse.json({ error: "tenant_mismatch" }, { status: 403 });
+  }
+
+  // Swallow a malformed forward rather than 500 back at the hub, which retries.
+  const payload = (await req.json().catch(() => null)) as {
+    type?: string;
+    message?: { fromE164?: string; text?: string | null; type?: string };
+    status?: { waMessageId?: string; status?: string; updatedAtIst?: string };
+  } | null;
+
+  if (!payload) return NextResponse.json({ ok: true });
+
+  try {
+    const msg = payload.message;
+    if (msg?.fromE164 && msg.type === "text" && msg.text) {
+      await handleInboundText(formatPhoneE164(msg.fromE164), msg.text);
+    }
+
+    const status = payload.status;
+    if (status?.waMessageId && status.status) {
+      const parsed = status.updatedAtIst ? new Date(status.updatedAtIst) : null;
+      const at = parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
+      await applyStatusUpdate(status.waMessageId, status.status, at);
+    }
+  } catch (err) {
+    console.error("WhatsApp hub forward processing failed:", err);
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
 export async function POST(req: NextRequest) {
+  // The hub identifies itself by tenant header; Meta signs the raw body. Both
+  // are accepted so the cutover needs no coordinated flip.
+  if (req.headers.get("x-whatsapp-hub-tenant") !== null) {
+    return handleHubForward(req);
+  }
+
   const rawBody = await req.text();
   const sig = req.headers.get("x-hub-signature-256") ?? "";
 
@@ -92,87 +224,17 @@ export async function POST(req: NextRequest) {
         for (const msg of value.messages ?? []) {
           if (msg.type !== "text" || !msg.from) continue;
           const bodyText = (msg.text?.body ?? "").toString();
-          const e164 = formatPhoneE164(msg.from);
-          const last10 = e164.replace(/^\+/, "").slice(-10);
-
-          const intern = await prisma.intern.findFirst({
-            where: { phone: { contains: last10 } },
-          });
-
-          if (!intern) continue;
-
-          if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
-            await prisma.intern.update({
-              where: { id: intern.id },
-              data: { status: "ACTIVE", acceptedAt: new Date() },
-            });
-            scheduleLearningProvision(intern.id);
-            await sendWhatsAppTemplate(e164, "offer_accepted", "en", [
-              intern.name,
-              formatDateIST(intern.startDate),
-            ]);
-            console.info(
-              `[whatsapp-webhook] Intern ${intern.name} auto-accepted via WhatsApp`
-            );
-            continue;
-          }
-
-          const startMs = Date.now();
-          const intent = await parseIntent(bodyText);
-          const response = await executeIntent(intern, intent);
-          const latencyMs = Date.now() - startMs;
-
-          await Promise.all([
-            sendWhatsAppText(e164, response),
-            prisma.botInteractionLog.create({
-              data: {
-                internId: intern.id,
-                channel: "WHATSAPP",
-                input: bodyText,
-                intent: intent.action,
-                response,
-                success: intent.action !== "UNKNOWN",
-                latencyMs,
-              },
-            }),
-          ]);
-
-          console.info(
-            `[wa-bot] ${intern.name}: "${bodyText}" → ${intent.action} (${latencyMs}ms)`
-          );
+          await handleInboundText(formatPhoneE164(msg.from), bodyText);
         }
 
         for (const status of value.statuses ?? []) {
           if (!status.id || !status.status) continue;
-          const at = statusTimestampMs(status.timestamp);
-          const st = status.status.toLowerCase();
-
-          if (st === "sent") {
-            await prisma.notificationLog.updateMany({
-              where: { externalId: status.id },
-              data: { status: "SENT", sentAt: at },
-            });
-          } else if (st === "delivered") {
-            await prisma.notificationLog.updateMany({
-              where: { externalId: status.id },
-              data: { status: "DELIVERED", deliveredAt: at },
-            });
-          } else if (st === "read") {
-            await prisma.notificationLog.updateMany({
-              where: { externalId: status.id },
-              data: { status: "READ", readAt: at },
-            });
-          } else if (st === "failed") {
-            await prisma.notificationLog.updateMany({
-              where: { externalId: status.id },
-              data: {
-                status: "FAILED",
-                errorDetail: JSON.stringify(
-                  status.errors !== undefined ? status.errors : null
-                ),
-              },
-            });
-          }
+          await applyStatusUpdate(
+            status.id,
+            status.status,
+            statusTimestampMs(status.timestamp),
+            status.errors
+          );
         }
       }
     }

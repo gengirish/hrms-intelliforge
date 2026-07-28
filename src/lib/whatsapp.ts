@@ -1,7 +1,14 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import {
+  hubSendTemplate,
+  hubSendText,
+  isWhatsAppHubConfigured,
+} from "@/lib/whatsapp-hub";
 
-if (!process.env.WHATSAPP_ACCESS_TOKEN) {
-  console.warn("WHATSAPP_ACCESS_TOKEN is not set — WhatsApp features will fail");
+if (!process.env.WHATSAPP_ACCESS_TOKEN && !isWhatsAppHubConfigured()) {
+  console.warn(
+    "Neither WHATSAPP_HUB_API_KEY nor WHATSAPP_ACCESS_TOKEN is set — WhatsApp features will fail"
+  );
 }
 
 const GRAPH_VERSION = "v21.0";
@@ -42,6 +49,18 @@ export async function sendWhatsAppTemplate(
   languageCode: string,
   parameters: string[]
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  // Prefer the central hub; fall back to direct Meta Graph so deploying this
+  // changes nothing until the hub env vars are set (and can be rolled back by
+  // unsetting them).
+  if (isWhatsAppHubConfigured()) {
+    return hubSendTemplate({
+      to: formatPhoneE164(phone),
+      templateName,
+      languageCode,
+      bodyParams: parameters,
+    });
+  }
+
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneNumberId) {
@@ -102,6 +121,10 @@ export async function sendWhatsAppText(
   phone: string,
   text: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (isWhatsAppHubConfigured()) {
+    return hubSendText(formatPhoneE164(phone), text);
+  }
+
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneNumberId) {
