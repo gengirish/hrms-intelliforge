@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { isOtpConfigured, normalizePhoneE164, verifyLoginOtp } from "@/lib/otp";
+import { findInternsByPhoneSuffix } from "@/lib/intern-phone";
+import {
+  isOtpConfigured,
+  normalizePhoneE164,
+  phoneSuffix10,
+  resolveInternByPhone,
+  verifyLoginOtp,
+} from "@/lib/otp";
 import { setAuthCookie, signJWT } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -59,24 +65,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(body, { status });
   }
 
-  const last10 = (body.phone ?? phone).replace(/^\+/, "").slice(-10);
-  const interns = await prisma.intern.findMany({
-    where: { phone: { contains: last10 } },
-    select: { id: true, email: true, name: true, orgId: true },
-    take: 2,
-  });
+  // Every match, not just the first two: resolveInternByPhone has to see them all
+  // to tell one live account from a pile of archived ones.
+  const matches = await findInternsByPhoneSuffix(phoneSuffix10(body.phone ?? phone));
+  const resolution = resolveInternByPhone(matches);
 
-  if (interns.length === 0) {
+  if (resolution.kind === "none") {
     return NextResponse.json(
       { error: "no_account", message: "No intern account uses this number." },
       { status: 404 }
     );
   }
 
-  // Intern.phone is not unique, so a shared number is ambiguous — refuse rather
-  // than guess which account to sign in.
-  if (interns.length > 1) {
-    console.error("[otp/verify] multiple interns share this number — refusing sign-in");
+  // A real tie between live accounts — refuse rather than guess which to sign in.
+  if (resolution.kind === "ambiguous") {
+    console.error(
+      `[otp/verify] ${resolution.count} eligible interns share this number — refusing sign-in`
+    );
     return NextResponse.json(
       {
         error: "ambiguous_phone",
@@ -86,7 +91,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const intern = interns[0];
+  const intern = resolution.intern;
   const token = await signJWT({
     userId: intern.id,
     role: "intern",

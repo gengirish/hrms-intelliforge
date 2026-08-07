@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { isOtpConfigured, normalizePhoneE164, requestLoginOtp } from "@/lib/otp";
+import { findInternsByPhoneSuffix } from "@/lib/intern-phone";
+import {
+  isOtpConfigured,
+  normalizePhoneE164,
+  phoneSuffix10,
+  requestLoginOtp,
+  resolveInternByPhone,
+} from "@/lib/otp";
 
 export const dynamic = "force-dynamic";
 
@@ -30,17 +36,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Only send to a number that already belongs to an intern: messaging an
-  // arbitrary number costs money and spams a stranger. The response is
-  // identical either way so this cannot be used to enumerate intern phones.
-  const last10 = phone.replace(/^\+/, "").slice(-10);
-  const known = await prisma.intern.findFirst({
-    where: { phone: { contains: last10 } },
-    select: { id: true },
-  });
-
-  if (!known) {
-    console.info("[otp/request] no intern for supplied number — not sending");
+  // Only send to a number that resolves to exactly one sign-in-able intern:
+  // messaging an arbitrary number costs money and spams a stranger, and a number
+  // /verify will refuse as ambiguous is not worth a code either. Same resolution
+  // as /verify, so the two can never disagree about who owns a number.
+  // The response is identical either way so this cannot be used to enumerate
+  // intern phone numbers.
+  const matches = await findInternsByPhoneSuffix(phoneSuffix10(phone));
+  const resolution = resolveInternByPhone(matches);
+  if (resolution.kind !== "ok") {
+    console.info(
+      `[otp/request] number does not resolve to a single intern (${resolution.kind}) — not sending`
+    );
     return NextResponse.json({ sent: true, resendInSeconds: 30 });
   }
 

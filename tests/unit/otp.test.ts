@@ -74,6 +74,115 @@ describe("isOtpConfigured", () => {
   });
 });
 
+describe("phoneSuffix10", () => {
+  it.each([
+    ["+919876543210", "9876543210"],
+    ["9876543210", "9876543210"],
+    ["+91 98765 43210", "9876543210"],
+    ["+91-98765-43210", "9876543210"],
+    ["09876543210", "9876543210"],
+  ])("reduces %s to the subscriber digits", async (input, expected) => {
+    const { phoneSuffix10 } = await import("@/lib/otp");
+    expect(phoneSuffix10(input)).toBe(expected);
+  });
+
+  it("strips separators the old leading-+ slice would have kept", async () => {
+    const { phoneSuffix10 } = await import("@/lib/otp");
+    // "+91 98765 43210".replace(/^\+/,"").slice(-10) === "8765 43210"
+    expect(phoneSuffix10("+91 98765 43210")).toBe("9876543210");
+  });
+});
+
+describe("resolveInternByPhone", () => {
+  const intern = (
+    id: string,
+    status: "PENDING" | "OFFERED" | "ACTIVE" | "COMPLETED",
+    deactivated = false
+  ) => ({
+    id,
+    email: `${id}@example.com`,
+    name: id,
+    orgId: "org1",
+    status,
+    deactivated,
+  });
+
+  it("returns none for no matches", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    expect(resolveInternByPhone([])).toEqual({ kind: "none" });
+  });
+
+  it("resolves a single ACTIVE intern", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([intern("a", "ACTIVE")]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "a" } });
+  });
+
+  it("prefers the ACTIVE intern over an archived COMPLETED one on the same number", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([
+      intern("old", "COMPLETED"),
+      intern("live", "ACTIVE"),
+    ]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "live" } });
+  });
+
+  it("prefers ACTIVE over PENDING and OFFERED too", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([
+      intern("p", "PENDING"),
+      intern("o", "OFFERED"),
+      intern("live", "ACTIVE"),
+    ]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "live" } });
+  });
+
+  it("still refuses when two ACTIVE interns genuinely tie", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    expect(
+      resolveInternByPhone([intern("a", "ACTIVE"), intern("b", "ACTIVE")])
+    ).toEqual({ kind: "ambiguous", count: 2 });
+  });
+
+  it("lets a COMPLETED alum sign in when nothing else claims the number", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([intern("alum", "COMPLETED")]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "alum" } });
+  });
+
+  it("refuses two non-ACTIVE matches, since there is no ACTIVE to prefer", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    expect(
+      resolveInternByPhone([intern("a", "COMPLETED"), intern("b", "OFFERED")])
+    ).toEqual({ kind: "ambiguous", count: 2 });
+  });
+
+  it("never signs in a deactivated intern", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    expect(resolveInternByPhone([intern("gone", "ACTIVE", true)])).toEqual({
+      kind: "none",
+    });
+  });
+
+  it("ignores a deactivated intern blocking a live one", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([
+      intern("gone", "ACTIVE", true),
+      intern("live", "ACTIVE"),
+    ]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "live" } });
+  });
+
+  it("does not let a deactivated ACTIVE row suppress the COMPLETED fallback", async () => {
+    const { resolveInternByPhone } = await import("@/lib/otp");
+    const res = resolveInternByPhone([
+      intern("gone", "ACTIVE", true),
+      intern("alum", "COMPLETED"),
+    ]);
+    expect(res).toMatchObject({ kind: "ok", intern: { id: "alum" } });
+  });
+});
+
 describe("requestLoginOtp", () => {
   it("throws rather than silently no-opping when unconfigured", async () => {
     const { requestLoginOtp } = await import("@/lib/otp");

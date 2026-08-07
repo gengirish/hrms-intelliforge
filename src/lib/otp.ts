@@ -12,6 +12,8 @@
  * `isOtpConfigured()` before calling.
  */
 
+import type { InternStatus } from "@prisma/client";
+
 const DEFAULT_OTP_URL = "https://intelliforge-otp-api.fly.dev";
 const DEFAULT_TENANT_ID = "hrms";
 
@@ -90,4 +92,61 @@ export function verifyLoginOtp(phoneE164: string, code: string) {
     method: "POST",
     body: JSON.stringify({ phone: phoneE164, purpose: "login", code }),
   });
+}
+
+/**
+ * Last 10 digits of a phone number, ignoring `+`, spaces and any other
+ * separator. This is the join key between a verified OTP number and a stored
+ * `Intern.phone`, which is *supposed* to be E.164 but is free text in the DB.
+ */
+export function phoneSuffix10(phone: string): string {
+  return phone.replace(/\D/g, "").slice(-10);
+}
+
+/** The Intern fields the phone→account resolution needs. */
+export type InternPhoneMatch = {
+  id: string;
+  email: string;
+  name: string;
+  orgId: string;
+  status: InternStatus;
+  deactivated: boolean;
+};
+
+export type InternPhoneResolution =
+  | { kind: "ok"; intern: InternPhoneMatch }
+  | { kind: "none" }
+  | { kind: "ambiguous"; count: number };
+
+/**
+ * Pick the one intern a verified number should sign in as.
+ *
+ * `Intern.phone` is not unique and numbers get reused — an intern finishes and
+ * is archived, a sibling joins on the family number, a candidate row carries the
+ * same contact. Treating every one of those as a collision locked real people
+ * out of accounts that were never actually ambiguous.
+ *
+ * So eligibility is narrowed before ambiguity is judged:
+ *   1. Deactivated interns are never a sign-in target. Deactivation is a soft
+ *      delete — such an account must not mint a session, and must not block a
+ *      live one from doing so.
+ *   2. ACTIVE wins outright. One ACTIVE match resolves even when PENDING,
+ *      OFFERED or COMPLETED rows share the number.
+ *   3. With no ACTIVE match, the remaining eligible rows are used as-is, so a
+ *      COMPLETED alum can still sign in for their certificate.
+ *
+ * Only a genuine tie — two live ACTIVE accounts, or two non-ACTIVE ones with no
+ * ACTIVE to prefer — is ambiguous, and there we still refuse rather than guess.
+ */
+export function resolveInternByPhone(
+  matches: InternPhoneMatch[]
+): InternPhoneResolution {
+  const eligible = matches.filter((m) => !m.deactivated);
+  if (eligible.length === 0) return { kind: "none" };
+
+  const active = eligible.filter((m) => m.status === "ACTIVE");
+  const tier = active.length > 0 ? active : eligible;
+
+  if (tier.length === 1) return { kind: "ok", intern: tier[0] };
+  return { kind: "ambiguous", count: tier.length };
 }
