@@ -6,6 +6,7 @@ import { registerSchema } from "@/lib/validations";
 import { errorResponse, serverError } from "@/lib/api-utils";
 import { assertCanAddIntern, PlanLimitError } from "@/lib/plan-limits";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { resolveOrgForPublicSignup } from "@/lib/default-org";
 
 export async function POST(req: Request) {
   try {
@@ -28,32 +29,11 @@ export async function POST(req: Request) {
       return errorResponse("An account with this email already exists", 409);
     }
 
-    let orgId: string;
-    if (orgSlug) {
-      const org = await prisma.organization.findUnique({
-        where: { slug: orgSlug },
-        select: { id: true },
-      });
-      if (!org) {
-        return errorResponse("Organization not found", 404);
-      }
-      orgId = org.id;
-    } else {
-      const orgs = await prisma.organization.findMany({ select: { id: true } });
-      if (orgs.length === 0) {
-        return errorResponse(
-          "No organization configured. Contact support before creating an account.",
-          503
-        );
-      }
-      if (orgs.length > 1) {
-        return errorResponse(
-          "Organization slug is required when multiple organizations exist",
-          400
-        );
-      }
-      orgId = orgs[0].id;
+    const resolved = await resolveOrgForPublicSignup(orgSlug);
+    if (!resolved.ok) {
+      return errorResponse(resolved.error, resolved.status);
     }
+    const orgId = resolved.orgId;
 
     const passwordHash = await hashPassword(password);
 

@@ -49,7 +49,7 @@ Single **Next.js 14 App Router monolith** — no separate backend service. All A
 
 ### Multi-tenant isolation
 
-Every tenant-scoped table has a `NOT NULL orgId` FK to `Organization` (`ON DELETE CASCADE`), enforced at the Postgres level — orphan rows are structurally impossible. `orgId` is assigned at write time from `session.orgId` (never trust a client-supplied org id); see the table in `.cursor/skills/hrms-project/SKILL.md` / `.agents/skills/hrms-project/SKILL.md` for the exact code path per mutation. Registration (`POST /api/auth/register`) auto-attaches to the sole org when only one exists, otherwise requires `orgSlug`.
+Every tenant-scoped table has a `NOT NULL orgId` FK to `Organization` (`ON DELETE CASCADE`), enforced at the Postgres level — orphan rows are structurally impossible. `orgId` is assigned at write time from `session.orgId` (never trust a client-supplied org id); see the table in `.cursor/skills/hrms-project/SKILL.md` / `.agents/skills/hrms-project/SKILL.md` for the exact code path per mutation. Public signup-style endpoints that take no session — `POST /api/auth/register` and `POST /api/mentors/apply` — resolve their org through the shared `resolveOrgForPublicSignup()` (`src/lib/default-org.ts`): explicit `orgSlug` → `DEFAULT_ORG_SLUG` env → the sole org → 400. `DEFAULT_ORG_SLUG` must be set in Vercel whenever more than one `Organization` row exists, otherwise the public `/mentors/apply` and bare `/sign-up` pages (which send no slug) are refused. See `docs/MULTI_TENANT.md`.
 
 ### Notifications
 

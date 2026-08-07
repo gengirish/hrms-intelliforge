@@ -5,6 +5,7 @@ import { errorResponse, serverError } from "@/lib/api-utils";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 import { hashPassword } from "@/lib/auth";
 import { mentorApplicationSchema } from "@/lib/validations";
+import { resolveOrgForPublicSignup } from "@/lib/default-org";
 import {
   sendMentorApplicationReceived,
   sendNewMentorApplicationAlert,
@@ -33,32 +34,13 @@ export async function POST(req: NextRequest) {
     }
     const data = parsed.data;
 
-    // Resolve the org this application belongs to. Single-tenant by default;
-    // an explicit orgSlug is required only when multiple orgs exist.
-    let orgId: string;
-    if (data.orgSlug) {
-      const org = await prisma.organization.findUnique({
-        where: { slug: data.orgSlug },
-        select: { id: true },
-      });
-      if (!org) return errorResponse("Organization not found", 404);
-      orgId = org.id;
-    } else {
-      const orgs = await prisma.organization.findMany({ select: { id: true } });
-      if (orgs.length === 0) {
-        return errorResponse(
-          "No organization is configured to receive applications yet.",
-          503
-        );
-      }
-      if (orgs.length > 1) {
-        return errorResponse(
-          "Organization is required when multiple organizations exist.",
-          400
-        );
-      }
-      orgId = orgs[0].id;
-    }
+    // Resolve the org this application belongs to: explicit orgSlug, else the
+    // DEFAULT_ORG_SLUG tenant that owns the public /mentors pages, else the
+    // sole org. The public apply link carries no ?org= param, so without the
+    // default every submission would be refused once a second org exists.
+    const resolved = await resolveOrgForPublicSignup(data.orgSlug);
+    if (!resolved.ok) return errorResponse(resolved.error, resolved.status);
+    const orgId = resolved.orgId;
 
     // Reject duplicates: an already-registered admin, or a pending application.
     const existingAdmin = await prisma.admin.findUnique({

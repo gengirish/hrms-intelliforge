@@ -4,12 +4,25 @@ IntelliForge HRMS attaches every intern to an `Organization`. Self-service regis
 
 ## How org resolution works
 
+Resolution lives in one place — `resolveOrgForPublicSignup()` (`src/lib/default-org.ts`) — and is shared by both public signup-style endpoints: `POST /api/auth/register` and `POST /api/mentors/apply`.
+
 | Scenario | Behavior |
 |----------|----------|
-| `orgSlug` provided in register body | Look up org by slug; **404** if not found |
+| `orgSlug` provided in the request body | Look up org by slug; **404** if not found |
+| No `orgSlug`, `DEFAULT_ORG_SLUG` env set and matching | Use that org |
 | No `orgSlug`, exactly **one** org in DB | Use that org (legacy single-tenant deployments) |
 | No `orgSlug`, **zero** orgs | **503** — no org configured |
-| No `orgSlug`, **multiple** orgs | **400** — slug required |
+| No `orgSlug`, **multiple** orgs and no usable default | **400** — cannot disambiguate |
+
+### `DEFAULT_ORG_SLUG`
+
+The public marketing pages (`/mentors/apply`, and `/sign-up` reached without `?org=`) carry no org slug, so once a second `Organization` row exists every submission on them would be refused. `DEFAULT_ORG_SLUG` names the tenant that owns those pages:
+
+```
+DEFAULT_ORG_SLUG=intelliforge-ai
+```
+
+**Set this in Vercel (all environments) as soon as a second org is created.** A stale value (slug no longer exists) is logged as an error and falls through to the org-count rules, so a single-tenant deployment keeps working.
 
 ## Intern invite / signup links
 
@@ -52,8 +65,9 @@ The sign-up page:
 
 | Status | Message |
 |--------|---------|
-| 400 | `Organization slug is required when multiple organizations exist` |
+| 400 | `We couldn't tell which organization this is for. Please use the link your organization sent you.` |
 | 404 | `Organization not found` |
+| 503 | `No organization is configured yet. Please contact support.` |
 
 ### `GET /api/orgs/:slug/public`
 
@@ -110,9 +124,10 @@ Find the slug in the database (`organizations.slug`) or via the admin dashboard 
 ### Moving to multiple orgs
 
 1. Ensure each organization has a unique `slug` (set at org creation via `/create-org`).
-2. Update any hard-coded `/sign-up` links to include `?org=<slug>`.
-3. Update CI/scripts that call `create-admin.mjs` or `create-test-weekly-progress-users.mjs` to pass `--org-id` when multiple orgs are present.
-4. Self-registration without `orgSlug` will return **400** once a second org is added — this is intentional to prevent interns landing in the wrong tenant.
+2. Set `DEFAULT_ORG_SLUG` to the tenant that owns the public pages. Without it, `/mentors/apply` and a bare `/sign-up` return **400** as soon as a second org exists.
+3. Update any hard-coded `/sign-up` links to include `?org=<slug>`.
+4. Update CI/scripts that call `create-admin.mjs` or `create-test-weekly-progress-users.mjs` to pass `--org-id` when multiple orgs are present.
+5. Submissions that carry neither `orgSlug` nor a usable `DEFAULT_ORG_SLUG` still return **400** — that guard is intentional, to prevent people landing in the wrong tenant.
 
 ### No schema changes
 

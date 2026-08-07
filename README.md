@@ -284,7 +284,7 @@ Playwright can also start the dev server automatically when `E2E_BASE_URL` is un
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | Create intern account. Auto-attaches to the sole org when only one exists; requires `orgSlug` when multiple orgs exist |
+| `/api/auth/register` | POST | Create intern account. Org resolution: `orgSlug` → `DEFAULT_ORG_SLUG` env → the sole org → 400 |
 | `/api/auth/login` | POST | Sign in with email + password |
 | `/api/auth/me` | GET | Get current authenticated user (from JWT cookie) |
 | `/api/auth/logout` | POST | Sign out (clears session cookie) |
@@ -295,7 +295,7 @@ Playwright can also start the dev server automatically when `E2E_BASE_URL` is un
 
 **Intern registration with org slug**
 
-When multiple organizations exist, registration must include an org slug:
+When multiple organizations exist, registration should include an org slug (submissions without one fall back to `DEFAULT_ORG_SLUG`):
 
 ```bash
 # UI: /sign-up?org=acme-corp
@@ -387,7 +387,7 @@ Every tenant-scoped row belongs to an `Organization`. The schema supports
 | Flow | How |
 |------|-----|
 | **New workspace** | `/create-org` → `POST /api/org` creates org + first admin |
-| **Intern sign-up (single org)** | `/sign-up` — auto-attaches to the only org |
+| **Intern sign-up (no slug)** | `/sign-up` — attaches to `DEFAULT_ORG_SLUG`, or to the only org when there is just one |
 | **Intern sign-up (multi org)** | `/sign-up?org=slug` — requires valid slug; shows org branding |
 | **Admin scope** | All dashboard queries filter by `admin.orgId` |
 
@@ -407,7 +407,8 @@ queries like `/api/dashboard` and `/api/attendance` filter by
 
 | Code path | How it sets `orgId` |
 |-----------|---------------------|
-| `POST /api/auth/register` | `orgSlug` lookup when provided; else sole org; fails 400 if multiple orgs and no slug |
+| `POST /api/auth/register` | `resolveOrgForPublicSignup()`: `orgSlug` → `DEFAULT_ORG_SLUG` → sole org; 400 if still ambiguous |
+| `POST /api/mentors/apply` | Same `resolveOrgForPublicSignup()` path as register |
 | `POST /api/org` | Creates new org; admin gets new org's id |
 | `POST /api/jobs/[id]/convert` | From `session.orgId` of the authenticated admin |
 | `POST /api/jobs` (create job) | From `session.orgId` of the authenticated admin |

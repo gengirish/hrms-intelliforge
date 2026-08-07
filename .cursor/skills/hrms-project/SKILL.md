@@ -200,6 +200,7 @@ Indian locale conventions: IST timezone, ₹ stipend in paise, DD/MM/YYYY dates.
 | `WHATSAPP_*` | WhatsApp Cloud API credentials |
 | `CRON_SECRET` | Vercel cron auth header |
 | `NEXT_PUBLIC_APP_URL` | App base URL |
+| `DEFAULT_ORG_SLUG` | Org that public no-slug signups/applications attach to |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Billing |
 | `RAZORPAY_*` | Payout disbursement |
 | `LEARNING_API_*` | Learning platform integration |
@@ -226,7 +227,7 @@ Per-org overrides exist on `Organization` for WhatsApp and AgentMail when tenant
 1. **Monolith only** — no separate backend service; all logic in `src/app/api/` and `src/lib/`
 2. **Prisma for all DB access** — use `prisma` from `@/lib/prisma`; migrations in `prisma/migrations/`
 3. **Multi-tenant isolation** — every query scoped by `orgId` from session; never trust client-supplied org ids
-4. **Register requires orgSlug** when multiple orgs exist; single org auto-attaches
+4. **Public signup org resolution** — `/api/auth/register` and `/api/mentors/apply` share `resolveOrgForPublicSignup()` (`src/lib/default-org.ts`): `orgSlug` → `DEFAULT_ORG_SLUG` env → sole org → 400
 5. **Notifications go through `notify()`** — never call AgentMail/WhatsApp directly from routes
 6. **Indian conventions** — IST dates, paise for money, E.164 phones for WhatsApp
 7. **Versioned migrations** — use `prisma migrate deploy` in production, not `db push`
