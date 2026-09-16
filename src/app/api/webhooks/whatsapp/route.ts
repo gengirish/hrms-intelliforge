@@ -11,6 +11,8 @@ import { parseIntent } from "@/lib/wa-bot/intent-parser";
 import { executeIntent } from "@/lib/wa-bot/executor";
 import { processWebhookEventOnce } from "@/lib/webhook-idempotency";
 import { acceptOffer, isAcceptanceReply } from "@/lib/offer-acceptance";
+import { findInternsByPhoneSuffix } from "@/lib/intern-phone";
+import { phoneSuffix10, resolveInternByPhone } from "@/lib/otp";
 
 function statusTimestampMs(ts: string | number | undefined): Date {
   const n = typeof ts === "string" ? parseInt(ts, 10) : Number(ts);
@@ -48,12 +50,23 @@ type WaTextMessage = {
 
 /** One inbound text, from either transport. */
 async function handleInboundText(e164: string, bodyText: string): Promise<void> {
-  const last10 = e164.replace(/^\+/, "").slice(-10);
+  // Same resolution as OTP sign-in: phone is not unique, so a bare findFirst
+  // could act on a deactivated or reused-number row (or, for an empty sender,
+  // any intern at all).
+  const resolution = resolveInternByPhone(
+    await findInternsByPhoneSuffix(phoneSuffix10(e164))
+  );
+  if (resolution.kind === "ambiguous") {
+    console.warn(
+      `[wa-bot] Ignoring inbound message: ${resolution.count} interns share this number`
+    );
+    return;
+  }
+  if (resolution.kind === "none") return;
 
-  const intern = await prisma.intern.findFirst({
-    where: { phone: { contains: last10 } },
+  const intern = await prisma.intern.findUnique({
+    where: { id: resolution.intern.id },
   });
-
   if (!intern) return;
 
   if (intern.status === "OFFERED" && isAcceptanceReply(bodyText, "whatsapp")) {
