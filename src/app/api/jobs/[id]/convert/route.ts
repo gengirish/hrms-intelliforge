@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { serverError } from "@/lib/api-utils";
 import { assertCanAddIntern, PlanLimitError } from "@/lib/plan-limits";
 import { z } from "zod";
@@ -20,6 +21,9 @@ export async function POST(
     const session = await getSession();
     if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await hasFullOrgAdminAccess(session.sub, session.orgId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id: jobId } = await params;

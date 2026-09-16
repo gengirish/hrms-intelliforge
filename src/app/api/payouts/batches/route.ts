@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthAdmin } from "@/lib/auth";
+import { isFullOrgAdmin } from "@/lib/admin-intern-access";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-utils";
 import { getISTDate } from "@/lib/utils";
@@ -34,6 +35,12 @@ export async function GET(req: NextRequest) {
   }
   if (!admin.orgId) {
     return NextResponse.json({ error: ORPHAN_ADMIN_MSG }, { status: 403 });
+  }
+  if (!isFullOrgAdmin(admin)) {
+    return NextResponse.json(
+      { error: "Only organization admins can manage stipend payouts." },
+      { status: 403 }
+    );
   }
 
   try {
@@ -73,6 +80,12 @@ export async function POST(req: NextRequest) {
   }
   if (!admin.orgId) {
     return NextResponse.json({ error: ORPHAN_ADMIN_MSG }, { status: 403 });
+  }
+  if (!isFullOrgAdmin(admin)) {
+    return NextResponse.json(
+      { error: "Only organization admins can manage stipend payouts." },
+      { status: 403 }
+    );
   }
 
   let body: unknown;

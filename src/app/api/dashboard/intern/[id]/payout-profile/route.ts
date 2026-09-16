@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthAdmin } from "@/lib/auth";
+import { isFullOrgAdmin } from "@/lib/admin-intern-access";
 import { errorResponse, serverError } from "@/lib/api-utils";
 import { payoutProfileSchema } from "@/lib/validations";
 import { parseRecipientJson } from "@/lib/razorpay";
@@ -65,6 +66,9 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         403
       );
     }
+    if (!isFullOrgAdmin(admin)) {
+      return errorResponse("Only organization admins can manage payout details.", 403);
+    }
 
     const { id: internId } = await context.params;
 
@@ -119,6 +123,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         "Your admin account isn't attached to an organization. Contact support.",
         403
       );
+    }
+    if (!isFullOrgAdmin(admin)) {
+      return errorResponse("Only organization admins can manage payout details.", 403);
     }
 
     const { id: internId } = await context.params;

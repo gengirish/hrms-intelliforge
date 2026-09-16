@@ -45,7 +45,7 @@ Single **Next.js 14 App Router monolith** — no separate backend service. All A
 
 ### Admin roles: ADMIN vs MENTOR
 
-`Admin.orgAdminRole` is either `ADMIN` (full) or `MENTOR` (limited). The split is enforced centrally in `src/middleware.ts`, not per-route: MENTOR admins get redirected away from `/dashboard/settings` and `/dashboard/hiring`, and get 403s on `/api/billing/*`, `/api/jobs/*`, `PUT /api/org`, and org-admin-mutation endpoints (invite/promote/patch team members). When adding a new admin-only mutation, add its guard in middleware, not just in the route handler.
+`Admin.orgAdminRole` is either `ADMIN` (full) or `MENTOR` (limited). The split is enforced centrally in `src/middleware.ts` via the rules in `src/lib/mentor-access.ts`: MENTOR admins get redirected away from `/dashboard/settings`, `/dashboard/hiring`, `/dashboard/mentor-applications`, `/dashboard/payouts` and `/dashboard/marketplace`, and get 403s on `/api/billing/*`, `/api/jobs/*`, `/api/payouts/*`, `/api/dashboard/intern/[id]/payout-profile`, `PUT /api/org`, and org-admin-mutation endpoints (invite/promote/patch team members). When adding a new admin-only mutation, add its guard in `mentor-access.ts`, not just in the route handler. Middleware reads the JWT's `adminOrgRole` claim, which stays stale for the 7-day token lifetime after a demotion, so handlers that move money or change org config also re-check the role from the DB with `hasFullOrgAdminAccess()` / `isFullOrgAdmin()` (`src/lib/admin-intern-access.ts`).
 
 ### Multi-tenant isolation
 

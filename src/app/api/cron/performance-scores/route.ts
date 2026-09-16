@@ -4,6 +4,10 @@ import { serverError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
+    // Without this guard an unset CRON_SECRET makes "Bearer undefined" a valid credential.
+    if (!process.env.CRON_SECRET) {
+      return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+    }
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

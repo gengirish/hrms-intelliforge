@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { prisma } from "@/lib/prisma";
 import { getStripe, PLANS, PlanKey } from "@/lib/stripe";
 import { serverError } from "@/lib/api-utils";
@@ -9,6 +10,9 @@ export async function POST(req: NextRequest) {
     const session = await getSession();
     if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await hasFullOrgAdminAccess(session.sub, session.orgId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
