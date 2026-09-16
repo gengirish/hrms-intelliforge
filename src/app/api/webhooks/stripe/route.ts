@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { getStripe, getPlanLimits } from "@/lib/stripe";
 import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
@@ -87,6 +88,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("Stripe webhook processing error:", err);
+    Sentry.captureException(err, { tags: { webhook: "stripe" } });
     // Release the claim and 5xx so Stripe's retry is actually processed.
     if (claimed) await releaseWebhookEvent("stripe", event.id);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });

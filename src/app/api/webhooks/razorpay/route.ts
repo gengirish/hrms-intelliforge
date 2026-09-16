@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import type { StipendPayoutStatus } from "@prisma/client";
@@ -165,6 +166,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error("Razorpay webhook processing error:", err);
+    Sentry.captureException(err, { tags: { webhook: "razorpay" } });
     // Release the claim and 5xx so RazorpayX's retry is actually processed.
     if (claimed) await releaseWebhookEvent("razorpay", eventId);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });

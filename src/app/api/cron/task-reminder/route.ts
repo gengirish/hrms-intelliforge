@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { runCronWithMonitor } from "@/lib/cron-monitor";
 
 const NOTIFY_CONCURRENCY = 15;
 
@@ -43,20 +44,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const activeInterns = await prisma.intern.findMany({
-      where: { status: "ACTIVE", deactivated: false },
-    });
+    return await runCronWithMonitor("task-reminder", async () => {
+      const activeInterns = await prisma.intern.findMany({
+        where: { status: "ACTIVE", deactivated: false },
+      });
 
-    const { sent, failed } = await notifyInBatches(
-      activeInterns.map((i) => ({ id: i.id, email: i.email })),
-      "TASK_REMINDER"
-    );
+      const { sent, failed } = await notifyInBatches(
+        activeInterns.map((i) => ({ id: i.id, email: i.email })),
+        "TASK_REMINDER"
+      );
 
-    return NextResponse.json({
-      ok: true,
-      sent,
-      failed,
-      total: activeInterns.length,
+      return NextResponse.json({
+        ok: true,
+        sent,
+        failed,
+        total: activeInterns.length,
+      });
     });
   } catch (err) {
     console.error("Cron task-reminder error:", err);

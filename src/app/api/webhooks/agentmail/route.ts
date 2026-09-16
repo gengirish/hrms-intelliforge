@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
 import { acceptOffer, isAcceptanceReply } from "@/lib/offer-acceptance";
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     console.error("Webhook error:", err);
+    Sentry.captureException(err, { tags: { webhook: "agentmail" } });
     if (claimedEventId) await releaseWebhookEvent("agentmail", claimedEventId);
     return NextResponse.json(
       { error: "Webhook processing failed" },

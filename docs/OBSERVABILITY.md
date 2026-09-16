@@ -14,6 +14,7 @@ IntelliForge HRMS ships with optional error tracking (Sentry) and product analyt
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_SENTRY_DSN` | Yes (to enable) | Client + server DSN |
+| `SENTRY_DSN` | Optional | Server/edge-only DSN (fallback for `NEXT_PUBLIC_SENTRY_DSN`) |
 | `SENTRY_AUTH_TOKEN` | Optional | Uploads source maps on build |
 | `SENTRY_ORG` | Optional | Org slug for source maps |
 | `SENTRY_PROJECT` | Optional | Project slug for source maps |
@@ -33,7 +34,10 @@ After deploy, trigger a test error (e.g. temporary throw in a dev-only route) or
 ### Files
 
 - `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
-- `instrumentation.ts` — loads server/edge Sentry on boot
+- `src/instrumentation.ts` — loads server/edge Sentry on boot; exports `onRequestError`
+- `src/lib/cron-monitor.ts` — Sentry cron check-ins for the four Vercel crons (slugs/schedules mirror `vercel.json`)
+- Webhook route catch blocks report via `Sentry.captureException`
+- `src/lib/rate-limit.ts` — reports once per instance if production runs without Upstash Redis
 - `next.config.mjs` — wraps with `withSentryConfig` only when DSN is present
 
 ---

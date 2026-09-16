@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { DailyPlanStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { runCronWithMonitor } from "@/lib/cron-monitor";
 import { getISTStartOfDay } from "@/lib/utils";
 
 const NOTIFY_CONCURRENCY = 15;
@@ -44,46 +45,48 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const activeInterns = await prisma.intern.findMany({
-      where: { status: "ACTIVE", deactivated: false },
-    });
+    return await runCronWithMonitor("daily-plan-nudge", async () => {
+      const activeInterns = await prisma.intern.findMany({
+        where: { status: "ACTIVE", deactivated: false },
+      });
 
-    const todayStart = getISTStartOfDay();
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+      const todayStart = getISTStartOfDay();
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
-    if (activeInterns.length === 0) {
+      if (activeInterns.length === 0) {
+        return NextResponse.json({
+          ok: true,
+          sent: 0,
+          failed: 0,
+          total: 0,
+        });
+      }
+
+      const internIds = activeInterns.map((i) => i.id);
+      const submittedPlans = await prisma.dailyTaskPlan.findMany({
+        where: {
+          internId: { in: internIds },
+          date: { gte: todayStart, lt: todayEnd },
+          status: DailyPlanStatus.SUBMITTED,
+        },
+        select: { internId: true },
+      });
+      const internIdsWithPlan = new Set(submittedPlans.map((p) => p.internId));
+
+      const internsNeedingNudge = activeInterns.filter(
+        (intern) => !internIdsWithPlan.has(intern.id)
+      );
+
+      const { sent, failed } = await notifyInBatches(
+        internsNeedingNudge.map((i) => ({ id: i.id, email: i.email }))
+      );
+
       return NextResponse.json({
         ok: true,
-        sent: 0,
-        failed: 0,
-        total: 0,
+        sent,
+        failed,
+        total: activeInterns.length,
       });
-    }
-
-    const internIds = activeInterns.map((i) => i.id);
-    const submittedPlans = await prisma.dailyTaskPlan.findMany({
-      where: {
-        internId: { in: internIds },
-        date: { gte: todayStart, lt: todayEnd },
-        status: DailyPlanStatus.SUBMITTED,
-      },
-      select: { internId: true },
-    });
-    const internIdsWithPlan = new Set(submittedPlans.map((p) => p.internId));
-
-    const internsNeedingNudge = activeInterns.filter(
-      (intern) => !internIdsWithPlan.has(intern.id)
-    );
-
-    const { sent, failed } = await notifyInBatches(
-      internsNeedingNudge.map((i) => ({ id: i.id, email: i.email }))
-    );
-
-    return NextResponse.json({
-      ok: true,
-      sent,
-      failed,
-      total: activeInterns.length,
     });
   } catch (err) {
     console.error("Cron daily-plan-nudge error:", err);

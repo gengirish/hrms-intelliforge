@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { EsignStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, parseDigioWebhookEvent } from "@/lib/esign";
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, status: nextStatus });
   } catch (err: unknown) {
     console.error("Digio webhook error:", err);
+    Sentry.captureException(err, { tags: { webhook: "digio" } });
     if (claimedEventId) await releaseWebhookEvent("digio", claimedEventId);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
