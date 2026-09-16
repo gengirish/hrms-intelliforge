@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { verifyInterviewWebhookAuth } from "@/lib/interview-webhook-auth";
 
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, candidateId: candidate.id });
   } catch (err) {
     console.error("Interview bot webhook error:", err);
+    Sentry.captureException(err, { tags: { webhook: "interview-bot" } });
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 }

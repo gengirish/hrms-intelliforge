@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { scheduleLearningProvision } from "@/lib/learning-provision";
 
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     console.error("Webhook error:", err);
+    Sentry.captureException(err, { tags: { webhook: "agentmail" } });
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import {
   verifyWhatsAppSignature,
@@ -176,6 +177,7 @@ async function handleHubForward(req: NextRequest): Promise<NextResponse> {
     }
   } catch (err) {
     console.error("WhatsApp hub forward processing failed:", err);
+    Sentry.captureException(err, { tags: { webhook: "whatsapp" } });
   }
 
   return NextResponse.json({ ok: true });
@@ -240,6 +242,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("WhatsApp webhook processing failed:", err);
+    Sentry.captureException(err, { tags: { webhook: "whatsapp" } });
   }
 
   return NextResponse.json({ ok: true });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { runCronWithMonitor } from "@/lib/cron-monitor";
 import { getISTStartOfDay, isISTWeekday } from "@/lib/utils";
 
 const NOTIFY_CONCURRENCY = 15;
@@ -44,59 +45,61 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    if (!isISTWeekday()) {
+    return await runCronWithMonitor("attendance-nudge", async () => {
+      if (!isISTWeekday()) {
+        return NextResponse.json({
+          ok: true,
+          skipped: true,
+          reason: "weekend",
+          sent: 0,
+          failed: 0,
+          total: 0,
+        });
+      }
+
+      const activeInterns = await prisma.intern.findMany({
+        where: { status: "ACTIVE", deactivated: false },
+      });
+
+      const todayStart = getISTStartOfDay();
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+      if (activeInterns.length === 0) {
+        return NextResponse.json({
+          ok: true,
+          sent: 0,
+          failed: 0,
+          total: 0,
+        });
+      }
+
+      const internIds = activeInterns.map((i) => i.id);
+      const todaysAttendance = await prisma.attendance.findMany({
+        where: {
+          internId: { in: internIds },
+          date: { gte: todayStart, lt: todayEnd },
+        },
+        select: { internId: true },
+      });
+      const internIdsWithAttendance = new Set(
+        todaysAttendance.map((a) => a.internId)
+      );
+
+      const internsNeedingNudge = activeInterns.filter(
+        (intern) => !internIdsWithAttendance.has(intern.id)
+      );
+
+      const { sent, failed } = await notifyInBatches(
+        internsNeedingNudge.map((i) => ({ id: i.id, email: i.email })),
+        "ATTENDANCE_NUDGE"
+      );
+
       return NextResponse.json({
         ok: true,
-        skipped: true,
-        reason: "weekend",
-        sent: 0,
-        failed: 0,
-        total: 0,
+        sent,
+        failed,
+        total: activeInterns.length,
       });
-    }
-
-    const activeInterns = await prisma.intern.findMany({
-      where: { status: "ACTIVE", deactivated: false },
-    });
-
-    const todayStart = getISTStartOfDay();
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-    if (activeInterns.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        sent: 0,
-        failed: 0,
-        total: 0,
-      });
-    }
-
-    const internIds = activeInterns.map((i) => i.id);
-    const todaysAttendance = await prisma.attendance.findMany({
-      where: {
-        internId: { in: internIds },
-        date: { gte: todayStart, lt: todayEnd },
-      },
-      select: { internId: true },
-    });
-    const internIdsWithAttendance = new Set(
-      todaysAttendance.map((a) => a.internId)
-    );
-
-    const internsNeedingNudge = activeInterns.filter(
-      (intern) => !internIdsWithAttendance.has(intern.id)
-    );
-
-    const { sent, failed } = await notifyInBatches(
-      internsNeedingNudge.map((i) => ({ id: i.id, email: i.email })),
-      "ATTENDANCE_NUDGE"
-    );
-
-    return NextResponse.json({
-      ok: true,
-      sent,
-      failed,
-      total: activeInterns.length,
     });
   } catch (err) {
     console.error("Cron attendance-nudge error:", err);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { getStripe, getPlanLimits } from "@/lib/stripe";
 
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("Stripe webhook processing error:", err);
+    Sentry.captureException(err, { tags: { webhook: "stripe" } });
   }
 
   return NextResponse.json({ received: true });
