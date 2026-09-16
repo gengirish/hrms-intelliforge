@@ -3,24 +3,12 @@ import { prisma } from "@/lib/prisma";
 import {
   verifyWhatsAppSignature,
   formatPhoneE164,
-  sendWhatsAppTemplate,
   sendWhatsAppText,
 } from "@/lib/whatsapp";
 import { whatsAppHubTenantId } from "@/lib/whatsapp-hub";
-import { formatDateIST } from "@/lib/utils";
 import { parseIntent } from "@/lib/wa-bot/intent-parser";
 import { executeIntent } from "@/lib/wa-bot/executor";
-import { scheduleLearningProvision } from "@/lib/learning-provision";
-
-function indicatesOfferAcceptance(text: string): boolean {
-  const lower = text.toLowerCase();
-  return (
-    /\bi\s+accept\b/i.test(text) ||
-    /\byes\b/.test(lower) ||
-    /\bagree\b/.test(lower) ||
-    /\bconfirm\b/.test(lower)
-  );
-}
+import { acceptOffer, isAcceptanceReply } from "@/lib/offer-acceptance";
 
 function statusTimestampMs(ts: string | number | undefined): Date {
   const n = typeof ts === "string" ? parseInt(ts, 10) : Number(ts);
@@ -66,19 +54,9 @@ async function handleInboundText(e164: string, bodyText: string): Promise<void> 
 
   if (!intern) return;
 
-  if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
-    await prisma.intern.update({
-      where: { id: intern.id },
-      data: { status: "ACTIVE", acceptedAt: new Date() },
-    });
-    scheduleLearningProvision(intern.id);
-    await sendWhatsAppTemplate(e164, "offer_accepted", "en", [
-      intern.name,
-      formatDateIST(intern.startDate),
-    ]);
-    console.info(
-      `[whatsapp-webhook] Intern ${intern.name} auto-accepted via WhatsApp`
-    );
+  if (intern.status === "OFFERED" && isAcceptanceReply(bodyText, "whatsapp")) {
+    // The offer_accepted confirmation goes out via notify() inside acceptOffer.
+    await acceptOffer({ internId: intern.id, source: "WHATSAPP" });
     return;
   }
 

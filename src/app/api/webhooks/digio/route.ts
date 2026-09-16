@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { EsignStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, parseDigioWebhookEvent } from "@/lib/esign";
-import { notify } from "@/lib/notifications";
-import { scheduleLearningProvision } from "@/lib/learning-provision";
-import { formatDateIST } from "@/lib/utils";
+import { acceptOffer } from "@/lib/offer-acceptance";
 
 function mapWebhookToStatus(
   eventType: string,
@@ -31,27 +29,6 @@ function mapWebhookToStatus(
     return "FAILED";
   }
   return null;
-}
-
-async function completeOfferAcceptance(internId: string) {
-  const intern = await prisma.intern.findUnique({ where: { id: internId } });
-  if (!intern) return;
-  if (intern.status === "ACTIVE" || intern.status === "COMPLETED") return;
-
-  await prisma.intern.update({
-    where: { id: internId },
-    data: { status: "ACTIVE", acceptedAt: new Date() },
-  });
-
-  scheduleLearningProvision(internId);
-
-  try {
-    await notify(internId, "OFFER_ACCEPTED", {
-      startDate: formatDateIST(intern.startDate),
-    });
-  } catch {
-    // non-critical
-  }
 }
 
 export async function POST(req: NextRequest) {
@@ -106,14 +83,14 @@ export async function POST(req: NextRequest) {
         where: { id: esignRequest.internId },
       });
 
-      if (intern && intern.status === "PENDING") {
+      if (intern && intern.status === "PENDING" && !intern.deactivated) {
         await prisma.intern.update({
           where: { id: intern.id },
           data: { status: "OFFERED" },
         });
       }
 
-      await completeOfferAcceptance(esignRequest.internId);
+      await acceptOffer({ internId: esignRequest.internId, source: "ESIGN" });
     }
 
     return NextResponse.json({ ok: true, status: nextStatus });
