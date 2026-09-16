@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serverError } from "@/lib/api-utils";
-import { sendNewApplicationAlert } from "@/lib/agentmail";
+import { sendApplicationReceivedEmail, sendNewApplicationAlert } from "@/lib/agentmail";
 import { expertApplySchema, isExpertNetworkForm } from "@/lib/hiring/expert-network";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -90,24 +90,43 @@ export async function POST(
       },
     });
 
-    sendNewApplicationAlert({
-      jobTitle: job.title,
-      candidateName: parsed.data.name,
-      candidateEmail: parsed.data.email,
-      candidatePhone: parsed.data.phone,
-      resumeUrl: parsed.data.resumeUrl,
-      githubUrl: parsed.data.githubUrl,
-      portfolioUrl: parsed.data.portfolioUrl,
-      coverNote: parsed.data.coverNote,
-      expert: expert && {
-        domain: expert.expertDomain,
-        degree: expert.highestDegree,
-        hIndex: expert.hIndex ?? null,
-        scholarUrl: expert.scholarUrl || null,
-        referrerName: expert.referrerName || null,
-        referrerEmail: expert.referrerEmail || null,
-      },
-    }).catch((err) => console.warn("Application alert email failed:", err));
+    // Awaited: on Vercel a fire-and-forget send can be frozen once the
+    // response is returned, delaying or dropping the email.
+    const emailResults = await Promise.allSettled([
+      sendNewApplicationAlert({
+        jobTitle: job.title,
+        candidateName: parsed.data.name,
+        candidateEmail: parsed.data.email,
+        candidatePhone: parsed.data.phone,
+        resumeUrl: parsed.data.resumeUrl,
+        githubUrl: parsed.data.githubUrl,
+        portfolioUrl: parsed.data.portfolioUrl,
+        coverNote: parsed.data.coverNote,
+        expert: expert && {
+          domain: expert.expertDomain,
+          degree: expert.highestDegree,
+          hIndex: expert.hIndex ?? null,
+          scholarUrl: expert.scholarUrl || null,
+          referrerName: expert.referrerName || null,
+          referrerEmail: expert.referrerEmail || null,
+        },
+      }),
+      sendApplicationReceivedEmail({
+        jobTitle: job.title,
+        candidateName: parsed.data.name,
+        candidateEmail: parsed.data.email,
+        referrerName: expert?.referrerName || null,
+        referrerEmail: expert?.referrerEmail || null,
+      }),
+    ]);
+    emailResults.forEach((result, i) => {
+      if (result.status === "rejected") {
+        console.error(
+          i === 0 ? "Application alert email failed:" : "Applicant confirmation email failed:",
+          result.reason
+        );
+      }
+    });
 
     return NextResponse.json({
       success: true,

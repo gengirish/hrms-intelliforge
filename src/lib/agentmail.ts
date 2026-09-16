@@ -21,6 +21,19 @@ if (!HR_INBOX_ID) {
   );
 }
 
+// hr@intelliforge.tech only exists inside AgentMail (the domain's MX points
+// there), so mailing it from itself never reaches a person. Alerts go to
+// HR_ALERT_EMAILS (comma-separated) instead.
+const DEFAULT_HR_ALERT_EMAILS = ["gen.girish@gmail.com"];
+
+export function getHRAlertRecipients(raw = process.env.HR_ALERT_EMAILS): string[] {
+  const list = (raw ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : DEFAULT_HR_ALERT_EMAILS;
+}
+
 async function getHRInboxId(): Promise<string> {
   if (HR_INBOX_ID) return HR_INBOX_ID;
   throw new Error(
@@ -257,7 +270,7 @@ export async function sendNewApplicationAlert({
     .join(" · ");
 
   await agentmail.inboxes.messages.send(inboxId, {
-    to: "hr@intelliforge.tech",
+    to: getHRAlertRecipients(),
     subject: `New Application: ${candidateName} — ${jobTitle}`,
     html: `
       <h2>New Application Received</h2>
@@ -273,6 +286,39 @@ export async function sendNewApplicationAlert({
       <br/>
       <p><a href="${APP_URL}/dashboard/hiring">→ View in Hiring Dashboard</a></p>
       <p>— IntelliForge HRMS</p>
+    `,
+  });
+}
+
+export async function sendApplicationReceivedEmail({
+  jobTitle,
+  candidateName,
+  candidateEmail,
+  referrerName,
+  referrerEmail,
+}: {
+  jobTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  referrerName?: string | null;
+  referrerEmail?: string | null;
+}) {
+  const inboxId = await getHRInboxId();
+  const referralLine = referrerEmail
+    ? `<p>${escapeHtml(referrerName || "Someone")} (copied) submitted your profile on your behalf. If you did not agree to this, just reply and we will remove it.</p>`
+    : "";
+
+  await agentmail.inboxes.messages.send(inboxId, {
+    to: candidateEmail,
+    ...(referrerEmail ? { cc: referrerEmail } : {}),
+    subject: `We received your application — ${jobTitle}`,
+    html: `
+      <h2>Hi ${escapeHtml(candidateName)},</h2>
+      <p>Thanks for applying for <strong>${escapeHtml(jobTitle)}</strong>. Your application has been received and our team will review it.</p>
+      ${referralLine}
+      <p>We'll get back to you by email with next steps. You can reply to this message if you have any questions.</p>
+      <br/>
+      <p>— IntelliForge AI HR Team</p>
     `,
   });
 }
