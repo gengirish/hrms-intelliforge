@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scheduleLearningProvision } from "@/lib/learning-provision";
+import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
 
 function parseSenderEmail(from: unknown): string | null {
   if (!from) return null;
@@ -30,6 +31,7 @@ function indicatesOfferAcceptance(text: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  let claimedEventId: string | null = null;
   try {
     const configuredSecret = process.env.WEBHOOK_SECRET;
     if (!configuredSecret) {
@@ -44,6 +46,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    const agentMailEventId: unknown = body.event_id ?? body.message?.message_id;
+    if (typeof agentMailEventId === "string" && agentMailEventId) {
+      if (!(await claimWebhookEvent("agentmail", agentMailEventId))) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+      claimedEventId = agentMailEventId;
+    }
 
     const eventType = body.event ?? body.event_type;
     if (eventType === "message.received") {
@@ -77,6 +87,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     console.error("Webhook error:", err);
+    if (claimedEventId) await releaseWebhookEvent("agentmail", claimedEventId);
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 }

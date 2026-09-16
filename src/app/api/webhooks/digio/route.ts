@@ -5,6 +5,7 @@ import { verifyWebhookSignature, parseDigioWebhookEvent } from "@/lib/esign";
 import { notify } from "@/lib/notifications";
 import { scheduleLearningProvision } from "@/lib/learning-provision";
 import { formatDateIST } from "@/lib/utils";
+import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
 
 function mapWebhookToStatus(
   eventType: string,
@@ -61,8 +62,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  let claimedEventId: string | null = null;
   try {
-    const { eventType, providerDocId, documentStatus, signedPdfUrl, signedAt } =
+    const { eventType, eventId, providerDocId, documentStatus, signedPdfUrl, signedAt } =
       parseDigioWebhookEvent(rawBody);
 
     if (!providerDocId) {
@@ -87,6 +89,14 @@ export async function POST(req: NextRequest) {
 
     if (esignRequest.status === nextStatus) {
       return NextResponse.json({ ok: true, duplicate: true });
+    }
+
+    // No event id in the envelope: fall back to the status check above.
+    if (eventId) {
+      if (!(await claimWebhookEvent("digio", eventId, esignRequest.orgId))) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+      claimedEventId = eventId;
     }
 
     await prisma.offerEsignRequest.update({
@@ -119,6 +129,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, status: nextStatus });
   } catch (err: unknown) {
     console.error("Digio webhook error:", err);
+    if (claimedEventId) await releaseWebhookEvent("digio", claimedEventId);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

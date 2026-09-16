@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import type { StipendPayoutStatus } from "@prisma/client";
+import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
 
 function verifyRazorpaySignature(
   body: string,
@@ -117,7 +118,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
+  // Razorpay sends a per-event id header that stays constant across retries.
+  // Without it, a payout emits each payout.* event once, so id+event is stable.
+  const eventId =
+    req.headers.get("x-razorpay-event-id")?.trim() || `${entity.id}:${event}`;
+  let claimed = false;
+
   try {
+    if (!(await claimWebhookEvent("razorpay", eventId))) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    claimed = true;
+
     const payout = await prisma.stipendPayout.findFirst({
       where: {
         OR: [
@@ -153,6 +165,9 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error("Razorpay webhook processing error:", err);
+    // Release the claim and 5xx so RazorpayX's retry is actually processed.
+    if (claimed) await releaseWebhookEvent("razorpay", eventId);
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
