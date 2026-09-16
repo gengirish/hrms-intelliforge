@@ -55,6 +55,16 @@ describe("expertApplySchema", () => {
     expect(expertApplySchema.safeParse({ ...base, highestDegree: "Diploma" }).success).toBe(false);
   });
 
+  it("treats the Scholar / ORCID link as optional", () => {
+    expect(expertApplySchema.safeParse({ ...base, scholarUrl: "" }).success).toBe(true);
+    expect(expertApplySchema.safeParse({ ...base, scholarUrl: "   " }).success).toBe(true);
+  });
+
+  it("adds https:// to a bare Scholar / ORCID link", () => {
+    const parsed = expertApplySchema.safeParse({ ...base, scholarUrl: "orcid.org/0000-0002-1825-0097" });
+    expect(parsed.success && parsed.data.scholarUrl).toBe("https://orcid.org/0000-0002-1825-0097");
+  });
+
   it("coerces and bounds the H-index", () => {
     const parsed = expertApplySchema.safeParse({ ...base, hIndex: "3" });
     expect(parsed.success && parsed.data.hIndex).toBe(3);

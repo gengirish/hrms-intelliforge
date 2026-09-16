@@ -679,11 +679,12 @@ export default function InternshipDetailPage() {
                         </div>
                         <div>
                           <label htmlFor="apply-scholar" className="block text-xs font-medium text-slate-400 mb-1">
-                            Google Scholar / ORCID URL
+                            Google Scholar / ORCID URL (optional)
                           </label>
                           <input
                             id="apply-scholar"
-                            type="url"
+                            type="text"
+                            inputMode="url"
                             value={form.scholarUrl}
                             onChange={(e) => setForm((p) => ({ ...p, scholarUrl: e.target.value }))}
                             className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"

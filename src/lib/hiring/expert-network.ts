@@ -50,7 +50,17 @@ export function referralPayoutPaise(candidate: {
   return candidate.hIndex > 1 ? 50_000 : 30_000;
 }
 
-const optionalUrl = z.string().url("Please provide a valid URL").optional().or(z.literal(""));
+// Optional profile link. Blank is fine; a bare "scholar.google.com/..." or
+// "orcid.org/..." gets https:// so people aren't rejected for omitting it.
+const optionalProfileUrl = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  },
+  z.string().url("Please provide a valid Scholar or ORCID link").optional().or(z.literal(""))
+);
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(""));
 
 export const expertApplySchema = z
@@ -63,7 +73,7 @@ export const expertApplySchema = z
       errorMap: () => ({ message: "Please choose the highest qualification" }),
     }),
     hIndex: z.coerce.number().int().min(0).max(500).optional().nullable(),
-    scholarUrl: optionalUrl,
+    scholarUrl: optionalProfileUrl,
     referrerName: optionalText(100),
     referrerEmail: z.string().email("Please provide a valid referrer email").optional().or(z.literal("")),
     referralConsent: z.boolean().optional(),
