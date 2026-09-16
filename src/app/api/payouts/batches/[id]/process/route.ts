@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthAdmin } from "@/lib/auth";
+import { isFullOrgAdmin } from "@/lib/admin-intern-access";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-utils";
 import {
@@ -28,6 +29,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
   if (!admin.orgId) {
     return NextResponse.json({ error: ORPHAN_ADMIN_MSG }, { status: 403 });
+  }
+  if (!isFullOrgAdmin(admin)) {
+    return NextResponse.json(
+      { error: "Only organization admins can manage stipend payouts." },
+      { status: 403 }
+    );
   }
 
   if (!isRazorpayConfigured()) {

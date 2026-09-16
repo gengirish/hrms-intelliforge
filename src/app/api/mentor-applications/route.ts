@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { isFullOrgAdminRole } from "@/lib/org-admin-roles";
+import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { errorResponse, serverError } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     if (!session?.sub || session.role !== "admin" || !session.orgId) {
       return errorResponse("Unauthorized", 401);
     }
-    if (!isFullOrgAdminRole(session.adminOrgRole)) {
+    if (!(await hasFullOrgAdminAccess(session.sub, session.orgId))) {
       return errorResponse("Forbidden", 403);
     }
 

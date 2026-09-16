@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { isMentorBlockedApi, isMentorBlockedPage } from "@/lib/mentor-access";
 
 const COOKIE_NAME = "hrms-session";
 
@@ -101,28 +102,10 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-user-admin-org-role", adminOrgRole);
 
     if (payload.role === "admin" && adminOrgRole === "MENTOR") {
-      if (
-        pathname.startsWith("/dashboard/settings") ||
-        pathname.startsWith("/dashboard/hiring") ||
-        pathname.startsWith("/dashboard/mentor-applications")
-      ) {
+      if (isMentorBlockedPage(pathname)) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
-      if (pathname.startsWith("/api/billing") || pathname.startsWith("/api/jobs")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-      if (pathname === "/api/org" && request.method === "PUT") {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-      const teamMemberPatch =
-        request.method === "PATCH" &&
-        /^\/api\/org\/admins\/(?!promote-intern)[^/]+\/?$/.test(pathname);
-      const isOrgAdminsMutation =
-        (pathname === "/api/org/admins" && request.method === "POST") ||
-        (pathname === "/api/org/admins/direct" && request.method === "POST") ||
-        teamMemberPatch ||
-        (pathname === "/api/org/admins/promote-intern" && request.method === "POST");
-      if (isOrgAdminsMutation) {
+      if (isMentorBlockedApi(pathname, request.method)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { IndianRupee, CheckCircle2, AlertCircle } from "lucide-react";
 import { PayoutProfileForm } from "@/components/dashboard/payout-profile-form";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 export interface InternPayoutSectionProps {
   internId: string;
@@ -11,9 +12,14 @@ export interface InternPayoutSectionProps {
 }
 
 export function InternPayoutSection({ internId, className }: InternPayoutSectionProps) {
+  const { user } = useAuth();
+  const isMentorOnly =
+    user?.accountType === "admin" && user?.orgAdminRole === "MENTOR";
   const [configured, setConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Payout details are full-admin only (the API returns 403 for mentors).
+    if (isMentorOnly) return;
     let cancelled = false;
     (async () => {
       try {
@@ -30,7 +36,9 @@ export function InternPayoutSection({ internId, className }: InternPayoutSection
     return () => {
       cancelled = true;
     };
-  }, [internId]);
+  }, [internId, isMentorOnly]);
+
+  if (isMentorOnly) return null;
 
   return (
     <section className={cn("glass-card p-6 space-y-4", className)}>

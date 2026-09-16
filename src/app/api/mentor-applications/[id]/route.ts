@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { isFullOrgAdminRole, ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
+import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
+import { ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
 import { errorResponse, serverError } from "@/lib/api-utils";
 import { mentorApplicationReviewSchema } from "@/lib/validations";
 import { createOrgAdminDirect } from "@/lib/admin-invite-flow";
@@ -30,7 +31,7 @@ export async function PATCH(
     if (!session?.sub || session.role !== "admin" || !session.orgId) {
       return errorResponse("Unauthorized", 401);
     }
-    if (!isFullOrgAdminRole(session.adminOrgRole)) {
+    if (!(await hasFullOrgAdminAccess(session.sub, session.orgId))) {
       return errorResponse("Only organization admins can review mentor applications.", 403);
     }
 

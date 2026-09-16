@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { serverError } from "@/lib/api-utils";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { agentmail } from "@/lib/agentmail";
@@ -24,6 +25,9 @@ export async function POST(
     const session = await getSession();
     if (!session || session.role !== "admin" || !session.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await hasFullOrgAdminAccess(session.sub, session.orgId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const inboxId = process.env.AGENTMAIL_HR_INBOX_ID?.trim();
