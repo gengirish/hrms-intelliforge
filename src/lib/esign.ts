@@ -227,6 +227,8 @@ export function verifyWebhookSignature(
 
 export function parseDigioWebhookEvent(rawBody: string): {
   eventType: string;
+  /** Digio's per-delivery event id, when the envelope carries one. */
+  eventId?: string;
   providerDocId?: string;
   documentStatus?: string;
   signedPdfUrl?: string;
@@ -267,5 +269,14 @@ export function parseDigioWebhookEvent(rawBody: string): {
       ? new Date(signedAtRaw)
       : undefined;
 
-  return { eventType, providerDocId, documentStatus, signedPdfUrl, signedAt };
+  // Digio's webhook envelope carries its own event id at the top level. Only
+  // trust it when the document lives in a nested payload — otherwise body.id
+  // is the document id, which repeats across that document's events.
+  const eventIdRaw = eventData !== body ? body.id : undefined;
+  const eventId =
+    typeof eventIdRaw === "string" && eventIdRaw.trim() && eventIdRaw.trim() !== providerDocId
+      ? eventIdRaw.trim()
+      : undefined;
+
+  return { eventType, eventId, providerDocId, documentStatus, signedPdfUrl, signedAt };
 }

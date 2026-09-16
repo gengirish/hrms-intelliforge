@@ -751,3 +751,19 @@ model MarketplaceTransaction {
   @@index([recipientType, recipientId])
   @@map("marketplace_transactions")
 }
+
+/// Inbound provider webhook deliveries already claimed for processing, so a
+/// provider retry of the same event is acknowledged without re-running side
+/// effects. Not tenant-scoped: a webhook usually cannot know its org up front,
+/// so orgId is an optional plain column rather than a required FK.
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  orgId      String?
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([receivedAt])
+  @@map("webhook_events")
+}

@@ -11,6 +11,7 @@ import { formatDateIST } from "@/lib/utils";
 import { parseIntent } from "@/lib/wa-bot/intent-parser";
 import { executeIntent } from "@/lib/wa-bot/executor";
 import { scheduleLearningProvision } from "@/lib/learning-provision";
+import { processWebhookEventOnce } from "@/lib/webhook-idempotency";
 
 function indicatesOfferAcceptance(text: string): boolean {
   const lower = text.toLowerCase();
@@ -156,7 +157,7 @@ async function handleHubForward(req: NextRequest): Promise<NextResponse> {
   // Swallow a malformed forward rather than 500 back at the hub, which retries.
   const payload = (await req.json().catch(() => null)) as {
     type?: string;
-    message?: { fromE164?: string; text?: string | null; type?: string };
+    message?: { fromE164?: string; text?: string | null; type?: string; waMessageId?: string };
     status?: { waMessageId?: string; status?: string; updatedAtIst?: string };
   } | null;
 
@@ -165,14 +166,20 @@ async function handleHubForward(req: NextRequest): Promise<NextResponse> {
   try {
     const msg = payload.message;
     if (msg?.fromE164 && msg.type === "text" && msg.text) {
-      await handleInboundText(formatPhoneE164(msg.fromE164), msg.text);
+      const [from, text] = [formatPhoneE164(msg.fromE164), msg.text];
+      const run = () => handleInboundText(from, text);
+      if (msg.waMessageId) await processWebhookEventOnce("whatsapp", `msg:${msg.waMessageId}`, run);
+      else await run();
     }
 
     const status = payload.status;
     if (status?.waMessageId && status.status) {
       const parsed = status.updatedAtIst ? new Date(status.updatedAtIst) : null;
       const at = parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
-      await applyStatusUpdate(status.waMessageId, status.status, at);
+      const [id, st] = [status.waMessageId, status.status];
+      await processWebhookEventOnce("whatsapp", `status:${id}:${st}`, () =>
+        applyStatusUpdate(id, st, at)
+      );
     }
   } catch (err) {
     console.error("WhatsApp hub forward processing failed:", err);
@@ -224,16 +231,17 @@ export async function POST(req: NextRequest) {
         for (const msg of value.messages ?? []) {
           if (msg.type !== "text" || !msg.from) continue;
           const bodyText = (msg.text?.body ?? "").toString();
-          await handleInboundText(formatPhoneE164(msg.from), bodyText);
+          const from = formatPhoneE164(msg.from);
+          const run = () => handleInboundText(from, bodyText);
+          if (msg.id) await processWebhookEventOnce("whatsapp", `msg:${msg.id}`, run);
+          else await run();
         }
 
         for (const status of value.statuses ?? []) {
           if (!status.id || !status.status) continue;
-          await applyStatusUpdate(
-            status.id,
-            status.status,
-            statusTimestampMs(status.timestamp),
-            status.errors
+          const [id, st] = [status.id, status.status];
+          await processWebhookEventOnce("whatsapp", `status:${id}:${st}`, () =>
+            applyStatusUpdate(id, st, statusTimestampMs(status.timestamp), status.errors)
           );
         }
       }

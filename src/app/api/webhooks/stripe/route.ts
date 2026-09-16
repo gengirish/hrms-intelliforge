@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe, getPlanLimits } from "@/lib/stripe";
+import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -20,7 +21,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  let claimed = false;
   try {
+    if (!(await claimWebhookEvent("stripe", event.id))) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    claimed = true;
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
@@ -80,6 +87,9 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("Stripe webhook processing error:", err);
+    // Release the claim and 5xx so Stripe's retry is actually processed.
+    if (claimed) await releaseWebhookEvent("stripe", event.id);
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
