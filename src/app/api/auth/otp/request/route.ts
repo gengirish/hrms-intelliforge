@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findInternsByPhoneSuffix } from "@/lib/intern-phone";
+import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
   isOtpConfigured,
   normalizePhoneE164,
@@ -12,6 +13,15 @@ export const dynamic = "force-dynamic";
 
 /** POST { phone } → sends a WhatsApp login OTP to a known intern. */
 export async function POST(req: NextRequest) {
+  // Per-IP cap on top of the OTP service's per-number limits: stops one client
+  // spraying many numbers (WhatsApp cost, and a table scan per request).
+  if (!(await rateLimitAsync(`otp-request:${getClientIp(req)}`, 10, 60_000))) {
+    return NextResponse.json(
+      { error: "rate_limited", message: "Too many code requests. Try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   const input = (await req.json().catch(() => null)) as { phone?: string } | null;
 
   const phone = normalizePhoneE164(input?.phone);

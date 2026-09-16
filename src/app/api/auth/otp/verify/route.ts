@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findInternsByPhoneSuffix } from "@/lib/intern-phone";
+import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
   isOtpConfigured,
   normalizePhoneE164,
@@ -19,6 +20,15 @@ export const dynamic = "force-dynamic";
  * Interns are created by HR, so an unknown number is a rejection, not a signup.
  */
 export async function POST(req: NextRequest) {
+  // Per-IP cap on top of the OTP service's per-number limits: stops one client
+  // spraying many numbers (WhatsApp cost, and a table scan per request).
+  if (!(await rateLimitAsync(`otp-verify:${getClientIp(req)}`, 20, 60_000))) {
+    return NextResponse.json(
+      { error: "rate_limited", message: "Too many attempts. Try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   const input = (await req.json().catch(() => null)) as {
     phone?: string;
     code?: string;
