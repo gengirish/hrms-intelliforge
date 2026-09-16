@@ -28,6 +28,7 @@ export async function GET(
         applicationEmail: true,
         salaryInfo: true,
         interviewLink: true,
+        formType: true,
         createdAt: true,
         org: { select: { name: true, slug: true, logoUrl: true } },
       },

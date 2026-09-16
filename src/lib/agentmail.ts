@@ -227,6 +227,7 @@ export async function sendNewApplicationAlert({
   githubUrl,
   portfolioUrl,
   coverNote,
+  expert,
 }: {
   jobTitle: string;
   candidateName: string;
@@ -236,12 +237,21 @@ export async function sendNewApplicationAlert({
   githubUrl?: string | null;
   portfolioUrl?: string | null;
   coverNote?: string | null;
+  expert?: {
+    domain: string;
+    degree: string;
+    hIndex: number | null;
+    scholarUrl: string | null;
+    referrerName: string | null;
+    referrerEmail: string | null;
+  } | null;
 }) {
   const inboxId = await getHRInboxId();
   const links = [
     resumeUrl ? `<a href="${escapeHtml(resumeUrl)}">Resume</a>` : null,
     githubUrl ? `<a href="${escapeHtml(githubUrl)}">GitHub</a>` : null,
     portfolioUrl ? `<a href="${escapeHtml(portfolioUrl)}">Portfolio</a>` : null,
+    expert?.scholarUrl ? `<a href="${escapeHtml(expert.scholarUrl)}">Scholar</a>` : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -256,6 +266,8 @@ export async function sendNewApplicationAlert({
       <p><strong>Name:</strong> ${escapeHtml(candidateName)}</p>
       <p><strong>Email:</strong> <a href="mailto:${escapeHtml(candidateEmail)}">${escapeHtml(candidateEmail)}</a></p>
       ${candidatePhone ? `<p><strong>Phone:</strong> ${escapeHtml(candidatePhone)}</p>` : ""}
+      ${expert ? `<p><strong>Expertise:</strong> ${escapeHtml(expert.domain)} · ${escapeHtml(expert.degree)} · H-index ${expert.hIndex ?? "not given"}</p>` : ""}
+      ${expert?.referrerEmail ? `<p><strong>Referred by:</strong> ${escapeHtml(expert.referrerName ?? "")} (${escapeHtml(expert.referrerEmail)})</p>` : ""}
       ${links ? `<p><strong>Links:</strong> ${links}</p>` : ""}
       ${coverNote ? `<p><strong>Cover Note:</strong></p><blockquote>${escapeHtml(coverNote)}</blockquote>` : ""}
       <br/>

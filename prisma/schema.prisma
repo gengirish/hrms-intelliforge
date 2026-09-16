@@ -348,6 +348,9 @@ model JobPosting {
   salaryInfo        String?
   interviewBotJobId String?
   interviewLink     String?
+  // STANDARD (intern/engineering apply form) or EXPERT_NETWORK (researcher
+  // form with referral support; skips the Interview Bot).
+  formType          String   @default("STANDARD")
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
 
@@ -372,6 +375,14 @@ model Candidate {
   interviewStatus   String   @default("PENDING")
   reportUrl         String?
   convertedToIntern Boolean  @default(false)
+  // Expert-network postings only.
+  expertDomain      String?
+  highestDegree     String?
+  hIndex            Int?
+  scholarUrl        String?
+  referrerName      String?
+  referrerEmail     String?
+  referralConsent   Boolean  @default(false)
   createdAt         DateTime @default(now())
 
   jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)

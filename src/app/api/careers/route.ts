@@ -17,6 +17,7 @@ export async function GET() {
         employmentType: true,
         duration: true,
         salaryInfo: true,
+        formType: true,
         createdAt: true,
       },
     });

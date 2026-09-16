@@ -14,7 +14,8 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
-import { cn, formatDateIST } from "@/lib/utils";
+import { cn, formatDateIST, formatINR } from "@/lib/utils";
+import { referralPayoutPaise } from "@/lib/hiring/expert-network";
 import {
   CANDIDATE_STATUS_OPTIONS,
   canConvertCandidate,
@@ -37,6 +38,12 @@ interface Candidate {
   interviewStatus: string;
   reportUrl: string | null;
   convertedToIntern: boolean;
+  expertDomain: string | null;
+  highestDegree: string | null;
+  hIndex: number | null;
+  scholarUrl: string | null;
+  referrerName: string | null;
+  referrerEmail: string | null;
   createdAt: string;
 }
 
@@ -44,10 +51,12 @@ interface CandidateDetailPanelProps {
   candidate: Candidate;
   jobId: string;
   jobTitle: string;
+  /** Expert-network posting: show academic profile, hide interview score and conversion. */
+  expertNetwork?: boolean;
   open: boolean;
   onClose: () => void;
   onStatusChange: (newStatus: string) => Promise<void> | void;
-  onConvert: () => Promise<void> | void;
+  onConvert?: () => Promise<void> | void;
   onDelete: () => Promise<void> | void;
   onContact: (subject: string, message: string) => Promise<void>;
   onSchedule?: () => void;
@@ -71,6 +80,7 @@ export function CandidateDetailPanel({
   candidate,
   jobId,
   jobTitle,
+  expertNetwork = false,
   open,
   onClose,
   onStatusChange,
@@ -218,6 +228,7 @@ export function CandidateDetailPanel({
                 </p>
               </div>
 
+              {!expertNetwork && (
               <div>
                 <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold flex items-center gap-1.5">
                   <Award className="h-3 w-3" aria-hidden="true" />
@@ -234,6 +245,7 @@ export function CandidateDetailPanel({
                     : "—"}
                 </p>
               </div>
+              )}
 
               {candidate.reportUrl && (
                 <div>
@@ -303,10 +315,16 @@ export function CandidateDetailPanel({
             </div>
           </section>
 
+          {/* Expert profile */}
+          {expertNetwork && (
+            <ExpertProfileSection candidate={candidate} />
+          )}
+
           {/* Links section */}
           {(candidate.resumeUrl ||
             candidate.githubUrl ||
-            candidate.portfolioUrl) && (
+            candidate.portfolioUrl ||
+            candidate.scholarUrl) && (
             <section className="glass-card p-4">
               <h3 className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-3">
                 Links
@@ -343,6 +361,17 @@ export function CandidateDetailPanel({
                   >
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                     Portfolio
+                  </a>
+                )}
+                {candidate.scholarUrl && (
+                  <a
+                    href={candidate.scholarUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    Scholar
                   </a>
                 )}
               </div>
@@ -460,6 +489,7 @@ export function CandidateDetailPanel({
               Schedule interview
             </button>
           )}
+          {onConvert && (
           <button
             type="button"
             onClick={() => void onConvert()}
@@ -479,6 +509,7 @@ export function CandidateDetailPanel({
               ? "Already converted"
               : "Convert to intern"}
           </button>
+          )}
 
           <button
             type="button"
@@ -499,5 +530,52 @@ export function CandidateDetailPanel({
         </footer>
       </aside>
     </div>
+  );
+}
+
+function ExpertProfileSection({ candidate }: { candidate: Candidate }) {
+  const payout = referralPayoutPaise(candidate);
+  const rows: [string, string][] = [
+    ["Expertise", candidate.expertDomain ?? "—"],
+    ["Qualification", candidate.highestDegree ?? "—"],
+    ["H-index", candidate.hIndex !== null ? String(candidate.hIndex) : "Not given"],
+  ];
+
+  return (
+    <section className="glass-card p-4">
+      <h3 className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-3">
+        Expert profile
+      </h3>
+      <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-[11px] text-slate-500">{label}</dt>
+            <dd className="text-sm text-white">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-3 border-t border-slate-800 pt-3 text-sm">
+        {candidate.referrerEmail ? (
+          <p className="text-slate-300">
+            Referred by{" "}
+            <span className="text-white">{candidate.referrerName}</span>{" "}
+            <a
+              href={`mailto:${candidate.referrerEmail}`}
+              className="text-brand-400 hover:text-brand-300"
+            >
+              ({candidate.referrerEmail})
+            </a>
+            {" · "}
+            <span className="text-emerald-400">
+              {payout !== null
+                ? `${formatINR(payout)} referral`
+                : "Payout pending H-index"}
+            </span>
+          </p>
+        ) : (
+          <p className="text-slate-400">Applied directly</p>
+        )}
+      </div>
+    </section>
   );
 }

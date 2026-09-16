@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serverError } from "@/lib/api-utils";
 import { sendNewApplicationAlert } from "@/lib/agentmail";
+import { expertApplySchema, isExpertNetworkForm } from "@/lib/hiring/expert-network";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const applySchema = z.object({
@@ -19,11 +21,15 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    if (!rateLimit(getClientIp(req), 10)) {
+      return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429 });
+    }
+
     const { slug } = await params;
 
     const job = await prisma.jobPosting.findUnique({
       where: { slug, isActive: true },
-      select: { id: true, title: true, interviewLink: true },
+      select: { id: true, title: true, interviewLink: true, formType: true },
     });
 
     if (!job) {
@@ -36,6 +42,18 @@ export async function POST(
       const first = parsed.error.flatten().fieldErrors;
       const msg = Object.values(first).flat()[0] || "Invalid input";
       return NextResponse.json({ error: msg }, { status: 400 });
+    }
+
+    const isExpert = isExpertNetworkForm(job.formType);
+    let expert: z.infer<typeof expertApplySchema> | null = null;
+    if (isExpert) {
+      const expertParsed = expertApplySchema.safeParse(body);
+      if (!expertParsed.success) {
+        const first = expertParsed.error.flatten().fieldErrors;
+        const msg = Object.values(first).flat()[0] || "Invalid input";
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      expert = expertParsed.data;
     }
 
     const existing = await prisma.candidate.findFirst({
@@ -60,6 +78,15 @@ export async function POST(
         portfolioUrl: parsed.data.portfolioUrl || null,
         coverNote: parsed.data.coverNote || null,
         interviewStatus: "APPLIED",
+        ...(expert && {
+          expertDomain: expert.expertDomain,
+          highestDegree: expert.highestDegree,
+          hIndex: expert.hIndex ?? null,
+          scholarUrl: expert.scholarUrl || null,
+          referrerName: expert.referrerName || null,
+          referrerEmail: expert.referrerEmail || null,
+          referralConsent: Boolean(expert.referrerEmail && expert.referralConsent),
+        }),
       },
     });
 
@@ -72,12 +99,20 @@ export async function POST(
       githubUrl: parsed.data.githubUrl,
       portfolioUrl: parsed.data.portfolioUrl,
       coverNote: parsed.data.coverNote,
+      expert: expert && {
+        domain: expert.expertDomain,
+        degree: expert.highestDegree,
+        hIndex: expert.hIndex ?? null,
+        scholarUrl: expert.scholarUrl || null,
+        referrerName: expert.referrerName || null,
+        referrerEmail: expert.referrerEmail || null,
+      },
     }).catch((err) => console.warn("Application alert email failed:", err));
 
     return NextResponse.json({
       success: true,
       candidateId: candidate.id,
-      interviewLink: job.interviewLink,
+      interviewLink: isExpert ? null : job.interviewLink,
     });
   } catch (err) {
     return serverError(err, "Careers apply POST error");

@@ -19,6 +19,11 @@ import { toast } from "sonner";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import {
+  EXPERT_DEGREES,
+  EXPERT_DOMAINS,
+  isExpertNetworkForm,
+} from "@/lib/hiring/expert-network";
 
 interface Requirement {
   title: string;
@@ -54,6 +59,7 @@ interface JobDetail {
   applicationEmail: string | null;
   salaryInfo: string | null;
   interviewLink: string | null;
+  formType: string;
   createdAt: string;
   org: { name: string; slug: string; logoUrl: string | null };
 }
@@ -84,7 +90,16 @@ export default function InternshipDetailPage() {
     githubUrl: "",
     portfolioUrl: "",
     coverNote: "",
+    expertDomain: "",
+    highestDegree: "",
+    hIndex: "",
+    scholarUrl: "",
+    referrerName: "",
+    referrerEmail: "",
   });
+  const [isReferral, setIsReferral] = useState(false);
+  const [referralConsent, setReferralConsent] = useState(false);
+  const isExpert = isExpertNetworkForm(job?.formType);
 
   const loadJob = useCallback(async () => {
     try {
@@ -113,6 +128,20 @@ export default function InternshipDetailPage() {
       toast.error("Name and email are required");
       return;
     }
+    if (isExpert) {
+      if (!resumeFile && !form.resumeUrl) {
+        toast.error("Please attach a resume");
+        return;
+      }
+      if (!form.expertDomain || !form.highestDegree) {
+        toast.error("Please choose an area of expertise and qualification");
+        return;
+      }
+      if (isReferral && (!form.referrerName || !form.referrerEmail || !referralConsent)) {
+        toast.error("Add your name and email, and confirm the candidate's consent");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -140,7 +169,14 @@ export default function InternshipDetailPage() {
       const res = await fetch(`/api/careers/${slug}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, resumeUrl }),
+        body: JSON.stringify({
+          ...form,
+          resumeUrl,
+          hIndex: form.hIndex === "" ? null : Number(form.hIndex),
+          referrerName: isReferral ? form.referrerName : "",
+          referrerEmail: isReferral ? form.referrerEmail : "",
+          referralConsent: isReferral && referralConsent,
+        }),
       });
 
       const data = await res.json();
@@ -278,7 +314,7 @@ export default function InternshipDetailPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
           {job.skills.length > 0 && (
             <section className="mb-12">
-              <SectionHeading>Tech Stack</SectionHeading>
+              <SectionHeading>{isExpert ? "Areas of Expertise" : "Tech Stack"}</SectionHeading>
               <div className="flex flex-wrap gap-2">
                 {job.skills.map((skill) => (
                   <span
@@ -401,14 +437,44 @@ export default function InternshipDetailPage() {
                   Application Received!
                 </h2>
                 <p className="text-sm text-slate-400 mb-4">
-                  We&apos;ll review your application and get back to you soon.
+                  {isExpert
+                    ? "Thanks! We’ll review the profile and be in touch by email."
+                    : "We’ll review your application and get back to you soon."}
                 </p>
+                {isExpert && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmitted(false);
+                      setShowApplyForm(true);
+                      setResumeFile(null);
+                      setReferralConsent(false);
+                      setForm((p) => ({
+                        ...p,
+                        name: "",
+                        email: "",
+                        phone: "",
+                        resumeUrl: "",
+                        coverNote: "",
+                        expertDomain: "",
+                        highestDegree: "",
+                        hIndex: "",
+                        scholarUrl: "",
+                      }));
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors"
+                  >
+                    Refer someone else
+                  </button>
+                )}
+                {!isExpert && (
                 <Link
                   href={`/sign-up?org=${encodeURIComponent(job.org.slug)}&redirect=${encodeURIComponent("/intern-onboarding")}`}
                   className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-5 py-2.5 text-sm font-semibold text-indigo-300 transition-colors mb-4"
                 >
                   Create an account to complete onboarding
                 </Link>
+                )}
                 {job.interviewLink && (
                   <a
                     href={job.interviewLink}
@@ -427,9 +493,66 @@ export default function InternshipDetailPage() {
                   Apply for {job.title}
                 </h2>
                 <div className="space-y-4 text-left">
+                  {isExpert && (
+                    <fieldset className="rounded-lg border border-slate-700 p-4">
+                      <legend className="px-1 text-xs font-medium text-slate-400">
+                        Who is this for?
+                      </legend>
+                      <div className="flex flex-wrap gap-4 text-sm text-slate-300">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="apply-for"
+                            checked={!isReferral}
+                            onChange={() => setIsReferral(false)}
+                          />
+                          Myself
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="apply-for"
+                            checked={isReferral}
+                            onChange={() => setIsReferral(true)}
+                          />
+                          Someone I&apos;m referring
+                        </label>
+                      </div>
+                      {isReferral && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <label htmlFor="apply-referrer-name" className="block text-xs font-medium text-slate-400 mb-1">
+                              Your Name *
+                            </label>
+                            <input
+                              id="apply-referrer-name"
+                              type="text"
+                              required
+                              value={form.referrerName}
+                              onChange={(e) => setForm((p) => ({ ...p, referrerName: e.target.value }))}
+                              className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="apply-referrer-email" className="block text-xs font-medium text-slate-400 mb-1">
+                              Your Email *
+                            </label>
+                            <input
+                              id="apply-referrer-email"
+                              type="email"
+                              required
+                              value={form.referrerEmail}
+                              onChange={(e) => setForm((p) => ({ ...p, referrerEmail: e.target.value }))}
+                              className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </fieldset>
+                  )}
                   <div>
                     <label htmlFor="apply-name" className="block text-xs font-medium text-slate-400 mb-1">
-                      Full Name *
+                      {isExpert && isReferral ? "Candidate’s Full Name *" : "Full Name *"}
                     </label>
                     <input
                       id="apply-name"
@@ -445,7 +568,7 @@ export default function InternshipDetailPage() {
                   </div>
                   <div>
                     <label htmlFor="apply-email" className="block text-xs font-medium text-slate-400 mb-1">
-                      Email *
+                      {isExpert && isReferral ? "Candidate’s Email *" : "Email *"}
                     </label>
                     <input
                       id="apply-email"
@@ -476,7 +599,7 @@ export default function InternshipDetailPage() {
                   </div>
                   <div>
                     <label htmlFor="apply-resume" className="block text-xs font-medium text-slate-400 mb-1">
-                      Resume (PDF or Word, max 5 MB)
+                      Resume (PDF or Word, max 5 MB){isExpert && " *"}
                     </label>
                     <div className="relative">
                       <input
@@ -498,6 +621,78 @@ export default function InternshipDetailPage() {
                       )}
                     </div>
                   </div>
+                  {isExpert ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="apply-domain" className="block text-xs font-medium text-slate-400 mb-1">
+                            Area of Expertise *
+                          </label>
+                          <select
+                            id="apply-domain"
+                            required
+                            value={form.expertDomain}
+                            onChange={(e) => setForm((p) => ({ ...p, expertDomain: e.target.value }))}
+                            className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                          >
+                            <option value="">Select…</option>
+                            {EXPERT_DOMAINS.map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor="apply-degree" className="block text-xs font-medium text-slate-400 mb-1">
+                            Highest Qualification *
+                          </label>
+                          <select
+                            id="apply-degree"
+                            required
+                            value={form.highestDegree}
+                            onChange={(e) => setForm((p) => ({ ...p, highestDegree: e.target.value }))}
+                            className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                          >
+                            <option value="">Select…</option>
+                            {EXPERT_DEGREES.map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="apply-hindex" className="block text-xs font-medium text-slate-400 mb-1">
+                            H-index
+                          </label>
+                          <input
+                            id="apply-hindex"
+                            type="number"
+                            min={0}
+                            max={500}
+                            step={1}
+                            inputMode="numeric"
+                            value={form.hIndex}
+                            onChange={(e) => setForm((p) => ({ ...p, hIndex: e.target.value }))}
+                            className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                            placeholder="0 if no publications"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="apply-scholar" className="block text-xs font-medium text-slate-400 mb-1">
+                            Google Scholar / ORCID URL
+                          </label>
+                          <input
+                            id="apply-scholar"
+                            type="url"
+                            value={form.scholarUrl}
+                            onChange={(e) => setForm((p) => ({ ...p, scholarUrl: e.target.value }))}
+                            className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors"
+                            placeholder="https://scholar.google.com/citations?user=…"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="apply-github" className="block text-xs font-medium text-slate-400 mb-1">
@@ -536,9 +731,12 @@ export default function InternshipDetailPage() {
                       />
                     </div>
                   </div>
+                  )}
                   <div>
                     <label htmlFor="apply-cover" className="block text-xs font-medium text-slate-400 mb-1">
-                      Why does AI-native engineering matter to you? (3 sentences)
+                      {isExpert
+                        ? "Research background (optional)"
+                        : "Why does AI-native engineering matter to you? (3 sentences)"}
                     </label>
                     <textarea
                       id="apply-cover"
@@ -551,9 +749,25 @@ export default function InternshipDetailPage() {
                       }
                       rows={4}
                       className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors resize-none"
-                      placeholder="Tell us why you're excited about building with AI..."
+                      placeholder={
+                        isExpert
+                          ? "Field of research, notable publications, availability…"
+                          : "Tell us why you're excited about building with AI..."
+                      }
                     />
                   </div>
+                  {isExpert && isReferral && (
+                    <label className="flex items-start gap-2 text-xs text-slate-400">
+                      <input
+                        type="checkbox"
+                        required
+                        checked={referralConsent}
+                        onChange={(e) => setReferralConsent(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      I confirm this person has agreed to me sharing their resume and details.
+                    </label>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-6">
                   <button
@@ -580,11 +794,12 @@ export default function InternshipDetailPage() {
             ) : (
               <div>
                 <h2 className="text-xl font-bold text-white mb-2">
-                  Interested in this internship?
+                  {isExpert ? "Join the network, or refer someone" : "Interested in this internship?"}
                 </h2>
                 <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
-                  Send your GitHub profile, a deployed project link, and a few
-                  sentences on why AI-native engineering matters to you.
+                  {isExpert
+                    ? "Share your resume, or submit a researcher’s resume with their consent."
+                    : "Send your GitHub profile, a deployed project link, and a few sentences on why AI-native engineering matters to you."}
                 </p>
                 {job.applicationEmail && (
                   <p className="text-sm text-slate-500 mb-4">

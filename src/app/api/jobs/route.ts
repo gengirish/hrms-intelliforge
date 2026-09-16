@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { serverError } from "@/lib/api-utils";
 import { createInterviewConfig } from "@/lib/interview-bot-client";
 import { generateSlug } from "@/lib/utils";
+import { JOB_FORM_TYPES, isExpertNetworkForm } from "@/lib/hiring/expert-network";
 import { z } from "zod";
 
 const createJobSchema = z.object({
@@ -20,6 +21,7 @@ const createJobSchema = z.object({
   interviewSteps: z.array(z.object({ step: z.string(), title: z.string(), description: z.string() })).optional(),
   applicationEmail: z.string().email().optional().or(z.literal("")),
   salaryInfo: z.string().max(200).optional(),
+  formType: z.enum(JOB_FORM_TYPES).optional(),
 });
 
 export async function GET() {
@@ -61,6 +63,7 @@ export async function GET() {
         employmentType: job.employmentType,
         duration: job.duration,
         interviewLink: job.interviewLink,
+        formType: job.formType,
         isActive: job.isActive,
         createdAt: job.createdAt,
         candidateCount: job._count.candidates,
@@ -91,18 +94,23 @@ export async function POST(req: NextRequest) {
 
     let interviewBotJobId: string | null = null;
     let interviewLink: string | null = null;
+    const formType = parsed.data.formType ?? "STANDARD";
 
-    try {
-      const config = await createInterviewConfig({
-        title: parsed.data.title,
-        description: parsed.data.description,
-        skills: parsed.data.skills,
-        orgId: session.orgId,
-      });
-      interviewBotJobId = config.id;
-      interviewLink = config.interviewLink;
-    } catch (err) {
-      console.warn("Interview Bot integration skipped:", err);
+    // Expert-network postings are reviewed by hand and forwarded to the
+    // partner; an AI coding interview is not part of that flow.
+    if (!isExpertNetworkForm(formType)) {
+      try {
+        const config = await createInterviewConfig({
+          title: parsed.data.title,
+          description: parsed.data.description,
+          skills: parsed.data.skills,
+          orgId: session.orgId,
+        });
+        interviewBotJobId = config.id;
+        interviewLink = config.interviewLink;
+      } catch (err) {
+        console.warn("Interview Bot integration skipped:", err);
+      }
     }
 
     let slug = generateSlug(parsed.data.title);
@@ -128,6 +136,7 @@ export async function POST(req: NextRequest) {
         interviewSteps: parsed.data.interviewSteps || undefined,
         applicationEmail: parsed.data.applicationEmail || null,
         salaryInfo: parsed.data.salaryInfo || null,
+        formType,
         interviewBotJobId,
         interviewLink,
       },

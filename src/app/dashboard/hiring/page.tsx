@@ -23,7 +23,8 @@ import { CandidateDetailPanel } from "@/components/hiring/candidate-detail-panel
 import { ScheduleInterviewModal } from "@/components/hiring/schedule-interview-modal";
 import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge";
 import { canConvertCandidate } from "@/lib/hiring/candidate-status";
-import { cn, formatDateIST } from "@/lib/utils";
+import { cn, formatDateIST, formatINR } from "@/lib/utils";
+import { isExpertNetworkForm, referralPayoutPaise } from "@/lib/hiring/expert-network";
 
 interface JobPosting {
   id: string;
@@ -35,6 +36,7 @@ interface JobPosting {
   employmentType: string;
   duration: string | null;
   interviewLink: string | null;
+  formType: string;
   isActive: boolean;
   createdAt: string;
   candidateCount: number;
@@ -54,6 +56,12 @@ interface Candidate {
   interviewStatus: string;
   reportUrl: string | null;
   convertedToIntern: boolean;
+  expertDomain: string | null;
+  highestDegree: string | null;
+  hIndex: number | null;
+  scholarUrl: string | null;
+  referrerName: string | null;
+  referrerEmail: string | null;
   createdAt: string;
 }
 
@@ -84,6 +92,7 @@ export default function HiringPage() {
     duration: "",
     salaryInfo: "",
     applicationEmail: "",
+    formType: "STANDARD",
   });
 
   const loadJobs = useCallback(async () => {
@@ -142,6 +151,7 @@ export default function HiringPage() {
           duration: newJob.duration || undefined,
           salaryInfo: newJob.salaryInfo || undefined,
           applicationEmail: newJob.applicationEmail || undefined,
+          formType: newJob.formType,
         }),
       });
 
@@ -153,7 +163,7 @@ export default function HiringPage() {
 
       toast.success("Job posting created");
       setShowCreateForm(false);
-      setNewJob({ title: "", description: "", skills: "", location: "", employmentType: "FULL_TIME", duration: "", salaryInfo: "", applicationEmail: "" });
+      setNewJob({ title: "", description: "", skills: "", location: "", employmentType: "FULL_TIME", duration: "", salaryInfo: "", applicationEmail: "", formType: "STANDARD" });
       await loadJobs();
     } catch {
       toast.error("Failed to create job posting");
@@ -310,6 +320,11 @@ export default function HiringPage() {
   }
 
   if (selectedJob) {
+    const isExpert = isExpertNetworkForm(selectedJob.formType);
+    const referralTotalPaise = candidates.reduce(
+      (sum, c) => sum + (referralPayoutPaise(c) ?? 0),
+      0
+    );
     return (
       <>
         <Breadcrumbs
@@ -373,6 +388,12 @@ export default function HiringPage() {
                 <Users className="h-5 w-5 text-indigo-400" />
                 Candidates ({candidates.length})
               </h2>
+              {isExpert && candidates.length > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  {candidates.filter((c) => c.referrerEmail).length} referrals
+                  {referralTotalPaise > 0 && ` · ${formatINR(referralTotalPaise)} referral payout`}
+                </p>
+              )}
             </div>
 
             {candidatesLoading ? (
@@ -381,7 +402,9 @@ export default function HiringPage() {
               </div>
             ) : candidates.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-12">
-                No candidates yet. Share the interview link to start receiving applications.
+                {isExpert
+                  ? "No submissions yet. Share the public page to start receiving resumes."
+                  : "No candidates yet. Share the interview link to start receiving applications."}
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -389,7 +412,7 @@ export default function HiringPage() {
                   <thead>
                     <tr className="border-b border-slate-700 bg-slate-800/50">
                       <th className="text-left py-3 px-4 text-slate-400 font-medium">Name</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Score</th>
+                      <th className="text-left py-3 px-4 text-slate-400 font-medium">{isExpert ? "Profile" : "Score"}</th>
                       <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
                       <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Applied</th>
                       <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
@@ -429,13 +452,31 @@ export default function HiringPage() {
                                 {c.portfolioUrl && (
                                   <a href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">Portfolio</a>
                                 )}
+                                {c.scholarUrl && (
+                                  <a href={c.scholarUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-400 hover:text-indigo-300">Scholar</a>
+                                )}
                               </div>
                             )}
                           </div>
                         </td>
+                        {isExpert ? (
+                          <td className="py-3 px-4 text-xs">
+                            <p className="text-white">{c.expertDomain ?? "—"}</p>
+                            <p className="text-slate-400">
+                              {c.highestDegree ?? "—"} · H-index {c.hIndex ?? "?"}
+                            </p>
+                            {c.referrerEmail && (
+                              <p className="text-emerald-400" title={`Referred by ${c.referrerName} (${c.referrerEmail})`}>
+                                Referral
+                                {referralPayoutPaise(c) !== null && ` · ${formatINR(referralPayoutPaise(c)!)}`}
+                              </p>
+                            )}
+                          </td>
+                        ) : (
                         <td className={cn("py-3 px-4 font-bold", getScoreColor(c.interviewScore))}>
                           {c.interviewScore !== null ? `${c.interviewScore}%` : "—"}
                         </td>
+                        )}
                         <td className="py-3 px-4">
                           <CandidateStatusBadge status={c.interviewStatus} />
                         </td>
@@ -444,6 +485,7 @@ export default function HiringPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
+                            {!isExpert && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -454,6 +496,7 @@ export default function HiringPage() {
                               <Calendar className="h-3 w-3" />
                               Schedule
                             </button>
+                            )}
                             {c.reportUrl && (
                               <a
                                 href={c.reportUrl}
@@ -464,7 +507,7 @@ export default function HiringPage() {
                                 Report
                               </a>
                             )}
-                            {canConvertCandidate(c.interviewStatus, c.convertedToIntern) && (
+                            {!isExpert && canConvertCandidate(c.interviewStatus, c.convertedToIntern) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -502,13 +545,14 @@ export default function HiringPage() {
             candidate={selectedCandidate}
             jobId={selectedJob.id}
             jobTitle={selectedJob.title}
+            expertNetwork={isExpert}
             open={true}
             onClose={() => setSelectedCandidate(null)}
             onStatusChange={handleStatusChange}
-            onConvert={handlePanelConvert}
+            onConvert={isExpert ? undefined : handlePanelConvert}
             onDelete={handleDeleteCandidate}
             onContact={handleContactCandidate}
-            onSchedule={() => setSchedulingCandidate(selectedCandidate)}
+            onSchedule={isExpert ? undefined : () => setSchedulingCandidate(selectedCandidate)}
             busy={panelBusy}
           />
         )}
@@ -604,6 +648,20 @@ export default function HiringPage() {
                   <option value="CONTRACT">Contract</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="new-job-form-type" className="block text-xs font-medium text-slate-400 mb-1">
+                  Application form
+                </label>
+                <select
+                  id="new-job-form-type"
+                  value={newJob.formType}
+                  onChange={(e) => setNewJob((p) => ({ ...p, formType: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-white focus:border-indigo-500 outline-none transition-colors text-sm"
+                >
+                  <option value="STANDARD">Standard (GitHub, portfolio, AI interview)</option>
+                  <option value="EXPERT_NETWORK">Expert network (researchers, H-index, referrals; no AI interview)</option>
+                </select>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <input
                   type="text"
@@ -663,6 +721,11 @@ export default function HiringPage() {
                       )}>
                         {job.isActive ? "Active" : "Closed"}
                       </span>
+                      {isExpertNetworkForm(job.formType) && (
+                        <span className="inline-flex rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          Expert network
+                        </span>
+                      )}
                       {job.employmentType && job.employmentType !== "FULL_TIME" && (
                         <span className="inline-flex rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-[10px] font-medium text-indigo-400">
                           {job.employmentType === "INTERNSHIP" ? "Internship" : job.employmentType === "PART_TIME" ? "Part-Time" : "Contract"}
