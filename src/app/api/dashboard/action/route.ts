@@ -7,7 +7,7 @@ import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
 import { notify } from "@/lib/notifications";
-import { scheduleLearningProvision } from "@/lib/learning-provision";
+import { acceptOffer } from "@/lib/offer-acceptance";
 import { formatINR, formatDateIST } from "@/lib/utils";
 import React, { type ReactElement } from "react";
 
@@ -121,29 +121,31 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "approve_offer") {
-      if (intern.status !== "OFFERED") {
-        return NextResponse.json(
-          { error: `Cannot approve — intern status is "${intern.status}" (expected OFFERED).` },
-          { status: 400 }
-        );
-      }
-
-      await prisma.intern.update({
-        where: { id: internId },
-        data: { status: "ACTIVE", acceptedAt: new Date() },
+      const result = await acceptOffer({
+        internId,
+        source: "ADMIN",
+        orgId: admin.orgId,
+        adminId: admin.id,
       });
 
-      try {
-        await notify(internId, "OFFER_ACCEPTED", {
-          startDate: formatDateIST(intern.startDate),
-        });
-      } catch {
-        // non-critical — status is already updated
+      switch (result.outcome) {
+        case "accepted":
+          return NextResponse.json({ ok: true, status: "ACTIVE" });
+        case "already_active":
+          return NextResponse.json({ ok: true, status: "ACTIVE", alreadyActive: true });
+        case "not_found":
+          return NextResponse.json({ error: "Intern not found" }, { status: 404 });
+        case "deactivated":
+          return NextResponse.json(
+            { error: "Cannot approve — intern is deactivated. Reactivate them first." },
+            { status: 400 }
+          );
+        case "invalid_status":
+          return NextResponse.json(
+            { error: `Cannot approve — intern status is "${result.intern.status}" (expected OFFERED).` },
+            { status: 400 }
+          );
       }
-
-      scheduleLearningProvision(internId, admin.id);
-
-      return NextResponse.json({ ok: true, status: "ACTIVE" });
     }
 
     if (action === "send_reminder") {

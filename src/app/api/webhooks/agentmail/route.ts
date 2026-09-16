@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { scheduleLearningProvision } from "@/lib/learning-provision";
 import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/webhook-idempotency";
+import { acceptOffer, isAcceptanceReply } from "@/lib/offer-acceptance";
 
 function parseSenderEmail(from: unknown): string | null {
   if (!from) return null;
@@ -18,16 +18,6 @@ function parseSenderEmail(from: unknown): string | null {
     }
   }
   return null;
-}
-
-function indicatesOfferAcceptance(text: string): boolean {
-  const lower = text.toLowerCase();
-  return (
-    /\bi\s+accept\b/i.test(text) ||
-    /\byes\b/.test(lower) ||
-    /\bagree\b/.test(lower) ||
-    /\bconfirm\b/.test(lower)
-  );
 }
 
 export async function POST(req: NextRequest) {
@@ -74,13 +64,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
-      if (intern.status === "OFFERED" && indicatesOfferAcceptance(bodyText)) {
-        await prisma.intern.update({
-          where: { id: intern.id },
-          data: { acceptedAt: new Date(), status: "ACTIVE" },
-        });
-        scheduleLearningProvision(intern.id);
-        console.log(`Intern ${intern.name} auto-accepted via email reply`);
+      if (intern.status === "OFFERED" && isAcceptanceReply(bodyText, "email")) {
+        await acceptOffer({ internId: intern.id, source: "EMAIL" });
       }
     }
 
