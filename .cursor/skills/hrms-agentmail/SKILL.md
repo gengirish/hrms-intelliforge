@@ -21,7 +21,10 @@ AgentMail is an API-first email platform for AI agents. This skill covers SDK us
 
 - TypeScript SDK: `agentmail` in `package.json`; client and sends in `src/lib/agentmail.ts`
 - Single shared inbox `hr@intelliforge.tech` (`clientId: hrms-hr-inbox`); no per-user inboxes
-- Env: `AGENTMAIL_API_KEY` only for app email (see `.env.example`)
+- Env: `AGENTMAIL_API_KEY` + `AGENTMAIL_HR_INBOX_ID`; `HR_ALERT_EMAILS` for new-application alert recipients (see `.env.example`)
+- `intelliforge.tech` MX points at AgentMail, so `hr@intelliforge.tech` exists only inside AgentMail — never use it as a recipient for alerts from that same inbox (it logs as `sent` and reaches no one)
+- Intern mail goes through `notify()`; hiring mail (`sendNewApplicationAlert`, `sendApplicationReceivedEmail`) is sent directly from the apply route and awaited so Vercel doesn't freeze it
+- Inbound webhook events are deduped with `claimWebhookEvent("agentmail", …)`; offer replies go through `acceptOffer()`
 - Webhook: `POST /api/webhooks/agentmail` — register in console for the HR inbox
 - **No** in-app SMTP fallback; all outbound mail uses the API
 

@@ -32,6 +32,19 @@ All notification call sites (onboard, dashboard actions, cron jobs) now go throu
 
 The AgentMail functions (`sendWelcomeEmail`, `sendOfferLetter`, etc.) are still the email transport layer — they are called by the orchestrator, not by API routes directly.
 
+### Hiring emails (the exception)
+
+Job applicants are `Candidate` rows, not interns, so `notify()` does not apply. `POST /api/careers/[slug]/apply` sends two emails directly and awaits both:
+
+| Email | Function | Recipient |
+|---|---|---|
+| New-application alert | `sendNewApplicationAlert()` | `HR_ALERT_EMAILS` (comma-separated; defaults to `gen.girish@gmail.com`) |
+| Application received | `sendApplicationReceivedEmail()` | The applicant; for an expert-network referral, the referrer is CC'd |
+
+> **Do not send alerts to `hr@intelliforge.tech`.** The domain's MX record points at AgentMail, so that address exists only inside AgentMail. A message from the HR inbox to itself is logged as `sent` and never delivered anywhere a person reads. Send to a real mailbox instead.
+
+Failures are logged at error level ("Application alert email failed" / "Applicant confirmation email failed") and do not fail the application.
+
 ### Environment Variables
 
 | Variable | Purpose |
@@ -47,7 +60,7 @@ The AgentMail functions (`sendWelcomeEmail`, `sendOfferLetter`, etc.) are still 
 https://hrms.intelliforge.tech/api/webhooks/agentmail
 ```
 
-Incoming `message.received` events are used to match **offer acceptance** replies (sender email + body). See [README.md](../README.md#communication-system).
+Incoming `message.received` events are used to match **offer acceptance** replies (sender email + body), which are applied through the shared `acceptOffer()`. Each event is recorded in `webhook_events` first, so AgentMail retries are not processed twice. See [README.md](../README.md#communication-system).
 
 ---
 

@@ -73,7 +73,7 @@ prisma/
 | Page | Description |
 |------|-------------|
 | `/dashboard` | Manage interns — offers, analytics, learning, notifications |
-| `/dashboard/hiring` | Job postings, candidates, interview scores, convert to intern |
+| `/dashboard/hiring` | Job postings, candidates, interview scores, referral payouts, convert to intern |
 | `/dashboard/attendance` | Org-wide attendance overview |
 | `/dashboard/tasks` | Admin task management per intern |
 | `/dashboard/weekly-progress` | Review intern weekly progress |
@@ -85,8 +85,8 @@ prisma/
 
 | Page | Description |
 |------|-------------|
-| `/careers` | Public job board |
-| `/careers/[slug]` | Job detail + apply |
+| `/internships` | Public job board (`/careers` redirects here) |
+| `/internships/[slug]` | Job detail + apply (`/careers/[slug]` redirects here) |
 | `/pricing` | Subscription plans |
 | `/about` | Product info |
 
@@ -94,13 +94,22 @@ prisma/
 
 End-to-end hiring lives in `/dashboard/hiring` and the public careers pages:
 
-1. **Create job posting** — Admin creates a role with skills, description, and optional Interview Bot link.
-2. **Public apply** — Candidates apply at `/careers/[slug]` (resume upload, cover note).
+1. **Create job posting** — Admin creates a role with skills, description, and an **application form** (see below). Standard postings get an Interview Bot link when the integration is configured.
+2. **Public apply** — Candidates apply at `/internships/[slug]` (resume upload, cover note). HR gets a new-application alert at `HR_ALERT_EMAILS`, and the applicant gets a confirmation email.
 3. **Interview Bot** — When configured, candidates receive an AI interview link; scores and reports sync via `/api/webhooks/interview-bot`.
 4. **Review & schedule** — Admins review candidates, schedule Google Calendar events, and contact applicants.
 5. **Convert to intern** — Approved candidates convert to intern records (`POST /api/jobs/[id]/convert`), entering the intern lifecycle.
 
 Key models: `JobPosting`, `Candidate`, `ScheduledEvent`.
+
+### Application forms
+
+| `formType` | Use for | Form fields | Differences |
+|---|---|---|---|
+| `STANDARD` | Internships and engineering roles | GitHub, portfolio, cover note | Interview Bot, schedule, convert to intern |
+| `EXPERT_NETWORK` | Partner expert networks (e.g. Cognyzer researchers) | Expertise, qualification, H-index, Scholar/ORCID (optional), required resume | Referral submissions with consent; referrer CC'd on the confirmation; no Interview Bot or convert; dashboard shows referral payout (H-index 0–1 → ₹300, >1 → ₹500) |
+
+The form type is chosen when the posting is created; there is no edit UI yet. Logic lives in `src/lib/hiring/expert-network.ts`.
 
 ## Learning Integration
 
@@ -135,7 +144,9 @@ All outbound communication is routed through a **unified notification orchestrat
 | Channel | Provider | Code |
 |---------|----------|------|
 | Email | AgentMail (`hr@intelliforge.tech`) | `src/lib/agentmail.ts` |
-| WhatsApp | Meta Business Cloud API | `src/lib/whatsapp.ts` |
+| WhatsApp | Central WhatsApp hub, or Meta Business Cloud API directly as fallback | `src/lib/whatsapp.ts`, `src/lib/whatsapp-hub.ts` |
+
+Hiring mail is the exception to `notify()`, because candidates are not interns: the apply route sends the HR alert and applicant confirmation directly. Alerts go to `HR_ALERT_EMAILS`, not `hr@intelliforge.tech` — that address only exists inside AgentMail, so the inbox mailing itself reaches nobody.
 
 ### Notification Flows
 
@@ -150,11 +161,16 @@ Every notification goes through `notify(internId, type, data)` which handles cha
 | 5 | **Attendance Nudge** | HTML with attendance link | `attendance_nudge` template |
 | 6 | **Completion** | Certificate PDF attachment | `completion_cert` template (links to email for PDF) |
 
-### Offer Acceptance (Dual-Channel)
+### Offer Acceptance
 
-Interns can accept offers by replying on **either** channel:
-- **Email**: Reply "I Accept" to the offer email → AgentMail webhook auto-activates
-- **WhatsApp**: Reply "ACCEPT", "Yes", "Agree", or "Confirm" → WhatsApp webhook auto-activates
+Interns can accept an offer through any of these, and every path runs the shared `acceptOffer()` (`src/lib/offer-acceptance.ts`):
+- **Email**: Reply "I Accept" to the offer email → AgentMail webhook
+- **WhatsApp**: Reply "ACCEPT", "Yes", "Agree", or "Confirm" → WhatsApp webhook
+- **Portal**: Accept on `/offer`
+- **E-sign**: Complete the Digio signature → Digio webhook
+- **Admin**: `approve_offer` from the dashboard
+
+Replies that negate ("I don't accept", "decline") are never treated as acceptance, and quoted offer text in an email reply is ignored.
 
 ### Delivery Tracking
 
@@ -185,6 +201,7 @@ JWT_SECRET=your-secret-at-least-32-chars    # openssl rand -hex 32
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AGENTMAIL_API_KEY=am_your_api_key
 AGENTMAIL_HR_INBOX_ID=hr@intelliforge.tech   # inbox ID from AgentMail console
+HR_ALERT_EMAILS=you@example.com               # new-application alerts (comma-separated)
 CRON_SECRET=your-cron-secret
 NEXT_PUBLIC_APP_URL=https://hrms.intelliforge.tech
 
@@ -253,6 +270,8 @@ Subscribe to the `messages` webhook field. See [WhatsApp setup guide](./docs/wha
 **Interview Bot** — `/api/webhooks/interview-bot` for candidate score/report updates.  
 **RazorpayX** — `/api/webhooks/razorpay` for payout status.  
 **Digio** — `/api/webhooks/digio` for e-sign completion.
+
+All provider webhooks are idempotent: each event is recorded in `webhook_events` (`src/lib/webhook-idempotency.ts`), so provider retries are acknowledged without repeating side effects. Stripe, RazorpayX, Digio and the Interview Bot need their webhook secrets set in production (`STRIPE_WEBHOOK_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `DIGIO_WEBHOOK_SECRET`, `INTERVIEW_BOT_WEBHOOK_SECRET`); without one, Stripe/RazorpayX return 500, the Interview Bot returns 503, and Digio accepts unsigned calls while Digio itself is unconfigured.
 
 ## Testing
 

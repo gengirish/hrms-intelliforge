@@ -56,7 +56,7 @@ hrms-intelliforge/
 │   │   │   ├── hiring/             # Job postings + candidates
 │   │   │   ├── payouts/            # Stipend disbursement
 │   │   │   └── settings/           # Org, team, billing, integrations
-│   │   ├── careers/                # Public job board
+│   │   ├── internships/            # Public job board + apply (/careers redirects here)
 │   │   ├── sign-in/ sign-up/       # Auth pages
 │   │   ├── create-org/             # New workspace onboarding
 │   │   ├── intern-onboarding/      # Intern self-service onboarding
@@ -84,7 +84,7 @@ hrms-intelliforge/
 │       ├── esign.ts                # Digio e-sign
 │       ├── google-calendar.ts      # Calendar scheduling
 │       ├── ai/                     # OpenAI document OCR, reviews, scoring
-│       ├── hiring/                 # Candidate status helpers
+│       ├── hiring/                 # Candidate status + expert-network form helpers
 │       └── validations.ts          # Zod schemas
 ├── prisma/
 │   ├── schema.prisma               # Database schema
@@ -95,7 +95,9 @@ hrms-intelliforge/
 │   └── e2e/                        # Playwright E2E specs
 ├── scripts/                        # Maintenance & admin CLI scripts
 ├── docs/                           # Setup guides (AgentMail, WhatsApp)
+├── .claude/skills/                 # Claude Code skills
 ├── .cursor/skills/                 # Cursor AI skills
+├── .agents/skills/                 # Antigravity AI skills (all three kept in sync)
 ├── vercel.json                     # Cron job config
 ├── vitest.config.ts
 ├── playwright.config.ts
@@ -108,13 +110,15 @@ hrms-intelliforge/
 |---------|----------|-------|
 | **Intern portal** | `/attendance`, `/tasks`, `/daily-plan`, `/weekly-progress`, `/offer` | Self-service intern workflows |
 | **Admin dashboard** | `/dashboard` | Intern lifecycle, analytics, notifications, learning |
-| **Hiring pipeline** | `/dashboard/hiring`, `/careers` | Job postings, candidates, Interview Bot, convert to intern |
+| **Hiring pipeline** | `/dashboard/hiring`, `/internships` | Job postings, candidates, Interview Bot, convert to intern; `EXPERT_NETWORK` postings for partner researcher networks with referrals |
 | **WhatsApp bot** | `src/lib/wa-bot/`, `/api/webhooks/whatsapp` | Attendance, tasks, offer accept, FAQ intents |
 | **Stripe billing** | `/pricing`, `/api/billing/*`, `/api/webhooks/stripe` | Org subscription plans |
 | **Learning integration** | `/api/learning/*`, `LearningEnrollment` model | Enroll + sync from learning.intelliforge.tech |
 | **Payouts** | `/dashboard/payouts`, `/api/payouts/*` | RazorpayX stipend batches |
 | **Interview Bot** | `interview-bot-client.ts`, `/api/webhooks/interview-bot` | External AI interview scores/reports |
 | **E-sign offers** | `/api/offer/esign`, Digio webhook | Digital offer letter signing |
+| **Offer acceptance** | `src/lib/offer-acceptance.ts` | `acceptOffer()` shared by email, WhatsApp, portal, admin and e-sign |
+| **Webhook idempotency** | `src/lib/webhook-idempotency.ts`, `WebhookEvent` model | `claimWebhookEvent()` dedupes provider retries |
 | **Multi-tenant** | `Organization` model, `/create-org`, `?org=slug` sign-up | Org-scoped data isolation |
 | **Integrations health** | `/dashboard/settings` → Integrations tab | WhatsApp + AgentMail config status |
 
@@ -127,8 +131,9 @@ Key models in `prisma/schema.prisma`:
 | `Organization` | Tenant workspace | slug, plan, stripeCustomerId, whatsappPhoneId, agentmailInboxId |
 | `Admin` | Org admin/mentor | orgId, email, passwordHash, role |
 | `Intern` | Intern account | orgId, status, stipendPaise, mentorId, whatsappOptIn |
-| `JobPosting` | Hiring role | orgId, slug, skills, interviewBotJobId, interviewLink |
-| `Candidate` | Job applicant | jobPostingId, interviewScore, interviewStatus, convertedToIntern |
+| `JobPosting` | Hiring role | orgId, slug, skills, formType (`STANDARD`/`EXPERT_NETWORK`), interviewBotJobId, interviewLink |
+| `Candidate` | Job applicant | jobPostingId, interviewScore, interviewStatus, convertedToIntern, expertDomain, hIndex, referrerEmail, referralConsent |
+| `WebhookEvent` | Webhook dedupe ledger | provider, eventId (unique together), orgId |
 | `LearningEnrollment` | Learning course row | internId, courseId, progressPercent, learningEnrollmentId |
 | `NotificationLog` | Delivery tracking | internId, channel, type, status, externalId |
 | `StipendPayoutBatch` | Monthly payout run | orgId, month, status, totalPaise |
@@ -168,7 +173,15 @@ Auth is JWT-based: `signJWT({ userId, role, email })` stored in HTTP-only cookie
 
 ### Candidate Flow
 ```
-/careers → Apply → (optional) Interview Bot → Admin reviews → Convert to intern
+/internships/[slug] → Apply → HR alert + applicant confirmation email
+  → (optional) Interview Bot → Admin reviews → Convert to intern
+```
+
+### Expert-network Flow
+```
+/internships/[slug] (EXPERT_NETWORK) → Apply as self or refer someone (with consent)
+  → HR alert + confirmation (referrer CC'd) → Admin reviews profile + referral payout
+  → Forward to partner (e.g. Cognyzer) by hand
 ```
 
 ## Design System
@@ -196,7 +209,8 @@ Indian locale conventions: IST timezone, ₹ stipend in paise, DD/MM/YYYY dates.
 | `JWT_SECRET` | JWT signing (min 32 chars) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob file uploads |
 | `AGENTMAIL_API_KEY` | AgentMail SDK |
-| `AGENTMAIL_HR_INBOX_ID` | Default HR inbox |
+| `AGENTMAIL_HR_INBOX_ID` | Default HR inbox (sending address) |
+| `HR_ALERT_EMAILS` | New-application alert recipients; never `hr@intelliforge.tech` |
 | `WHATSAPP_*` | WhatsApp Cloud API credentials |
 | `CRON_SECRET` | Vercel cron auth header |
 | `NEXT_PUBLIC_APP_URL` | App base URL |
@@ -228,11 +242,13 @@ Per-org overrides exist on `Organization` for WhatsApp and AgentMail when tenant
 2. **Prisma for all DB access** — use `prisma` from `@/lib/prisma`; migrations in `prisma/migrations/`
 3. **Multi-tenant isolation** — every query scoped by `orgId` from session; never trust client-supplied org ids
 4. **Public signup org resolution** — `/api/auth/register` and `/api/mentors/apply` share `resolveOrgForPublicSignup()` (`src/lib/default-org.ts`): `orgSlug` → `DEFAULT_ORG_SLUG` env → sole org → 400
-5. **Notifications go through `notify()`** — never call AgentMail/WhatsApp directly from routes
+5. **Notifications go through `notify()`** — never call AgentMail/WhatsApp directly from routes. Exception: hiring emails to candidates (not interns) are sent directly from the apply route and awaited
 6. **Indian conventions** — IST dates, paise for money, E.164 phones for WhatsApp
 7. **Versioned migrations** — use `prisma migrate deploy` in production, not `db push`
 8. **Rate limiting** — use `rateLimit()` from `@/lib/rate-limit` on auth and sensitive endpoints
 9. **E2E cleanup** — run `scripts/purge-e2e-records.mjs --execute` after Playwright runs
+10. **Offer acceptance goes through `acceptOffer()`** — never flip an intern to ACTIVE in a route
+11. **Webhooks claim before acting** — `claimWebhookEvent()` after the signature check, `releaseWebhookEvent()` + 5xx on failure
 
 ## Testing
 
@@ -248,3 +264,5 @@ E2E_BASE_URL=http://localhost:3001 npm run test:e2e   # Playwright (port 3001)
 - `hrms-testing` — Vitest + Playwright
 - `hrms-agentmail` — Email integration
 - `hrms-billing` — Stripe setup
+
+Only `hrms-project`, `hrms-linkedin-mentor`, `hrms-database`, `hrms-agentmail` (HRMS half) and `ui-ux-pro-max` describe this codebase accurately; the other hrms-* skills were written for the separate Interview Bot project.

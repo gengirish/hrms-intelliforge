@@ -91,7 +91,7 @@ Job detail now includes `org.slug` alongside `org.name` and `org.logoUrl`.
 
 ## Careers flow
 
-After a candidate applies on `/careers/[jobSlug]`, the success screen links to org-scoped signup so they can create an account under the hiring organization before completing intern onboarding.
+After a candidate applies on `/internships/[jobSlug]` (`/careers/[jobSlug]` redirects there), the success screen links to org-scoped signup so they can create an account under the hiring organization before completing intern onboarding. Expert-network postings (`formType: EXPERT_NETWORK`) skip that link, since those applicants are not joining as interns; they get a "Refer someone else" button instead.
 
 ## Admin / test user scripts
 

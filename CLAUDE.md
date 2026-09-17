@@ -55,7 +55,13 @@ Every tenant-scoped table has a `NOT NULL orgId` FK to `Organization` (`ON DELET
 
 All outbound intern communication goes through the single orchestrator `notify(internId, type, data)` in `src/lib/notifications.ts`, which fans out to Email (AgentMail, `src/lib/agentmail.ts`) and WhatsApp (`src/lib/whatsapp.ts`), respects per-intern opt-in, and logs to `NotificationLog`. Never call AgentMail/WhatsApp clients directly from a route or cron job — always go through `notify()`.
 
-Offer acceptance is dual-channel: interns can reply "I Accept" by email (AgentMail webhook) or "ACCEPT"/"Yes"/"Agree"/"Confirm" on WhatsApp (WhatsApp webhook) — both paths must stay in sync if the acceptance logic changes.
+The one deliberate exception is hiring mail: candidates are not `Intern` rows, so `POST /api/careers/[slug]/apply` calls `sendNewApplicationAlert()` and `sendApplicationReceivedEmail()` (`src/lib/agentmail.ts`) directly. Both are awaited — a fire-and-forget send can be frozen once a Vercel function returns. HR alerts go to `HR_ALERT_EMAILS` (comma-separated, defaults to `gen.girish@gmail.com`), **not** `hr@intelliforge.tech`: the domain's MX points at AgentMail, so mail from the HR inbox to itself is recorded as "sent" and never reaches a person.
+
+Offer acceptance is multi-channel — email reply "I Accept" (AgentMail webhook), WhatsApp "ACCEPT"/"Yes"/"Agree"/"Confirm" (WhatsApp webhook), the intern portal, admin `approve_offer`, and Digio e-sign — and every path goes through `acceptOffer()` in `src/lib/offer-acceptance.ts`. Change acceptance rules (status checks, negation handling like "I don't accept", learning provisioning, the `OFFER_ACCEPTED` notification) there, never in an individual route.
+
+### Webhook idempotency
+
+Provider webhooks (Stripe, RazorpayX, Digio, WhatsApp, AgentMail) call `claimWebhookEvent(provider, eventId)` (`src/lib/webhook-idempotency.ts`) after the signature check and before any side effect; it inserts into `webhook_events`, unique on `(provider, eventId)`. A `false` result is a retry — answer 200 and do nothing. If processing throws, `releaseWebhookEvent()` and return 5xx so the provider's retry is actually processed.
 
 ### WhatsApp transport: hub or direct Meta
 
@@ -72,7 +78,7 @@ Offer acceptance is dual-channel: interns can reply "I Accept" by email (AgentMa
 
 ### WhatsApp OTP login
 
-`/api/auth/otp/request` and `/api/auth/otp/verify` (`src/lib/otp.ts`) let an intern sign in with a WhatsApp code instead of a password. Verification issues the same `hrms-session` cookie via `signJWT` + `setAuthCookie`, so nothing downstream knows the difference. Unlike other IntelliForge products this does **not** delegate identity to Clerk — HRMS mints its own session, so a verified number is mapped onto an existing `Intern` row and **never creates an account**. `Intern.phone` is not unique, so matches are narrowed by `resolveInternByPhone()` (`src/lib/otp.ts`) before ambiguity is judged: deactivated interns are never a sign-in target, a single ACTIVE match wins over any PENDING/OFFERED/COMPLETED rows sharing the number, and only a genuine tie (two ACTIVE, or two non-ACTIVE with no ACTIVE to prefer) is refused with 409. Both `/request` and `/verify` use the same resolution so they cannot disagree about who owns a number. `/request` only sends to a number that already belongs to an intern but responds identically either way, so it cannot be used to enumerate intern phone numbers.
+`/api/auth/otp/request` and `/api/auth/otp/verify` (`src/lib/otp.ts`, rate-limited per IP at 10/min and 20/min) let an intern sign in with a WhatsApp code instead of a password. Verification issues the same `hrms-session` cookie via `signJWT` + `setAuthCookie`, so nothing downstream knows the difference. Unlike other IntelliForge products this does **not** delegate identity to Clerk — HRMS mints its own session, so a verified number is mapped onto an existing `Intern` row and **never creates an account**. `Intern.phone` is not unique, so matches are narrowed by `resolveInternByPhone()` (`src/lib/otp.ts`) before ambiguity is judged: deactivated interns are never a sign-in target, a single ACTIVE match wins over any PENDING/OFFERED/COMPLETED rows sharing the number, and only a genuine tie (two ACTIVE, or two non-ACTIVE with no ACTIVE to prefer) is refused with 409. Both `/request` and `/verify` use the same resolution so they cannot disagree about who owns a number. `/request` only sends to a number that already belongs to an intern but responds identically either way, so it cannot be used to enumerate intern phone numbers.
 
 ### Intern lifecycle
 
@@ -85,7 +91,9 @@ Driven via `POST /api/dashboard/action` (`update_stipend`, `send_offer`, `approv
 
 ### Hiring pipeline
 
-`/careers/[slug]` (public apply) → optional external Interview Bot interview (score/report synced via `/api/webhooks/interview-bot`) → admin review/schedule → `POST /api/jobs/[id]/convert` creates the `Intern` record and folds the candidate into the intern lifecycle above.
+`/internships/[slug]` (public apply; `/careers/[slug]` redirects there) → optional external Interview Bot interview (score/report synced via `/api/webhooks/interview-bot`) → admin review/schedule → `POST /api/jobs/[id]/convert` creates the `Intern` record and folds the candidate into the intern lifecycle above.
+
+`JobPosting.formType` selects the application form. `STANDARD` is the flow above. `EXPERT_NETWORK` (`src/lib/hiring/expert-network.ts`) is for partner programmes that are not internships — e.g. the Cognyzer researcher network: it collects expertise, highest qualification, H-index and an optional Scholar/ORCID link, requires a resume, supports submitting someone else's resume as a referral (referrer name/email + explicit consent), skips Interview Bot creation, and in the dashboard shows the referral payout (`referralPayoutPaise()`: H-index 0–1 → ₹300, >1 → ₹500) instead of an interview score, with Schedule and Convert hidden. The dashboard has no edit-posting UI yet, so `formType` is chosen at creation.
 
 ### Cron jobs
 
@@ -93,7 +101,7 @@ Defined in `vercel.json`, all IST-scheduled: `task-reminder` (Mon 9am), `attenda
 
 ## Skills directories
 
-`.cursor/skills/` and `.agents/skills/` (Cursor/Antigravity equivalents, kept in sync) contain domain skill files. **Most of them (`hrms-backend`, `hrms-ai-engine`, `hrms-billing`, `hrms-deploy`, `hrms-forms`, `hrms-frontend`, `hrms-realtime`, `hrms-tanstack-query`, `hrms-testing`, `hrms-zustand`) are generic templates written for a different project** — a separate FastAPI + Docker + LiveKit "Interview Bot" service with Zustand/TanStack Query, none of which exist in this repo. Treat their code samples as illustrative only, not as this codebase's actual patterns.
+`.claude/skills/` (Claude Code), `.cursor/skills/` and `.agents/skills/` (Cursor/Antigravity) hold the same domain skill files and must be kept in sync. **Most of them (`hrms-backend`, `hrms-ai-engine`, `hrms-billing`, `hrms-deploy`, `hrms-forms`, `hrms-frontend`, `hrms-realtime`, `hrms-tanstack-query`, `hrms-testing`, `hrms-zustand`) are generic templates written for a different project** — a separate FastAPI + Docker + LiveKit "Interview Bot" service with Zustand/TanStack Query, none of which exist in this repo. Treat their code samples as illustrative only, not as this codebase's actual patterns.
 
 Only **`hrms-project`** (accurate architecture/schema/conventions overview for this repo), **`hrms-linkedin-mentor`** (accurate: `/api/mentors/import-linkedin` mentor-from-LinkedIn flow), **`hrms-database`** (Prisma/Postgres patterns, generically correct), and **`hrms-agentmail`** (the IntelliForge HRMS half of it) reliably describe this codebase. `ui-ux-pro-max` is a generic, stack-agnostic design reference tool and is accurate regardless of project.
 
