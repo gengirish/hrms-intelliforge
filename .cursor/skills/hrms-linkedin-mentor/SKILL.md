@@ -79,7 +79,7 @@ LinkedIn blocks most server-side fetches. **Always recommend pasting profile tex
 
 - `OPENAI_API_KEY` — required for extraction
 
-## Agent workflow (Cursor)
+## Agent workflow
 
 When the user provides a LinkedIn URL in chat:
 

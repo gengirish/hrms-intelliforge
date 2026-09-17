@@ -1,107 +1,82 @@
 ---
 name: hrms-project
-description: Provides architecture knowledge for the IntelliForge HRMS platform. Use when exploring the codebase, adding features, debugging, or asking about project structure, tech stack, conventions, database schema, or design system.
+description: Architecture map of the IntelliForge HRMS Next.js monolith — structure, features, Prisma models, auth and roles, tenant rules, integrations and conventions. Use when exploring this codebase, planning or adding a feature, debugging across modules, or answering where something lives.
 ---
 
 # IntelliForge HRMS — Project Architecture
 
 ## Project Context
 
-IntelliForge HRMS is a **Next.js 14 monolith** for internship program management, hiring pipelines, and HR operations. Each customer organization (tenant) manages interns through onboarding, attendance, tasks, offers, learning, payouts, and communications. The platform integrates with WhatsApp, AgentMail, Stripe, RazorpayX, IntelliForge Learning, and an external Interview Bot API.
+IntelliForge HRMS is a **Next.js 14 monolith** for internship programmes, hiring, a mentor marketplace and HR operations. Each organization (tenant) manages interns through onboarding, attendance, tasks, offers, learning, payouts and communications. Production: **https://hrms.intelliforge.tech** on Vercel, with Neon Postgres.
 
-There is **no separate FastAPI/Python backend** in this repo — all API logic lives in Next.js Route Handlers under `src/app/api/`.
+There is **no separate backend** (no FastAPI, Python or Docker service) — all API logic lives in Route Handlers under `src/app/api/`, business logic in `src/lib/`.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| App Framework | Next.js 14 (App Router), React 18, TypeScript |
-| Database | Neon (serverless PostgreSQL) |
-| ORM | Prisma |
-| Auth | JWT (jose) + bcrypt, HTTP-only session cookie |
-| UI Components | Tailwind CSS, lucide-react icons |
-| Forms | React Hook Form + Zod |
-| State | React context (`auth-context`), local component state |
-| Charts | Recharts |
-| File Storage | Vercel Blob |
-| Email | AgentMail TypeScript SDK |
-| WhatsApp | Meta Business Cloud API + intent bot |
-| PDF | @react-pdf/renderer |
-| AI | OpenAI (document OCR, performance reviews, risk scoring) |
-| Billing | Stripe (checkout, portal, webhooks) |
-| Payouts | RazorpayX |
-| Learning | IntelliForge Learning API |
-| Interviews | External Interview Bot API (HTTP client) |
-| E-sign | Digio |
-| Calendar | Google Calendar API |
-| Analytics | PostHog, Sentry |
-| Testing | Vitest (unit), Playwright (E2E) |
-| Deployment | Vercel |
+| App framework | Next.js 14 (App Router), React 18, TypeScript |
+| Database / ORM | Neon Postgres + Prisma 5 (see `hrms-database` skill) |
+| Auth | JWT (`jose`) + `bcryptjs`, HTTP-only `hrms-session` cookie; WhatsApp OTP sign-in for interns |
+| UI | Tailwind CSS, lucide-react icons, `sonner` toasts, Recharts |
+| Forms | Component state + `fetch`; Zod validation on the server (`src/lib/validations.ts`, per-route schemas) |
+| File storage | Vercel Blob (resumes, documents) |
+| Email | AgentMail TypeScript SDK (see `hrms-agentmail` skill) |
+| WhatsApp | Central WhatsApp hub (preferred) or Meta Cloud API directly; intent bot in `src/lib/wa-bot/` |
+| PDF | `@react-pdf/renderer` (offer letters, certificates) |
+| AI | OpenAI (document OCR, performance reviews, LinkedIn import) |
+| Billing / payouts | Stripe subscriptions; RazorpayX stipend and mentor payouts |
+| Other integrations | IntelliForge Learning API, external Interview Bot API, Digio e-sign, Google Calendar |
+| Rate limiting | Upstash Redis (`@upstash/ratelimit`), in-memory fallback |
+| Observability | Sentry (errors, cron check-ins), PostHog (product analytics) |
+| Testing | Vitest (unit), Playwright (E2E on port 3001) |
 
 ## Project Structure
 
 ```
 hrms-intelliforge/
 ├── src/
-│   ├── app/                        # Next.js App Router (pages + API)
-│   │   ├── api/                    # Route Handlers (REST endpoints)
-│   │   │   ├── auth/               # Login, register, magic link, verify
-│   │   │   ├── dashboard/          # Admin intern management
-│   │   │   ├── jobs/               # Hiring pipeline CRUD + convert
-│   │   │   ├── learning/           # Course catalog, enroll, sync
-│   │   │   ├── payouts/            # Stipend payout batches
-│   │   │   ├── webhooks/           # AgentMail, WhatsApp, Stripe, etc.
-│   │   │   └── cron/               # Vercel cron endpoints
-│   │   ├── dashboard/              # Admin UI pages
-│   │   │   ├── hiring/             # Job postings + candidates
-│   │   │   ├── payouts/            # Stipend disbursement
-│   │   │   └── settings/           # Org, team, billing, integrations
+│   ├── middleware.ts               # JWT check, session headers, MENTOR restrictions
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/               # login, register, magic-link, otp/, verify, reset
+│   │   │   ├── dashboard/          # Admin intern management + action endpoint
+│   │   │   ├── careers/ internships/  # Public job listing + apply
+│   │   │   ├── jobs/               # Hiring CRUD, candidates, convert
+│   │   │   ├── mentors/ mentor-applications/ marketplace/  # Mentor marketplace
+│   │   │   ├── learning/ payouts/ billing/ scheduling/ documents/
+│   │   │   ├── webhooks/           # agentmail, whatsapp, stripe, razorpay, digio, interview-bot
+│   │   │   └── cron/               # Vercel crons (CRON_SECRET)
+│   │   ├── dashboard/              # hiring, mentors, mentor-applications, mentor-profile,
+│   │   │                           # marketplace, payouts, settings, attendance, tasks, weekly-progress
 │   │   ├── internships/            # Public job board + apply (/careers redirects here)
-│   │   ├── sign-in/ sign-up/       # Auth pages
-│   │   ├── create-org/             # New workspace onboarding
-│   │   ├── intern-onboarding/      # Intern self-service onboarding
-│   │   ├── attendance/ tasks/      # Intern portal pages
-│   │   ├── daily-plan/             # Daily task planning
-│   │   ├── weekly-progress/        # Weekly progress reports
-│   │   └── offer/                  # Offer letter view + accept
-│   ├── components/                 # React components
-│   │   ├── dashboard/              # Admin subnav, charts
-│   │   ├── hiring/                 # Candidate panels, scheduling
-│   │   ├── learning/               # Enroll course modal
-│   │   └── ui/                     # Shared UI primitives
-│   └── lib/                        # Business logic & clients
-│       ├── auth.ts                 # JWT, bcrypt, session cookie
+│   │   ├── mentors/                # Public mentor directory + apply
+│   │   ├── sign-in/ sign-up/ create-org/ accept-admin-invite/ reset-password/
+│   │   └── intern-onboarding/ attendance/ tasks/ daily-plan/ weekly-progress/ offer/
+│   ├── components/                 # auth, dashboard, hiring, learning, marketing, mentors, shared
+│   └── lib/
+│       ├── auth.ts                 # signJWT, getSession, getAuthAdmin, getAuthIntern
 │       ├── prisma.ts               # Prisma client singleton
-│       ├── notifications.ts        # Unified email + WhatsApp orchestrator
-│       ├── agentmail.ts            # AgentMail SDK wrapper
-│       ├── whatsapp.ts             # WhatsApp Cloud API
-│       ├── wa-bot/                 # WhatsApp intent bot (parser, executor)
-│       ├── stripe.ts               # Stripe billing
-│       ├── razorpay.ts             # RazorpayX payouts
-│       ├── learning-client.ts      # Learning API client
-│       ├── learning-provision.ts   # Auto-enroll on onboarding
-│       ├── interview-bot-client.ts # External Interview Bot API
-│       ├── esign.ts                # Digio e-sign
-│       ├── google-calendar.ts      # Calendar scheduling
-│       ├── ai/                     # OpenAI document OCR, reviews, scoring
-│       ├── hiring/                 # Candidate status + expert-network form helpers
-│       └── validations.ts          # Zod schemas
-├── prisma/
-│   ├── schema.prisma               # Database schema
-│   ├── migrations/                 # Versioned SQL migrations
-│   └── seed.mjs                    # Bootstrap org + demo data
-├── tests/
-│   ├── unit/                       # Vitest unit tests
-│   └── e2e/                        # Playwright E2E specs
-├── scripts/                        # Maintenance & admin CLI scripts
-├── docs/                           # Setup guides (AgentMail, WhatsApp)
-├── .claude/skills/                 # Claude Code skills
-├── .cursor/skills/                 # Cursor AI skills
-├── .agents/skills/                 # Antigravity AI skills (all three kept in sync)
-├── vercel.json                     # Cron job config
-├── vitest.config.ts
-├── playwright.config.ts
-└── package.json
+│       ├── mentor-access.ts        # MENTOR page/API block rules used by middleware
+│       ├── admin-intern-access.ts  # getInternForAdmin, hasFullOrgAdminAccess
+│       ├── default-org.ts          # resolveOrgForPublicSignup
+│       ├── notifications.ts        # notify(): email + WhatsApp + NotificationLog
+│       ├── agentmail.ts auth-email.ts
+│       ├── whatsapp.ts whatsapp-hub.ts wa-bot/
+│       ├── otp.ts                  # WhatsApp OTP + resolveInternByPhone
+│       ├── offer-acceptance.ts     # acceptOffer(), isAcceptanceReply()
+│       ├── webhook-idempotency.ts  # claimWebhookEvent / releaseWebhookEvent
+│       ├── hiring/                 # candidate-status, expert-network
+│       ├── marketplace.ts marketplace-payouts.ts plan-limits.ts
+│       ├── stripe.ts razorpay.ts esign.ts learning-*.ts interview-bot-client.ts
+│       ├── rate-limit.ts cron-monitor.ts posthog.ts
+│       └── validations.ts utils.ts
+├── prisma/                         # schema.prisma, migrations/, seed.mjs
+├── tests/unit/  tests/e2e/
+├── scripts/                        # Dry-run-by-default maintenance scripts (--execute to write)
+├── docs/                           # Setup guides
+├── .claude/skills/ .cursor/skills/ .agents/skills/   # Identical skill sets
+└── vercel.json                     # Crons
 ```
 
 ## Features
@@ -109,160 +84,123 @@ hrms-intelliforge/
 | Feature | Location | Notes |
 |---------|----------|-------|
 | **Intern portal** | `/attendance`, `/tasks`, `/daily-plan`, `/weekly-progress`, `/offer` | Self-service intern workflows |
-| **Admin dashboard** | `/dashboard` | Intern lifecycle, analytics, notifications, learning |
-| **Hiring pipeline** | `/dashboard/hiring`, `/internships` | Job postings, candidates, Interview Bot, convert to intern; `EXPERT_NETWORK` postings for partner researcher networks with referrals |
+| **Admin dashboard** | `/dashboard` | Intern lifecycle via `POST /api/dashboard/action`, analytics, notifications, learning |
+| **Hiring pipeline** | `/dashboard/hiring`, `/internships/[slug]` | Postings, candidates, Interview Bot, convert to intern; `EXPERT_NETWORK` postings for partner researcher networks with referrals and H-index payouts |
+| **Mentor marketplace** | `/mentors`, `/mentors/apply`, `/dashboard/mentor-applications`, `/dashboard/marketplace` | Public mentor profiles, applications reviewed by admins, bookings, ratings, platform fee (`Organization.platformFeeBps`) |
+| **LinkedIn mentor import** | `/api/mentors/import-linkedin` | See `hrms-linkedin-mentor` skill |
 | **WhatsApp bot** | `src/lib/wa-bot/`, `/api/webhooks/whatsapp` | Attendance, tasks, offer accept, FAQ intents |
-| **Stripe billing** | `/pricing`, `/api/billing/*`, `/api/webhooks/stripe` | Org subscription plans |
-| **Learning integration** | `/api/learning/*`, `LearningEnrollment` model | Enroll + sync from learning.intelliforge.tech |
-| **Payouts** | `/dashboard/payouts`, `/api/payouts/*` | RazorpayX stipend batches |
+| **WhatsApp OTP sign-in** | `/api/auth/otp/request`, `/api/auth/otp/verify` | Maps a verified number onto an existing intern; never creates accounts; per-IP rate limits |
+| **Offer acceptance** | `src/lib/offer-acceptance.ts` | `acceptOffer()` shared by email, WhatsApp, portal, admin and Digio e-sign |
+| **Stripe billing** | `/pricing`, `/api/billing/*`, `/api/webhooks/stripe` | Plans and limits in `plan-limits.ts` |
+| **Payouts** | `/dashboard/payouts`, `/api/payouts/*` | RazorpayX stipend batches; full ADMIN only |
+| **Learning** | `/api/learning/*`, `LearningEnrollment` | Enroll + sync with learning.intelliforge.tech |
 | **Interview Bot** | `interview-bot-client.ts`, `/api/webhooks/interview-bot` | External AI interview scores/reports |
 | **E-sign offers** | `/api/offer/esign`, Digio webhook | Digital offer letter signing |
-| **Offer acceptance** | `src/lib/offer-acceptance.ts` | `acceptOffer()` shared by email, WhatsApp, portal, admin and e-sign |
-| **Webhook idempotency** | `src/lib/webhook-idempotency.ts`, `WebhookEvent` model | `claimWebhookEvent()` dedupes provider retries |
-| **Multi-tenant** | `Organization` model, `/create-org`, `?org=slug` sign-up | Org-scoped data isolation |
-| **Integrations health** | `/dashboard/settings` → Integrations tab | WhatsApp + AgentMail config status |
+| **Webhook idempotency** | `webhook-idempotency.ts`, `WebhookEvent` | Dedupes provider retries |
+| **Multi-tenant** | `Organization`, `/create-org`, `?org=slug` sign-up | Org-scoped data |
+| **Integrations health** | `/dashboard/settings` → Integrations | WhatsApp + AgentMail status |
 
 ## Database Schema (Prisma)
 
-Key models in `prisma/schema.prisma`:
-
-| Model | Purpose | Key Fields |
+| Model | Purpose | Key fields |
 |-------|---------|------------|
-| `Organization` | Tenant workspace | slug, plan, stripeCustomerId, whatsappPhoneId, agentmailInboxId |
-| `Admin` | Org admin/mentor | orgId, email, passwordHash, role |
-| `Intern` | Intern account | orgId, status, stipendPaise, mentorId, whatsappOptIn |
-| `JobPosting` | Hiring role | orgId, slug, skills, formType (`STANDARD`/`EXPERT_NETWORK`), interviewBotJobId, interviewLink |
-| `Candidate` | Job applicant | jobPostingId, interviewScore, interviewStatus, convertedToIntern, expertDomain, hIndex, referrerEmail, referralConsent |
-| `WebhookEvent` | Webhook dedupe ledger | provider, eventId (unique together), orgId |
-| `LearningEnrollment` | Learning course row | internId, courseId, progressPercent, learningEnrollmentId |
+| `Organization` | Tenant | slug, plan, maxInterns, maxMentors, platformFeeBps, marketplaceEnabled |
+| `Admin` | Org admin or mentor | orgId, email, passwordHash, `role` (`ADMIN` \| `MENTOR`) |
+| `Intern` | Intern account | orgId, status (`InternStatus`), stipendPaise, mentorId, phone, whatsappOptIn |
+| `JobPosting` | Hiring role | orgId, slug, formType (`STANDARD` \| `EXPERT_NETWORK`), interviewBotJobId, interviewLink |
+| `Candidate` | Applicant | jobPostingId, interviewStatus, interviewScore, convertedToIntern, expertDomain, hIndex, referrerEmail, referralConsent |
+| `MentorProfile` / `MentorApplication` / `MentorBooking` / `MentorRating` | Marketplace | profile slug, isPublic, hourlyRatePaise; application status `PENDING` \| `APPROVED` \| `REJECTED` |
+| `MarketplaceTransaction` | Platform fee ledger | orgId, status |
+| `StipendPayoutBatch` / `StipendPayout` | Payouts | month, totalPaise / amountPaise, razorpayPayoutId |
 | `NotificationLog` | Delivery tracking | internId, channel, type, status, externalId |
-| `StipendPayoutBatch` | Monthly payout run | orgId, month, status, totalPaise |
-| `StipendPayout` | Per-intern payout | batchId, internId, amountPaise, razorpayPayoutId |
-| `BotInteractionLog` | WhatsApp bot history | internId, intent, response, latencyMs |
-| `WeeklyProgressReport` | Intern weekly report | internId, weekKey, mentorFeedback |
-| `DailyTaskPlan` | Daily plan + items | internId, date, status |
+| `WeeklyProgressReport` / `DailyTaskPlan` | Intern reporting | internId, weekKey (unique per intern) / date |
+| `LearningEnrollment` | Learning course | internId, courseId, progressPercent |
+| `OfferEsignRequest` | Digio signing | internId, orgId, status (`EsignStatus`) |
+| `WebhookEvent` | Webhook dedupe | provider + eventId unique, optional orgId |
 
-All tenant-scoped tables have `orgId` (directly or via parent FK). Enums: `InternStatus`, `NotificationType`, `StipendPayoutStatus`, etc.
+Only `Admin`, `Intern`, `AdminInvite`, `JobPosting`, `MentorApplication` and `MarketplaceTransaction` have a required `orgId` with a cascading FK. Most intern data (`Attendance`, `Task`, `NotificationLog`, …) is scoped through `Intern`, and `Candidate` through `JobPosting` — check the parent's `orgId` before acting.
 
-## User Roles
+## Auth, Roles and Access
 
 | Role | Access |
 |------|--------|
-| **Intern** | Portal pages — attendance, tasks, offer, onboarding |
-| **Admin** | Full dashboard for their org — interns, hiring, payouts, settings |
-| **Mentor** | Admin with mentees assigned via `Intern.mentorId` |
+| **Intern** | Portal pages; password, magic link or WhatsApp OTP sign-in |
+| **Admin (`ADMIN`)** | Full dashboard for their org |
+| **Admin (`MENTOR`)** | Limited: own mentees (`Intern.mentorId`), mentor profile; blocked from hiring, settings, payouts, mentor applications, marketplace admin, billing and jobs APIs |
 
-Auth is JWT-based: `signJWT({ userId, role, email })` stored in HTTP-only cookie. `getAuthAdmin()` / `getAuthIntern()` read session in Route Handlers.
+- Session: `signJWT({ userId, role: "admin" | "intern", email, orgId, adminOrgRole })`, 7-day `hrms-session` cookie.
+- `src/middleware.ts` verifies the JWT and injects `x-user-id`, `x-user-role`, `x-user-email`, `x-user-org-id`, `x-user-admin-org-role`; `getSession()` reads those headers first. Cron and webhook routes are public in middleware and authenticate themselves.
+- MENTOR rules live in `src/lib/mentor-access.ts`; add new admin-only pages/APIs there. Handlers that move money or change org config also call `hasFullOrgAdminAccess()` because the JWT role can be up to 7 days stale.
 
 ## User Journeys
 
-### Org Admin Flow
 ```
-/create-org (or seed) → Dashboard → Manage interns
-  → Hiring: create job → review candidates → convert to intern
-  → Send offer → Track attendance/tasks → Enroll in Learning
-  → Process stipend payouts → Mark complete
-```
-
-### Intern Flow
-```
-/sign-up?org=slug → Verify email → /intern-onboarding
-  → Accept offer → Daily attendance + tasks + weekly progress
-  → Complete program → Certificate
-```
-
-### Candidate Flow
-```
-/internships/[slug] → Apply → HR alert + applicant confirmation email
-  → (optional) Interview Bot → Admin reviews → Convert to intern
-```
-
-### Expert-network Flow
-```
-/internships/[slug] (EXPERT_NETWORK) → Apply as self or refer someone (with consent)
-  → HR alert + confirmation (referrer CC'd) → Admin reviews profile + referral payout
-  → Forward to partner (e.g. Cognyzer) by hand
+Org admin:  /create-org → Dashboard → Hiring (post → review → convert) → send_offer
+            → attendance/tasks → Learning enroll → payouts → mark_complete
+Intern:     /sign-up?org=slug → verify → /intern-onboarding → accept offer (any channel)
+            → attendance, tasks, daily plan, weekly progress → certificate
+Candidate:  /internships/[slug] → apply (HR alert + confirmation email)
+            → optional Interview Bot → admin review → convert to intern
+Expert:     /internships/[slug] (EXPERT_NETWORK) → apply or refer with consent
+            → admin reviews profile + referral payout → forwarded to partner by hand
+Mentor:     /mentors/apply → admin approves in /dashboard/mentor-applications
+            → Admin(MENTOR) + MentorProfile created → bookings and ratings
 ```
 
 ## Design System
 
-Dark-first UI with glass-card aesthetic (see `src/app/globals.css`):
-
-- **Background**: Slate-950 (`--surface-950`) with gradient overlays
-- **Primary accent**: Blue-600 / Indigo-600 (`--brand-600`, indigo buttons)
-- **Secondary accent**: Orange-500 (`--accent-500`) for CTAs
-- **Success**: Emerald-500
-- **Danger**: Red-400/500
-- **Text**: Slate-100 primary, Slate-400 secondary/muted
-- **Font**: System sans (Tailwind defaults)
-- **Cards**: `glass-card` — dark translucent panels with border
-- **Sign-in/up pages**: Dark slate-950 background, indigo gradient headings
-- **Dashboard**: Dark theme with Recharts, status badges via `getStatusColor()`
-
-Indian locale conventions: IST timezone, ₹ stipend in paise, DD/MM/YYYY dates.
+Dark-first UI with a glass-card look (`src/app/globals.css`): slate-950 background, indigo/brand-600 primary, orange accent for CTAs, emerald success, red danger; `glass-card` panels; status badges via helpers such as `CandidateStatusBadge`. Indian conventions: IST dates (DD/MM/YYYY via `formatDateIST`), money in paise shown with `formatINR`, E.164 phone numbers.
 
 ## Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Neon PostgreSQL connection string |
-| `JWT_SECRET` | JWT signing (min 32 chars) |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob file uploads |
-| `AGENTMAIL_API_KEY` | AgentMail SDK |
-| `AGENTMAIL_HR_INBOX_ID` | Default HR inbox (sending address) |
-| `HR_ALERT_EMAILS` | New-application alert recipients; never `hr@intelliforge.tech` |
-| `WHATSAPP_*` | WhatsApp Cloud API credentials |
-| `CRON_SECRET` | Vercel cron auth header |
+| `DATABASE_URL` | Neon Postgres |
+| `JWT_SECRET` | JWT signing (≥ 32 chars) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
+| `AGENTMAIL_API_KEY` / `AGENTMAIL_HR_INBOX_ID` | Email sending inbox |
+| `HR_ALERT_EMAILS` | HR alert recipients — never `hr@intelliforge.tech` |
+| `WEBHOOK_SECRET` | AgentMail webhook header secret |
+| `WHATSAPP_HUB_URL` / `WHATSAPP_HUB_API_KEY` | Use the central WhatsApp hub; unset key = direct Meta (`WHATSAPP_*`) |
+| `CRON_SECRET` | `Authorization: Bearer` for `/api/cron/*` |
 | `NEXT_PUBLIC_APP_URL` | App base URL |
-| `DEFAULT_ORG_SLUG` | Org that public no-slug signups/applications attach to |
-| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Billing |
-| `RAZORPAY_*` | Payout disbursement |
-| `LEARNING_API_*` | Learning platform integration |
-| `INTERVIEW_BOT_API_URL` / `INTERVIEW_BOT_API_KEY` | External interview service |
-| `OPENAI_API_KEY` | Document OCR, AI reviews |
-| `DIGIO_*` | E-sign provider |
+| `DEFAULT_ORG_SLUG` | Org for sessionless public signups when several orgs exist |
+| `STRIPE_*`, `RAZORPAY_*`, `DIGIO_*` (incl. webhook secrets) | Billing, payouts, e-sign |
+| `LEARNING_API_*`, `INTERVIEW_BOT_*` | Learning platform, Interview Bot |
+| `OPENAI_API_KEY` | AI features |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Shared rate limiting |
+| `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_*` | Observability |
 
-Per-org overrides exist on `Organization` for WhatsApp and AgentMail when tenants bring their own credentials.
-
-## Naming Conventions
-
-| Used for | Style | Example |
-|----------|-------|---------|
-| API routes | kebab-case dirs | `src/app/api/weekly-progress/` |
-| Route Handlers | `route.ts` | `src/app/api/auth/login/route.ts` |
-| React components | PascalCase | `CandidateDetailPanel.tsx` |
-| lib modules | kebab-case or camelCase files | `learning-client.ts`, `auth.ts` |
-| Prisma models | PascalCase | `JobPosting`, `LearningEnrollment` |
-| DB columns (Prisma) | camelCase → snake_case in Postgres | `stipendPaise` → `stipend_paise` |
-| Env vars | UPPER_SNAKE_CASE | `DATABASE_URL` |
+`.env.example` is the full list.
 
 ## Key Rules
 
-1. **Monolith only** — no separate backend service; all logic in `src/app/api/` and `src/lib/`
-2. **Prisma for all DB access** — use `prisma` from `@/lib/prisma`; migrations in `prisma/migrations/`
-3. **Multi-tenant isolation** — every query scoped by `orgId` from session; never trust client-supplied org ids
-4. **Public signup org resolution** — `/api/auth/register` and `/api/mentors/apply` share `resolveOrgForPublicSignup()` (`src/lib/default-org.ts`): `orgSlug` → `DEFAULT_ORG_SLUG` env → sole org → 400
-5. **Notifications go through `notify()`** — never call AgentMail/WhatsApp directly from routes. Exception: hiring emails to candidates (not interns) are sent directly from the apply route and awaited
-6. **Indian conventions** — IST dates, paise for money, E.164 phones for WhatsApp
-7. **Versioned migrations** — use `prisma migrate deploy` in production, not `db push`
-8. **Rate limiting** — use `rateLimit()` from `@/lib/rate-limit` on auth and sensitive endpoints
-9. **E2E cleanup** — run `scripts/purge-e2e-records.mjs --execute` after Playwright runs
-10. **Offer acceptance goes through `acceptOffer()`** — never flip an intern to ACTIVE in a route
-11. **Webhooks claim before acting** — `claimWebhookEvent()` after the signature check, `releaseWebhookEvent()` + 5xx on failure
+1. **Monolith only** — logic in `src/app/api/` and `src/lib/`.
+2. **Prisma for all DB access** via `@/lib/prisma`; versioned SQL migrations, `prisma migrate deploy` in production, never `db push`.
+3. **Tenant isolation** — scope every query by `session.orgId` (directly or via the parent); never trust a client-supplied org id.
+4. **Public signup org resolution** — `resolveOrgForPublicSignup()`: `orgSlug` → `DEFAULT_ORG_SLUG` → sole org → 400.
+5. **Intern notifications go through `notify()`**. Transactional mail to non-interns (candidates, mentor applicants, auth) uses the helpers in `agentmail.ts` / `auth-email.ts` directly — await it.
+6. **Offer acceptance goes through `acceptOffer()`** — never set an intern ACTIVE in a route.
+7. **Webhooks** verify their own signature, then `claimWebhookEvent()` before side effects; `releaseWebhookEvent()` + 5xx on failure.
+8. **MENTOR guards** belong in `mentor-access.ts`; money/config handlers also re-check with `hasFullOrgAdminAccess()`.
+9. **Rate limiting** — `rateLimit()` / `rateLimitAsync()` with `getClientIp()` on auth and public write endpoints.
+10. **Indian conventions** — IST, paise, E.164.
+11. **Pushing to `master` deploys production** and runs migrations; CI order is lint → typecheck → unit → build → e2e.
+12. **E2E cleanup** — `node --env-file=.env.local scripts/purge-e2e-records.mjs --execute` after Playwright runs against a shared DB.
 
 ## Testing
 
 ```bash
-npm test                              # Vitest unit tests (tests/unit/)
-E2E_BASE_URL=http://localhost:3001 npm run test:e2e   # Playwright (port 3001)
+npm test                     # Vitest (tests/unit/**/*.test.ts)
+npx vitest run tests/unit/<file>.test.ts
+npx tsc --noEmit             # typecheck
+npm run lint
+npm run test:e2e             # Playwright; starts Next on :3001
 ```
 
 ## Related Skills
 
-- `hrms-frontend` — Next.js UI patterns
-- `hrms-database` — Prisma schema and migrations
-- `hrms-testing` — Vitest + Playwright
-- `hrms-agentmail` — Email integration
-- `hrms-billing` — Stripe setup
-
-Only `hrms-project`, `hrms-linkedin-mentor`, `hrms-database`, `hrms-agentmail` (HRMS half) and `ui-ux-pro-max` describe this codebase accurately; the other hrms-* skills were written for the separate Interview Bot project.
+- `hrms-database` — Prisma schema, migrations, tenant scoping, data fixes
+- `hrms-agentmail` — email sending, alerts, AgentMail webhook
+- `hrms-linkedin-mentor` — LinkedIn → mentor profile import
+- `ui-ux-pro-max` — general UI/UX design reference
