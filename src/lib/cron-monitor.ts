@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/nextjs";
  * Monitor slugs double as the Sentry Cron Monitor slugs.
  */
 export const CRON_MONITORS = {
-  // task-reminder and attendance-nudge are no longer scheduled in vercel.json;
+  // task-reminder, attendance-nudge and daily-plan-nudge are no longer scheduled in vercel.json;
   // the entries stay so the routes can still be run manually.
   "task-reminder": "30 3 * * 1", // Mon 09:00 IST
   "attendance-nudge": "0 5 * * 1-5", // Weekdays 10:30 IST

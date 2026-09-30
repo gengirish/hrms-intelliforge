@@ -372,7 +372,7 @@ Configured in `vercel.json`:
 |------|----------|-------------|
 | `/api/cron/task-reminder` | Not scheduled (manual only) | Weekly task log reminder (email + WhatsApp) |
 | `/api/cron/attendance-nudge` | Not scheduled (manual only) | Daily attendance nudge (email + WhatsApp) |
-| `/api/cron/daily-plan-nudge` | Weekdays 11:00 AM IST | Daily task plan reminder |
+| `/api/cron/daily-plan-nudge` | Not scheduled (manual only) | Daily task plan reminder |
 | `/api/cron/performance-scores` | Daily midnight IST | Compute weekly performance scores |
 
 ## Database Models

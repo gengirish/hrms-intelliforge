@@ -97,7 +97,7 @@ Driven via `POST /api/dashboard/action` (`update_stipend`, `send_offer`, `approv
 
 ### Cron jobs
 
-Defined in `vercel.json`, all IST-scheduled: `daily-plan-nudge` (weekdays 11am), `performance-scores` (daily midnight). `task-reminder` and `attendance-nudge` are unscheduled (turned off 30/09/2026); their routes still exist and can be triggered manually with the `CRON_SECRET` bearer.
+Defined in `vercel.json`, IST-scheduled: `performance-scores` (daily midnight). `task-reminder`, `attendance-nudge` and `daily-plan-nudge` are unscheduled (turned off 30/09/2026); their routes still exist and can be triggered manually with the `CRON_SECRET` bearer.
 
 ## Skills directories
 

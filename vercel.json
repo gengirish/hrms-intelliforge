@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily-plan-nudge",
-      "schedule": "30 5 * * 1-5"
-    },
-    {
       "path": "/api/cron/performance-scores",
       "schedule": "30 18 * * *"
     }
