@@ -7,11 +7,16 @@ import { z } from "zod";
  * Interview Bot, and support submitting someone else's resume as a referral.
  */
 
-export const JOB_FORM_TYPES = ["STANDARD", "EXPERT_NETWORK"] as const;
+export const JOB_FORM_TYPES = ["STANDARD", "EXPERT_NETWORK", "SALES_COMMISSION"] as const;
 export type JobFormType = (typeof JOB_FORM_TYPES)[number];
 
 export function isExpertNetworkForm(formType: string | null | undefined): boolean {
   return formType === "EXPERT_NETWORK";
+}
+
+/** Only engineering postings get an AI coding interview. */
+export function usesInterviewBot(formType: string | null | undefined): boolean {
+  return !formType || formType === "STANDARD";
 }
 
 export const EXPERT_DOMAINS = [

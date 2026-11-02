@@ -21,12 +21,18 @@ import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { formatINR, formatDateIST } from "@/lib/utils";
 import { captureEvent } from "@/lib/posthog";
+import {
+  COMMISSION_PAY_LABEL,
+  COMMISSION_TERMS,
+  isCommissionIntern,
+} from "@/lib/hiring/commission";
 
 interface InternOffer {
   id: string;
   name: string;
   role: string;
   stipendPaise: number;
+  compensationType?: string | null;
   startDate: string;
   durationWeeks: number;
   mentorId: string | null;
@@ -179,9 +185,13 @@ export default function OfferPage() {
               <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-900/50">
                 <IndianRupee className="h-5 w-5 text-emerald-400" />
                 <div>
-                  <p className="text-xs text-slate-400">Monthly Stipend</p>
+                  <p className="text-xs text-slate-400">
+                    {isCommissionIntern(intern) ? "Pay" : "Monthly Stipend"}
+                  </p>
                   <p className="text-sm font-medium text-white">
-                    {formatINR(intern.stipendPaise)}/month
+                    {isCommissionIntern(intern)
+                      ? COMMISSION_PAY_LABEL
+                      : `${formatINR(intern.stipendPaise)}/month`}
                   </p>
                 </div>
               </div>
@@ -206,6 +216,20 @@ export default function OfferPage() {
                 </div>
               </div>
             </div>
+
+            {isCommissionIntern(intern) && (
+              <div className="rounded-lg bg-slate-900/50 p-4">
+                <h3 className="text-sm font-semibold text-white">Commission terms</h3>
+                <p className="mt-1 text-xs text-slate-400">Please read these before you accept.</p>
+                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-300">
+                  {COMMISSION_TERMS.map(({ title, body }) => (
+                    <li key={title}>
+                      <strong className="text-white">{title}.</strong> {body}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3">
               <a

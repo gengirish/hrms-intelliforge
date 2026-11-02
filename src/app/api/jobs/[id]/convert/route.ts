@@ -4,6 +4,11 @@ import { getSession } from "@/lib/auth";
 import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { serverError } from "@/lib/api-utils";
 import { assertCanAddIntern, PlanLimitError } from "@/lib/plan-limits";
+import {
+  COMPENSATION_COMMISSION,
+  COMPENSATION_STIPEND,
+  isCommissionForm,
+} from "@/lib/hiring/commission";
 import { z } from "zod";
 
 const convertSchema = z.object({
@@ -37,7 +42,7 @@ export async function POST(
 
     const candidate = await prisma.candidate.findUnique({
       where: { id: parsed.data.candidateId },
-      include: { jobPosting: { select: { orgId: true } } },
+      include: { jobPosting: { select: { orgId: true, formType: true } } },
     });
 
     if (!candidate || candidate.jobPostingId !== jobId || candidate.jobPosting.orgId !== session.orgId) {
@@ -68,6 +73,9 @@ export async function POST(
           role: parsed.data.role,
           startDate: new Date(parsed.data.startDate),
           durationWeeks: parsed.data.durationWeeks,
+          compensationType: isCommissionForm(candidate.jobPosting.formType)
+            ? COMPENSATION_COMMISSION
+            : COMPENSATION_STIPEND,
           status: "PENDING",
         },
       }),

@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthIntern } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-utils";
-import { renderToBuffer } from "@react-pdf/renderer";
-import { OfferLetterPDF } from "@/lib/pdf";
-import { formatINR, formatDateIST } from "@/lib/utils";
-import React, { type ReactElement } from "react";
+import { generateOfferPdfBuffer } from "@/lib/offer-pdf";
+import { offerPayIsSet } from "@/lib/hiring/commission";
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,26 +23,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (intern.stipendPaise === 0) {
+    if (!offerPayIsSet(intern)) {
       return NextResponse.json(
         { error: "Offer details are incomplete." },
         { status: 400 }
       );
     }
 
-    const stipendINR = formatINR(intern.stipendPaise);
-    const startDateStr = formatDateIST(intern.startDate);
-
-    const pdfElement = React.createElement(OfferLetterPDF, {
-      internName: intern.name,
-      role: intern.role,
-      stipendINR,
-      startDate: startDateStr,
-      durationWeeks: intern.durationWeeks,
-      college: intern.college,
-    });
-
-    const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
+    const pdfBuffer = await generateOfferPdfBuffer(intern);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

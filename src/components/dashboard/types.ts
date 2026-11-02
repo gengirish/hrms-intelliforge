@@ -27,6 +27,7 @@ export interface Intern {
   startDate: string;
   durationWeeks: number;
   stipendPaise: number;
+  compensationType?: string | null;
   mentorId: string | null;
   aadharUrl: string | null;
   panUrl: string | null;

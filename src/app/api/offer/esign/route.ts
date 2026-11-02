@@ -5,6 +5,7 @@ import { serverError } from "@/lib/api-utils";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { createSigningRequest } from "@/lib/esign";
 import { generateOfferPdfBuffer } from "@/lib/offer-pdf";
+import { offerPayIsSet } from "@/lib/hiring/commission";
 import { z } from "zod";
 
 const esignBodySchema = z.object({
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (intern.stipendPaise === 0) {
+    if (!offerPayIsSet(intern)) {
       return NextResponse.json(
         { error: "Set the stipend amount before sending for e-sign." },
         { status: 400 }

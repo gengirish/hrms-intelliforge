@@ -24,6 +24,7 @@ import {
   EXPERT_DOMAINS,
   isExpertNetworkForm,
 } from "@/lib/hiring/expert-network";
+import { isCommissionForm } from "@/lib/hiring/commission";
 
 interface Requirement {
   title: string;
@@ -100,6 +101,7 @@ export default function InternshipDetailPage() {
   const [isReferral, setIsReferral] = useState(false);
   const [referralConsent, setReferralConsent] = useState(false);
   const isExpert = isExpertNetworkForm(job?.formType);
+  const isSales = isCommissionForm(job?.formType);
 
   const loadJob = useCallback(async () => {
     try {
@@ -314,7 +316,7 @@ export default function InternshipDetailPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
           {job.skills.length > 0 && (
             <section className="mb-12">
-              <SectionHeading>{isExpert ? "Areas of Expertise" : "Tech Stack"}</SectionHeading>
+              <SectionHeading>{isExpert ? "Areas of Expertise" : isSales ? "Skills" : "Tech Stack"}</SectionHeading>
               <div className="flex flex-wrap gap-2">
                 {job.skills.map((skill) => (
                   <span
@@ -693,7 +695,7 @@ export default function InternshipDetailPage() {
                         </div>
                       </div>
                     </>
-                  ) : (
+                  ) : isSales ? null : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="apply-github" className="block text-xs font-medium text-slate-400 mb-1">
@@ -737,7 +739,9 @@ export default function InternshipDetailPage() {
                     <label htmlFor="apply-cover" className="block text-xs font-medium text-slate-400 mb-1">
                       {isExpert
                         ? "Research background (optional)"
-                        : "Why does AI-native engineering matter to you? (3 sentences)"}
+                        : isSales
+                          ? "Name 5 home sellers who take orders by DM, and write the first message you would send one of them *"
+                          : "Why does AI-native engineering matter to you? (3 sentences)"}
                     </label>
                     <textarea
                       id="apply-cover"
@@ -748,12 +752,16 @@ export default function InternshipDetailPage() {
                           coverNote: e.target.value,
                         }))
                       }
-                      rows={4}
+                      rows={isSales ? 7 : 4}
+                      required={isSales}
+                      maxLength={2000}
                       className="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-colors resize-none"
                       placeholder={
                         isExpert
                           ? "Field of research, notable publications, availability…"
-                          : "Tell us why you're excited about building with AI..."
+                          : isSales
+                            ? "Instagram handles or links for 5 sellers, then your message…"
+                            : "Tell us why you're excited about building with AI..."
                       }
                     />
                   </div>
@@ -800,6 +808,8 @@ export default function InternshipDetailPage() {
                 <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
                   {isExpert
                     ? "Share your resume, or submit a researcher’s resume with their consent."
+                    : isSales
+                    ? "Tell us about yourself and complete a short exercise: 5 sellers and your first message. This role is commission only."
                     : "Send your GitHub profile, a deployed project link, and a few sentences on why AI-native engineering matters to you."}
                 </p>
                 {job.applicationEmail && (

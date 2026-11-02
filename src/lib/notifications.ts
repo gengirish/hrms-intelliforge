@@ -4,6 +4,7 @@ import {
   NotificationType as DbNotificationType,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isCommissionIntern } from "@/lib/hiring/commission";
 import {
   sendWelcomeEmail,
   sendOfferLetter,
@@ -43,7 +44,7 @@ export interface NotificationData {
 
 function logFieldsForType(
   type: DbNotificationType,
-  intern: { name: string; role: string; email: string },
+  intern: { name: string; role: string; email: string; compensationType?: string | null },
   data: NotificationData,
   appUrl: string
 ): { subject?: string; body: string } {
@@ -56,7 +57,7 @@ function logFieldsForType(
     case DbNotificationType.OFFER_LETTER:
       return {
         subject: `Offer letter — ${intern.name}`,
-        body: `Offer letter: ${intern.name}, ${intern.role}, stipend ${data.stipendPaise != null ? formatINR(data.stipendPaise) : "—"}, start ${data.startDate ?? "—"}`,
+        body: `Offer letter: ${intern.name}, ${intern.role}, ${isCommissionIntern(intern) ? "commission only" : `stipend ${data.stipendPaise != null ? formatINR(data.stipendPaise) : "—"}`}, start ${data.startDate ?? "—"}`,
       };
     case DbNotificationType.TASK_REMINDER:
       return {
@@ -156,6 +157,7 @@ export async function notify(
               stipendPaise: data.stipendPaise!,
               startDate: data.startDate!,
               pdfBase64: data.pdfBase64!,
+              commission: isCommissionIntern(intern),
             });
             break;
           case "TASK_REMINDER":
@@ -225,7 +227,9 @@ export async function notify(
     intern.whatsappOptIn &&
     intern.phone &&
     type !== "CUSTOM" &&
-    type !== "COURSE_ENROLLED"
+    type !== "COURSE_ENROLLED" &&
+    // The approved offer_letter template quotes a stipend; the email carries the terms.
+    !(type === "OFFER_LETTER" && isCommissionIntern(intern))
   ) {
     const phone = formatPhoneE164(intern.phone);
     let result: { success: boolean; messageId?: string; error?: string } = {

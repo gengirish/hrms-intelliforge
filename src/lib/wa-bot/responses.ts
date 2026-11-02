@@ -1,4 +1,9 @@
 import { formatINR, formatDateIST, formatTimeIST, getCurrentISOWeek } from "@/lib/utils";
+import {
+  COMMISSION_PAY_LABEL,
+  COMMISSION_RATE_SUMMARY,
+  isCommissionIntern,
+} from "@/lib/hiring/commission";
 
 interface AttendanceRecord {
   date: Date;
@@ -18,6 +23,7 @@ interface InternProfile {
   role: string;
   status: string;
   stipendPaise: number;
+  compensationType?: string | null;
   startDate: Date;
   durationWeeks: number;
   college: string;
@@ -100,6 +106,9 @@ export function attendanceListResponse(records: AttendanceRecord[]): string {
 }
 
 export function stipendResponse(intern: InternProfile): string {
+  if (isCommissionIntern(intern)) {
+    return `Your internship is commission only, with no fixed stipend. You earn ${COMMISSION_RATE_SUMMARY}`;
+  }
   return `Your stipend is *${formatINR(intern.stipendPaise)}/month*.`;
 }
 
@@ -118,7 +127,9 @@ export function statusResponse(intern: InternProfile): string {
     `Start: ${formatDateIST(intern.startDate)}\n` +
     `Duration: ${intern.durationWeeks} weeks\n` +
     `Days remaining: ${daysLeft}\n` +
-    `Stipend: ${formatINR(intern.stipendPaise)}/month`
+    (isCommissionIntern(intern)
+      ? `Pay: ${COMMISSION_PAY_LABEL}`
+      : `Stipend: ${formatINR(intern.stipendPaise)}/month`)
   );
 }
 

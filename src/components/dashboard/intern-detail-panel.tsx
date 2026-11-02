@@ -13,6 +13,7 @@ import {
   UserX,
   UserCheck,
 } from "lucide-react";
+import { offerPayIsSet } from "@/lib/hiring/commission";
 import { EnrollCourseModal } from "@/components/learning/enroll-course-modal";
 import { cn, getStatusColor } from "@/lib/utils";
 import { InternOverviewTab } from "./intern-overview-tab";
@@ -178,10 +179,10 @@ export function InternDetailPanel({
                   <button
                     onClick={() => onAction("send_offer")}
                     disabled={
-                      actionLoading === "send_offer" || intern.stipendPaise === 0
+                      actionLoading === "send_offer" || !offerPayIsSet(intern)
                     }
                     title={
-                      intern.stipendPaise === 0
+                      !offerPayIsSet(intern)
                         ? "Set the stipend first before sending the offer"
                         : undefined
                     }
@@ -197,10 +198,10 @@ export function InternDetailPanel({
                   <button
                     onClick={onSendForEsign}
                     disabled={
-                      actionLoading === "send_esign" || intern.stipendPaise === 0
+                      actionLoading === "send_esign" || !offerPayIsSet(intern)
                     }
                     title={
-                      intern.stipendPaise === 0
+                      !offerPayIsSet(intern)
                         ? "Set the stipend first before sending for e-sign"
                         : "Send offer for Aadhaar e-sign via Digio"
                     }
@@ -213,7 +214,7 @@ export function InternDetailPanel({
                     )}
                     Send for E-Sign
                   </button>
-                  {intern.stipendPaise === 0 && (
+                  {!offerPayIsSet(intern) && (
                     <span className="text-xs text-amber-400">Set stipend first →</span>
                   )}
                 </div>

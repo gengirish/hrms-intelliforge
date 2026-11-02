@@ -5,7 +5,7 @@ import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { serverError } from "@/lib/api-utils";
 import { createInterviewConfig } from "@/lib/interview-bot-client";
 import { generateSlug } from "@/lib/utils";
-import { JOB_FORM_TYPES, isExpertNetworkForm } from "@/lib/hiring/expert-network";
+import { JOB_FORM_TYPES, usesInterviewBot } from "@/lib/hiring/expert-network";
 import { z } from "zod";
 
 const createJobSchema = z.object({
@@ -103,9 +103,9 @@ export async function POST(req: NextRequest) {
     let interviewLink: string | null = null;
     const formType = parsed.data.formType ?? "STANDARD";
 
-    // Expert-network postings are reviewed by hand and forwarded to the
-    // partner; an AI coding interview is not part of that flow.
-    if (!isExpertNetworkForm(formType)) {
+    // Expert-network and sales postings are reviewed by hand; an AI coding
+    // interview is not part of those flows.
+    if (usesInterviewBot(formType)) {
       try {
         const config = await createInterviewConfig({
           title: parsed.data.title,

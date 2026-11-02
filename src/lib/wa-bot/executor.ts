@@ -10,6 +10,7 @@ interface InternData {
   role: string;
   status: string;
   stipendPaise: number;
+  compensationType?: string | null;
   startDate: Date;
   durationWeeks: number;
   college: string;

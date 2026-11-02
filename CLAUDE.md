@@ -87,13 +87,15 @@ PENDING --send_offer--> OFFERED --approve_offer / accept--> ACTIVE --mark_comple
                                                                  |
                                                         deactivate / reactivate
 ```
-Driven via `POST /api/dashboard/action` (`update_stipend`, `send_offer`, `approve_offer`, `send_reminder`, `mark_complete`, `deactivate`, `reactivate`). `send_offer` requires stipend > 0. Deactivated interns are excluded from cron jobs and hidden from the dashboard by default (soft delete, not hard delete).
+Driven via `POST /api/dashboard/action` (`update_stipend`, `send_offer`, `approve_offer`, `send_reminder`, `mark_complete`, `deactivate`, `reactivate`). `send_offer` requires stipend > 0, unless `Intern.compensationType` is `COMMISSION`. Deactivated interns are excluded from cron jobs and hidden from the dashboard by default (soft delete, not hard delete).
 
 ### Hiring pipeline
 
 `/internships/[slug]` (public apply; `/careers/[slug]` redirects there) → optional external Interview Bot interview (score/report synced via `/api/webhooks/interview-bot`) → admin review/schedule → `POST /api/jobs/[id]/convert` creates the `Intern` record and folds the candidate into the intern lifecycle above.
 
 `JobPosting.formType` selects the application form. `STANDARD` is the flow above. `EXPERT_NETWORK` (`src/lib/hiring/expert-network.ts`) is for partner programmes that are not internships — e.g. the Cognyzer researcher network: it collects expertise, highest qualification, H-index and an optional Scholar/ORCID link, requires a resume, supports submitting someone else's resume as a referral (referrer name/email + explicit consent), skips Interview Bot creation, and in the dashboard shows the referral payout (`referralPayoutPaise()`: H-index 0–1 → ₹300, >1 → ₹500) instead of an interview score, with Schedule and Convert hidden. The dashboard has no edit-posting UI yet, so `formType` is chosen at creation.
+
+`SALES_COMMISSION` (`src/lib/hiring/commission.ts`) is for commission-only AwaazOS sales interns: no GitHub or portfolio fields, no Interview Bot, and the cover note becomes a required screening exercise. Convert sets `Intern.compensationType = "COMMISSION"`; their offer letter gets a Commission Terms page from `COMMISSION_TERMS`, and the `offer_letter` WhatsApp template is skipped because it quotes a stipend. The rate and term must match `SALES_SHARE_BPS` / `SALES_SHARE_MONTHS` in AwaazOS (`lib/sales-earnings.ts`), which computes what is owed; commission is not part of stipend payout batches. The posting's rich fields live in `src/lib/hiring/sales-intern-job.ts`, published by `scripts/publish-sales-intern-job.mts` (dry run by default).
 
 ### Cron jobs
 

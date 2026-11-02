@@ -25,6 +25,7 @@ import { CandidateStatusBadge } from "@/components/hiring/candidate-status-badge
 import { canConvertCandidate } from "@/lib/hiring/candidate-status";
 import { cn, formatDateIST, formatINR } from "@/lib/utils";
 import { isExpertNetworkForm, referralPayoutPaise } from "@/lib/hiring/expert-network";
+import { isCommissionForm } from "@/lib/hiring/commission";
 
 interface JobPosting {
   id: string;
@@ -660,6 +661,7 @@ export default function HiringPage() {
                 >
                   <option value="STANDARD">Standard (GitHub, portfolio, AI interview)</option>
                   <option value="EXPERT_NETWORK">Expert network (researchers, H-index, referrals; no AI interview)</option>
+                  <option value="SALES_COMMISSION">Sales, commission only (no GitHub, no AI interview, no stipend)</option>
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -724,6 +726,11 @@ export default function HiringPage() {
                       {isExpertNetworkForm(job.formType) && (
                         <span className="inline-flex rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
                           Expert network
+                        </span>
+                      )}
+                      {isCommissionForm(job.formType) && (
+                        <span className="inline-flex rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          Commission only
                         </span>
                       )}
                       {job.employmentType && job.employmentType !== "FULL_TIME" && (

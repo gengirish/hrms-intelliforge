@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serverError } from "@/lib/api-utils";
 import { sendApplicationReceivedEmail, sendNewApplicationAlert } from "@/lib/agentmail";
-import { expertApplySchema, isExpertNetworkForm } from "@/lib/hiring/expert-network";
+import { expertApplySchema, isExpertNetworkForm, usesInterviewBot } from "@/lib/hiring/expert-network";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
@@ -131,7 +131,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       candidateId: candidate.id,
-      interviewLink: isExpert ? null : job.interviewLink,
+      interviewLink: usesInterviewBot(job.formType) ? job.interviewLink : null,
     });
   } catch (err) {
     return serverError(err, "Careers apply POST error");
