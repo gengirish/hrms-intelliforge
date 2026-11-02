@@ -1,6 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { OfferLetterPDF } from "@/lib/pdf";
 import { formatINR, formatDateIST } from "@/lib/utils";
+import { isCommissionIntern } from "@/lib/hiring/commission";
 import React, { type ReactElement } from "react";
 
 export type InternOfferPdfFields = {
@@ -10,6 +11,7 @@ export type InternOfferPdfFields = {
   startDate: Date;
   durationWeeks: number;
   college: string;
+  compensationType?: string | null;
 };
 
 export async function generateOfferPdfBuffer(
@@ -22,6 +24,7 @@ export async function generateOfferPdfBuffer(
     startDate: formatDateIST(intern.startDate),
     durationWeeks: intern.durationWeeks,
     college: intern.college,
+    commission: isCommissionIntern(intern),
   });
   return renderToBuffer(pdfElement as unknown as ReactElement);
 }

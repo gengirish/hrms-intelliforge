@@ -133,6 +133,8 @@ model Intern {
   startDate        DateTime
   durationWeeks    Int
   stipendPaise     Int          @default(0)
+  // STIPEND, or COMMISSION for sales interns (stipend stays 0).
+  compensationType String       @default("STIPEND")
   mentorId         String?
   mentor           Admin?       @relation("InternMentor", fields: [mentorId], references: [id], onDelete: SetNull)
   aadharUrl        String?
@@ -348,8 +350,9 @@ model JobPosting {
   salaryInfo        String?
   interviewBotJobId String?
   interviewLink     String?
-  // STANDARD (intern/engineering apply form) or EXPERT_NETWORK (researcher
-  // form with referral support; skips the Interview Bot).
+  // STANDARD (intern/engineering apply form), EXPERT_NETWORK (researcher form
+  // with referral support) or SALES_COMMISSION (commission-only sales interns).
+  // Only STANDARD uses the Interview Bot.
   formType          String   @default("STANDARD")
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())

@@ -1,5 +1,6 @@
 import { AgentMailClient } from "agentmail";
 import { escapeHtml } from "@/lib/html-escape";
+import { COMMISSION_PAY_LABEL, COMMISSION_SUMMARY } from "@/lib/hiring/commission";
 
 if (!process.env.AGENTMAIL_API_KEY) {
   console.warn("AGENTMAIL_API_KEY is not set — email features will fail");
@@ -78,6 +79,7 @@ export async function sendOfferLetter({
   stipendPaise,
   startDate,
   pdfBase64,
+  commission = false,
 }: {
   internEmail: string;
   internName: string;
@@ -85,6 +87,7 @@ export async function sendOfferLetter({
   stipendPaise: number;
   startDate: string;
   pdfBase64: string;
+  commission?: boolean;
 }) {
   const inboxId = await getHRInboxId();
   const stipendINR = (stipendPaise / 100).toLocaleString("en-IN");
@@ -94,7 +97,12 @@ export async function sendOfferLetter({
     html: `
       <h2>Welcome to IntelliForge AI, ${escapeHtml(internName)}!</h2>
       <p>Role: <strong>${escapeHtml(role)}</strong></p>
-      <p>Stipend: <strong>₹${escapeHtml(stipendINR)}/month</strong></p>
+      ${
+        commission
+          ? `<p>Pay: <strong>${escapeHtml(COMMISSION_PAY_LABEL)}</strong></p>
+      <p>${escapeHtml(COMMISSION_SUMMARY)} The full terms are in the attached letter.</p>`
+          : `<p>Stipend: <strong>₹${escapeHtml(stipendINR)}/month</strong></p>`
+      }
       <p>Start Date: <strong>${startDate}</strong></p>
       <p>Please <strong>reply to this email with "I Accept"</strong>
          to confirm your internship.</p>

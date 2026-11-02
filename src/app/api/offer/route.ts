@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
       name: intern.name,
       role: intern.role,
       stipendPaise: intern.stipendPaise,
+      compensationType: intern.compensationType,
       startDate: intern.startDate,
       durationWeeks: intern.durationWeeks,
       mentorId: intern.mentorId,

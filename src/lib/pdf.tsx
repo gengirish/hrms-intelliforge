@@ -16,6 +16,7 @@ import {
   OfferLetterFooter,
   OfferLetterWatermark,
 } from "@/lib/pdf-brand";
+import { COMMISSION_PAY_LABEL, COMMISSION_TERMS } from "@/lib/hiring/commission";
 
 /* ── brand palette (matches intelliforge.tech) ─────────── */
 const C = BRAND_COLORS;
@@ -109,6 +110,8 @@ interface OfferLetterProps {
   startDate: string;
   durationWeeks: number;
   college: string;
+  /** Commission-only sales intern: adds the commission page, drops the stipend. */
+  commission?: boolean;
 }
 
 export function OfferLetterPDF({
@@ -118,6 +121,7 @@ export function OfferLetterPDF({
   startDate,
   durationWeeks,
   college,
+  commission = false,
 }: OfferLetterProps) {
   const today = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -132,14 +136,22 @@ export function OfferLetterPDF({
   );
   const refNum = 1000 + (refHash % 9000);
   const refStr = `IF/INTERN/${new Date().getFullYear()}/${refNum}`;
+  const pageCount = commission ? 3 : 2;
+  // Converted candidates carry college "N/A" until they complete their profile.
+  const credentials =
+    college && college !== "N/A"
+      ? `Based on your academic credentials at ${college} and demonstrated aptitude`
+      : "Based on your application and demonstrated aptitude";
 
   const details: { label: string; value: string; multiline?: boolean }[] = [
     { label: "Legal Entity", value: COMPANY.legalName },
     { label: "Position", value: role },
-    { label: "Monthly Stipend", value: stipendINR },
+    commission
+      ? { label: "Pay", value: COMMISSION_PAY_LABEL }
+      : { label: "Monthly Stipend", value: stipendINR },
     { label: "Start Date", value: startDate },
     { label: "Duration", value: `${durationWeeks} weeks` },
-    { label: "Work Mode", value: "Hybrid (Remote / On-site)" },
+    { label: "Work Mode", value: commission ? "Remote" : "Hybrid (Remote / On-site)" },
     {
       label: "Registered Office",
       value: REGISTERED_OFFICE_TEXT,
@@ -193,14 +205,21 @@ export function OfferLetterPDF({
           <Text style={o.greeting}>Dear <Text style={{ fontFamily: "Helvetica-Bold" }}>{internName}</Text>,</Text>
           <Text style={o.para}>
             We are delighted to extend this formal offer of internship at {COMPANY.brandName},
-            a brand of {COMPANY.legalName}. Based on your academic credentials at {college} and
-            demonstrated aptitude, we are confident you will make a meaningful contribution to our team.
+            a brand of {COMPANY.legalName}. {credentials}, we are confident you will make a meaningful
+            contribution to our team.
           </Text>
-          <Text style={o.para}>
-            Your internship may be carried out remotely or on-site at our Hyderabad office
-            ({REGISTERED_OFFICE_INLINE}), as agreed with your mentor. The terms and details of your
-            engagement are outlined on the following page.
-          </Text>
+          {commission ? (
+            <Text style={o.para}>
+              This is a remote, commission-only internship selling AwaazOS to home businesses. There is
+              no fixed stipend. Please read the commission terms on the following page before you accept.
+            </Text>
+          ) : (
+            <Text style={o.para}>
+              Your internship may be carried out remotely or on-site at our Hyderabad office
+              ({REGISTERED_OFFICE_INLINE}), as agreed with your mentor. The terms and details of your
+              engagement are outlined on the following page.
+            </Text>
+          )}
 
           {/* details table */}
           <View style={o.tableWrap}>
@@ -225,8 +244,39 @@ export function OfferLetterPDF({
           </View>
         </View>
 
-        <OfferLetterFooter refStr={refStr} pageLabel="Page 1 of 2" />
+        <OfferLetterFooter refStr={refStr} pageLabel={`Page 1 of ${pageCount}`} />
       </Page>
+
+      {commission && (
+        <Page size="A4" style={base.page}>
+          <OfferLetterWatermark />
+
+          <View style={o.accentBar} />
+
+          <View style={o.page2Header}>
+            <View>
+              <Text style={o.page2Title}>
+                Intelli<Text style={o.brandAccent}>Forge</Text> AI — Internship Offer Letter
+              </Text>
+              <Text style={o.page2Sub}>Commission Terms &bull; {internName}</Text>
+            </View>
+            <View style={o.refBox}>
+              <Text style={o.refText}>Ref: {refStr}</Text>
+            </View>
+          </View>
+
+          <View style={o.body}>
+            <Text style={[o.sectionTitle, { marginTop: 0 }]}>Commission Terms</Text>
+            {COMMISSION_TERMS.map(({ title, body }, i) => (
+              <Text key={title} style={[o.term, { marginBottom: 6 }]}>
+                {i + 1}. <Text style={{ fontFamily: "Helvetica-Bold" }}>{title}.</Text> {body}
+              </Text>
+            ))}
+          </View>
+
+          <OfferLetterFooter refStr={refStr} pageLabel={`Page 2 of ${pageCount}`} />
+        </Page>
+      )}
 
       <Page size="A4" style={base.page}>
         <OfferLetterWatermark />
@@ -248,8 +298,16 @@ export function OfferLetterPDF({
         <View style={o.body}>
           <Text style={[o.sectionTitle, { marginTop: 0 }]}>Terms &amp; Conditions</Text>
           <Text style={o.term}>1. This internship is for the specified duration and may be extended by mutual agreement.</Text>
-          <Text style={o.term}>2. You will be expected to follow {COMPANY.brandName} policies, maintain professionalism, and meet assigned deliverables. On-site days at the registered office may be scheduled by your mentor as required.</Text>
-          <Text style={o.term}>3. The stipend will be disbursed monthly upon satisfactory performance.</Text>
+          <Text style={o.term}>
+            {commission
+              ? `2. You will be expected to follow ${COMPANY.brandName} policies and maintain professionalism.`
+              : `2. You will be expected to follow ${COMPANY.brandName} policies, maintain professionalism, and meet assigned deliverables. On-site days at the registered office may be scheduled by your mentor as required.`}
+          </Text>
+          <Text style={o.term}>
+            {commission
+              ? "3. Commission is your only pay and is paid as set out in the Commission Terms."
+              : "3. The stipend will be disbursed monthly upon satisfactory performance."}
+          </Text>
           <Text style={o.term}>4. A Certificate of Completion will be issued upon successful completion of the programme.</Text>
           <Text style={o.term}>5. Either party may terminate this engagement with 7 days written notice.</Text>
 
@@ -276,7 +334,7 @@ export function OfferLetterPDF({
           </View>
         </View>
 
-        <OfferLetterFooter refStr={refStr} pageLabel="Page 2 of 2" />
+        <OfferLetterFooter refStr={refStr} pageLabel={`Page ${pageCount} of ${pageCount}`} />
       </Page>
     </Document>
   );

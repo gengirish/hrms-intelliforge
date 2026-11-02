@@ -5,10 +5,12 @@ import { serverError } from "@/lib/api-utils";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { actionSchema } from "@/lib/validations";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { OfferLetterPDF, CompletionCertPDF } from "@/lib/pdf";
+import { CompletionCertPDF } from "@/lib/pdf";
 import { notify } from "@/lib/notifications";
 import { acceptOffer } from "@/lib/offer-acceptance";
-import { formatINR, formatDateIST } from "@/lib/utils";
+import { generateOfferPdfBuffer } from "@/lib/offer-pdf";
+import { isCommissionIntern, offerPayIsSet } from "@/lib/hiring/commission";
+import { formatDateIST } from "@/lib/utils";
 import React, { type ReactElement } from "react";
 
 export async function POST(req: NextRequest) {
@@ -55,6 +57,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "update_stipend") {
+      if (isCommissionIntern(intern)) {
+        return NextResponse.json({ error: "This intern is on commission and has no stipend." }, { status: 400 });
+      }
       await prisma.intern.update({
         where: { id: internId },
         data: { stipendPaise: stipendPaise! },
@@ -69,27 +74,18 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (intern.stipendPaise === 0) {
+      if (!offerPayIsSet(intern)) {
         return NextResponse.json(
           { error: "Set the stipend amount before sending the offer." },
           { status: 400 }
         );
       }
 
-      const stipendINR = formatINR(intern.stipendPaise);
       const startDateStr = formatDateIST(intern.startDate);
 
       let pdfBase64: string;
       try {
-        const pdfElement = React.createElement(OfferLetterPDF, {
-          internName: intern.name,
-          role: intern.role,
-          stipendINR,
-          startDate: startDateStr,
-          durationWeeks: intern.durationWeeks,
-          college: intern.college,
-        });
-        const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement);
+        const pdfBuffer = await generateOfferPdfBuffer(intern);
         pdfBase64 = pdfBuffer.toString("base64");
       } catch (pdfErr) {
         console.error("PDF render failed:", pdfErr);

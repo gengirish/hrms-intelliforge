@@ -13,6 +13,7 @@ const el = React.createElement(OfferLetterPDF, {
   startDate: "15 July 2026",
   durationWeeks: 12,
   college: "IIIT Hyderabad",
+  commission: process.argv.includes("--commission"),
 });
 
 const buf = await renderToBuffer(el);

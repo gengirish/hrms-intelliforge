@@ -9,6 +9,11 @@ import {
   ShieldAlert,
   ShieldQuestion,
 } from "lucide-react";
+import {
+  COMMISSION_PAY_LABEL,
+  COMMISSION_SUMMARY,
+  isCommissionIntern,
+} from "@/lib/hiring/commission";
 import { cn, formatINR, formatDateIST } from "@/lib/utils";
 import { InternPayoutSection } from "./intern-payout-section";
 import type { Intern, DocVerification, MentorOption } from "./types";
@@ -75,6 +80,17 @@ export function InternOverviewTab({
       </div>
 
       <div className="glass-card p-6 space-y-4">
+        {isCommissionIntern(intern) ? (
+          <>
+            <h3 className="text-sm font-semibold text-white">Pay</h3>
+            <p className="text-sm text-white">{COMMISSION_PAY_LABEL}</p>
+            <p className="text-xs text-slate-400">
+              {COMMISSION_SUMMARY} Stores and amounts are on AwaazOS at /admin/earnings. Commission is
+              paid outside stipend payout batches.
+            </p>
+          </>
+        ) : (
+          <>
         <h3 className="text-sm font-semibold text-white">Stipend (in paise)</h3>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 flex-1">
@@ -108,6 +124,8 @@ export function InternOverviewTab({
         <p className="text-xs text-slate-400">
           Display: {formatINR(stipendEdit ?? 0)}/month
         </p>
+          </>
+        )}
 
         <h3 className="text-sm font-semibold text-white pt-4">Documents</h3>
         <div className="space-y-3">
