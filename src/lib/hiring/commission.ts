@@ -1,5 +1,5 @@
 /**
- * Commission-only sales internships (AwaazOS outreach). Pure and client-safe.
+ * Commission-only outreach internships (AwaazOS). Pure and client-safe.
  *
  * A posting with the SALES_COMMISSION form makes its converted candidates
  * COMMISSION interns: stipend 0 is valid for them, and their offer letter
