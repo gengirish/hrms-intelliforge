@@ -3,10 +3,10 @@ import { COMMISSION_FORM_TYPE, COMMISSION_MONTHS, COMMISSION_SHARE_PERCENT } fro
 /** The commission-only AwaazOS sales posting. Published by scripts/publish-sales-intern-job.mts. */
 export const SALES_INTERN_JOB = {
   slug: "sales-associate-intern-awaazos",
-  title: "Sales Associate Intern (AwaazOS)",
+  title: "AI-Native Outreach Associate Intern (AwaazOS)",
   description:
-    "Help home businesses on Instagram and WhatsApp take orders properly. You find sellers, build each one a demo store, show it to them and bring them on to AwaazOS. This role is commission only, with no fixed stipend. AwaazOS is at an early stage and you would be among our first sales people, so the pitch is still being proven and earnings are not guaranteed.",
-  skills: ["Sales", "Outreach", "WhatsApp", "Instagram", "Communication"],
+    "Work on our AI-native outreach system, not traditional sales. There are no cold-call scripts or bought lists: AI agents find home sellers on Instagram and WhatsApp, score how well each one fits and give you a ranked list. You bring the human part: you check each lead, build the seller a demo store, personalise and send the message yourself, and bring them on to AwaazOS. This role is commission only, with no fixed stipend. AwaazOS is at an early stage and you would be among our first outreach associates, so the pitch is still being proven and earnings are not guaranteed.",
+  skills: ["AI-Native Outreach", "AI Tools", "WhatsApp", "Instagram", "Communication", "Product Demos"],
   location: "Remote (India)",
   employmentType: "INTERNSHIP",
   duration: "3 Months",
@@ -14,13 +14,18 @@ export const SALES_INTERN_JOB = {
   applicationEmail: "hr@intelliforge.tech",
   formType: COMMISSION_FORM_TYPE,
   responsibilities: [
-    "Find home bakers, cloud kitchens and other home sellers in your assigned localities on Instagram and WhatsApp",
+    "Work from the ranked list our AI agents prepare for your localities: home bakers, cloud kitchens and other home sellers, each with a score and the reason they fit",
+    "Check each lead yourself, and flag where the AI got it wrong so the system improves",
     "Build a demo store for each seller from your AwaazOS sales login",
-    "Message sellers one at a time, saying who you are and that the store is a demo with sample orders",
+    "Start from the ready-made message, personalise it and send it yourself, one seller at a time, saying who you are and that the store is a demo with sample orders",
     "Show sellers how the store works, answer their questions and send them the link to claim it",
     "Report your messages, replies, demos and paying stores every week",
   ],
   requirements: [
+    {
+      title: "Curious about AI",
+      description: "You like using AI tools, you check what they give you, and you can tell when an answer is wrong.",
+    },
     {
       title: "Comfortable talking to strangers",
       description: "You can start a polite conversation with a business owner, and you take a no without pushing.",
@@ -38,8 +43,14 @@ export const SALES_INTERN_JOB = {
       description: "You understand that you earn only when a store you brought in pays, and that it can take more than a month.",
     },
   ],
-  bonusSkills: ["Instagram selling", "Telugu", "Kannada", "Hindi", "Local food or home business contacts"],
+  bonusSkills: ["Using ChatGPT or Claude", "Instagram selling", "Telugu", "Kannada", "Hindi", "Local food or home business contacts"],
   perks: [
+    {
+      icon: "🤖",
+      title: "An AI-native way to do outreach",
+      description:
+        "AI agents do the searching and scoring, so your time goes on real conversations with sellers. You see how an AI outreach system works from the inside. AI never messages a seller for you: every message is yours.",
+    },
     {
       icon: "💰",
       title: `${COMMISSION_SHARE_PERCENT}% commission, no stipend`,
