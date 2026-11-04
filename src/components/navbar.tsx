@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Menu,
   X,
@@ -30,6 +31,8 @@ export function Navbar() {
   const { user, isSignedIn, signOut } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const accountType = (user?.accountType as AccountType | undefined) ?? null;
   const navLinks = getVisibleNav(accountType, user?.orgAdminRole ?? null);
@@ -55,6 +58,8 @@ export function Navbar() {
 
   useEffect(() => {
     if (!mobileOpen) return;
+    const menuButton = menuButtonRef.current;
+    closeButtonRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMobileOpen(false);
     };
@@ -63,6 +68,7 @@ export function Navbar() {
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      menuButton?.focus();
     };
   }, [mobileOpen]);
 
@@ -253,6 +259,7 @@ export function Navbar() {
               </button>
             )}
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-expanded={mobileOpen}
@@ -272,123 +279,128 @@ export function Navbar() {
         </div>
       </div>
 
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-[55]" role="presentation">
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm animate-stat-reveal"
-          />
-          <div
-            id="mobile-nav-drawer"
-            ref={drawerRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-            className={cn(
-              "absolute right-0 top-0 h-full w-[85%] max-w-sm bg-slate-950 border-l border-slate-800",
-              "flex flex-col safe-top",
-              "translate-x-0 transition-transform duration-200 ease-out-expo"
-            )}
-            style={{ animation: "slide-in 200ms cubic-bezier(0.16, 1, 0.3, 1)" }}
-          >
-            <div className="flex items-center justify-between border-b border-slate-800 px-4 h-16">
-              <BrandMark href="/" size="sm" />
+      {/* Portalled to <body>: this nav's backdrop-filter would otherwise be the
+          containing block for the fixed overlay, clamping it to the nav's height. */}
+      {mobileOpen &&
+        createPortal(
+            <div className="md:hidden fixed inset-0 z-[55]" role="presentation">
               <button
                 type="button"
-                onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
-                className="p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer touch-target"
+                onClick={() => setMobileOpen(false)}
+                className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm animate-stat-reveal"
+              />
+              <div
+                id="mobile-nav-drawer"
+                ref={drawerRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Navigation menu"
+                className={cn(
+                  "absolute right-0 top-0 h-dvh w-[85%] max-w-sm bg-slate-950 border-l border-slate-800",
+                  "flex flex-col safe-top",
+                  "translate-x-0 transition-transform duration-200 ease-out-expo"
+                )}
+                style={{ animation: "slide-in 200ms cubic-bezier(0.16, 1, 0.3, 1)" }}
               >
-                <X className="h-5 w-5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const active = isActiveLink(pathname, link.href);
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer",
-                      active
-                        ? "bg-brand-500/10 text-white ring-1 ring-inset ring-brand-500/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "h-4 w-4 shrink-0",
-                        active ? "text-brand-300" : "text-slate-500"
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="border-t border-slate-800 p-3 safe-bottom space-y-1">
-              {isSignedIn ? (
-                <>
-                  <div className="px-3 py-2 text-xs">
-                    <p className="text-slate-400 truncate">{user?.email}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider font-semibold text-brand-300">
-                      {user?.accountType}
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between border-b border-slate-800 px-4 h-16">
+                  <BrandMark href="/" size="sm" />
                   <button
+                    ref={closeButtonRef}
                     type="button"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      signOut();
-                    }}
-                    className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close menu"
+                    className="p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer touch-target"
                   >
-                    <LogOut className="h-4 w-4" aria-hidden="true" />
-                    Sign out
+                    <X className="h-5 w-5" aria-hidden="true" />
                   </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/create-org"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full btn-cta py-2.5 text-sm"
-                  >
-                    Start free
-                  </Link>
-                  <Link
-                    href="/sign-in"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                  >
-                    <User className="h-4 w-4" aria-hidden="true" />
-                    Sign In
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-          <style jsx>{`
-            @keyframes slide-in {
-              from {
-                transform: translateX(100%);
-              }
-              to {
-                transform: translateX(0);
-              }
-            }
-          `}</style>
-        </div>
-      )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+                  {navLinks.map((link) => {
+                    const Icon = link.icon;
+                    const active = isActiveLink(pathname, link.href);
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer",
+                          active
+                            ? "bg-brand-500/10 text-white ring-1 ring-inset ring-brand-500/30"
+                            : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                        )}
+                      >
+                        <Icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            active ? "text-brand-300" : "text-slate-500"
+                          )}
+                          aria-hidden="true"
+                        />
+                        <span>{link.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-slate-800 p-3 safe-bottom space-y-1">
+                  {isSignedIn ? (
+                    <>
+                      <div className="px-3 py-2 text-xs">
+                        <p className="text-slate-400 truncate">{user?.email}</p>
+                        <p className="mt-1 text-[10px] uppercase tracking-wider font-semibold text-brand-300">
+                          {user?.accountType}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileOpen(false);
+                          signOut();
+                        }}
+                        className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4" aria-hidden="true" />
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/create-org"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full btn-cta py-2.5 text-sm"
+                      >
+                        Start free
+                      </Link>
+                      <Link
+                        href="/sign-in"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                      >
+                        <User className="h-4 w-4" aria-hidden="true" />
+                        Sign In
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+              <style jsx>{`
+                @keyframes slide-in {
+                  from {
+                    transform: translateX(100%);
+                  }
+                  to {
+                    transform: translateX(0);
+                  }
+                }
+              `}</style>
+            </div>,
+          document.body
+        )}
     </nav>
   );
 }
