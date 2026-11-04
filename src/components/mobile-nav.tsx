@@ -40,7 +40,7 @@ export function MobileBottomNav() {
       {/* In-flow spacer so the fixed bar never covers the end of the page. */}
       <div
         aria-hidden="true"
-        className="h-[calc(4rem+env(safe-area-inset-bottom,0px))] md:hidden"
+        className="h-[calc(4rem+1px+env(safe-area-inset-bottom,0px))] md:hidden"
       />
       <nav
         role="navigation"
