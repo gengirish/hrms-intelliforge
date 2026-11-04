@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -79,7 +80,7 @@ export default function CreateOrgPage() {
             </div>
             <h1 className="text-2xl font-bold text-white">Create Your Organization</h1>
             <p className="text-sm text-slate-400 mt-2">
-              Set up your HR workspace. Free plan includes 5 interns.
+              Set up your HR workspace. Free plan includes {FREE_PLAN_MAX_INTERNS} interns.
             </p>
           </div>
 

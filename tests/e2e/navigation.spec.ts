@@ -10,7 +10,7 @@ test.describe("Navigation", () => {
 
   test("Start free CTA navigates to create-org", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "Start free — 5 interns" }).click();
+    await page.getByRole("link", { name: /^Start free — \d+ interns$/ }).click();
     await expect(page).toHaveURL(/\/create-org/, { timeout: 15_000 });
   });
 

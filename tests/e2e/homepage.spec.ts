@@ -28,7 +28,7 @@ test.describe("Homepage", () => {
 
   test("should have Start free CTA linking to create-org", async ({ page }) => {
     await page.goto("/");
-    const cta = page.getByRole("link", { name: "Start free — 5 interns" });
+    const cta = page.getByRole("link", { name: /^Start free — \d+ interns$/ });
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("href", "/create-org");
   });
