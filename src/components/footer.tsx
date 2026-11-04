@@ -100,12 +100,12 @@ export function Footer() {
 
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">Product</h3>
-            <ul className="space-y-2">
+            <ul className="md:space-y-2">
               {productLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-400 hover:text-brand-300 transition-colors"
+                    className="flex min-h-11 items-center text-sm text-slate-400 hover:text-brand-300 transition-colors md:inline md:min-h-0"
                   >
                     {link.label}
                   </Link>
@@ -118,12 +118,12 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-3">
               Intern Portal
             </h3>
-            <ul className="space-y-2">
+            <ul className="md:space-y-2">
               {internLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-400 hover:text-brand-300 transition-colors"
+                    className="flex min-h-11 items-center text-sm text-slate-400 hover:text-brand-300 transition-colors md:inline md:min-h-0"
                   >
                     {link.label}
                   </Link>
