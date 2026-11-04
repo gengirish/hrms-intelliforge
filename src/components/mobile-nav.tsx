@@ -4,13 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { getMobileTabs, isActiveLink, type AccountType } from "@/lib/nav-config";
+import {
+  getMobileTabs,
+  isActiveLink,
+  NAV_ITEMS,
+  type AccountType,
+} from "@/lib/nav-config";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const accountType = (user?.accountType as AccountType | undefined) ?? null;
-  const tabs = getMobileTabs(accountType, user?.orgAdminRole ?? null);
+  const isPublicPage = NAV_ITEMS.some(
+    (item) => item.audience.includes("public") && isActiveLink(pathname, item.href)
+  );
+  // Logged-out tabs would flash on signed-in routes until the session resolves.
+  const tabs =
+    isLoading && !isPublicPage
+      ? []
+      : getMobileTabs(accountType, user?.orgAdminRole ?? null);
 
   return (
     <nav
