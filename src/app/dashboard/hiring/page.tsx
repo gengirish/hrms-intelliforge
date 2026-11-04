@@ -765,7 +765,7 @@ export default function HiringPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     <Link
-                      href={`/careers/${job.slug}`}
+                      href={`/internships/${job.slug}`}
                       onClick={(e) => e.stopPropagation()}
                       className="text-slate-500 hover:text-indigo-400 transition-colors p-1"
                       title="View public page"

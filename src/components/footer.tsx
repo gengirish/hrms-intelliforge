@@ -11,7 +11,7 @@ import { BrandMark } from "@/components/brand-mark";
 const productLinks = [
   { href: "/pricing", label: "Pricing" },
   { href: "/create-org", label: "Start free" },
-  { href: "/careers", label: "Careers" },
+  { href: "/internships", label: "Careers" },
   { href: "/about", label: "About" },
 ];
 

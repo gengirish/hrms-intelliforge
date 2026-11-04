@@ -22,6 +22,12 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/careers", destination: "/internships", permanent: true },
+      { source: "/careers/:slug", destination: "/internships/:slug", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
