@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { DemoVideo } from "@/components/marketing/demo-video";
 import { SocialProof } from "@/components/marketing/social-proof";
@@ -378,7 +377,6 @@ export default function HomePage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );

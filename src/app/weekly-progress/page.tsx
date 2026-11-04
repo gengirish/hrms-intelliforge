@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { BookOpen, Loader2, History } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { cn, getCurrentISOWeek } from "@/lib/utils";
 
@@ -90,7 +89,6 @@ function WeeklyProgressSuspenseFallback() {
         </div>
       </main>
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );
@@ -320,7 +318,6 @@ function WeeklyProgressContent() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -358,7 +355,6 @@ function WeeklyProgressContent() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -548,7 +544,6 @@ function WeeklyProgressContent() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );

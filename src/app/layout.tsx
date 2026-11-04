@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { CommandPalette } from "@/components/command-palette";
+import { MobileBottomNav } from "@/components/mobile-nav";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -144,6 +145,7 @@ export default function RootLayout({
         <AuthProvider>
           <PostHogProvider>
             {children}
+            <MobileBottomNav />
             <CommandPalette />
           </PostHogProvider>
         </AuthProvider>

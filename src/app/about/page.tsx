@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = {
@@ -703,7 +702,6 @@ export default function AboutPage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
     </div>
   );
 }

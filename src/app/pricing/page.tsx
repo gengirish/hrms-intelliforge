@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight, HelpCircle } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 export const metadata: Metadata = {
@@ -86,7 +85,6 @@ export default function PricingPage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
     </div>
   );
 }

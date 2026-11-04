@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { DashboardSubnav } from "@/components/dashboard/dashboard-subnav";
 
@@ -22,7 +21,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );
