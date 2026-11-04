@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
 import {
   ArrowRight,
   Sparkles,
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { DemoVideo } from "@/components/marketing/demo-video";
 import { SocialProof } from "@/components/marketing/social-proof";
@@ -136,7 +136,7 @@ export default function HomePage() {
 
               <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
                 <Link href="/create-org" className="btn-cta px-6 py-3 text-base">
-                  Start free — 5 interns
+                  Start free — {FREE_PLAN_MAX_INTERNS} interns
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <Link href="/pricing" className="btn-secondary px-6 py-3 text-base">
@@ -367,7 +367,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-slate-300">
               Join teams running mentor-led internships on the Mentor Internship
-              Platform. Free forever for up to 500 interns and 20 mentors.
+              Platform. Free forever for up to {FREE_PLAN_MAX_INTERNS} interns and 20 mentors.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-8 py-3 text-base">
               Start free today
@@ -378,7 +378,6 @@ export default function HomePage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );

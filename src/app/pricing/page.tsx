@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
 import { ArrowRight, HelpCircle } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for internal mentor-led internship programs. Start free with 500 interns and 20 mentors — scale as your cohort grows.",
+    `Simple, transparent pricing for internal mentor-led internship programs. Start free with ${FREE_PLAN_MAX_INTERNS} interns and 20 mentors — scale as your cohort grows.`,
 };
 
 const faqs = [
   {
     q: "Do I need a credit card to start?",
-    a: "No. The Free plan lets you launch a workspace with up to 5 interns without entering payment details.",
+    a: `No. The Free plan lets you launch a workspace with up to ${FREE_PLAN_MAX_INTERNS} interns without entering payment details.`,
   },
   {
     q: "Can interns sign up themselves?",
@@ -86,7 +86,6 @@ export default function PricingPage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
     </div>
   );
 }

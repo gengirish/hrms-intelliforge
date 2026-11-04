@@ -1,4 +1,11 @@
-import { PLANS, type PlanKey } from "@/lib/stripe";
+import { PLANS, type PlanKey } from "@/lib/plans";
+
+function internLimitLabel(key: PlanKey): string {
+  const { maxInterns } = PLANS[key];
+  return maxInterns >= 999999 ? "Unlimited" : String(maxInterns);
+}
+
+export const FREE_PLAN_MAX_INTERNS = PLANS.free.maxInterns;
 
 export interface MarketingPlan {
   key: PlanKey;
@@ -18,7 +25,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Free",
     price: "$0",
     period: "/mo",
-    interns: "500",
+    interns: internLimitLabel("free"),
     tagline: "Launch your first mentor-led cohort",
     features: [
       "20 mentors",
@@ -35,7 +42,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Starter",
     price: "$29",
     period: "/mo",
-    interns: "500",
+    interns: internLimitLabel("starter"),
     tagline: "Grow your internship program",
     features: [
       "20 mentors",
@@ -52,7 +59,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Growth",
     price: "$79",
     period: "/mo",
-    interns: "500",
+    interns: internLimitLabel("growth"),
     tagline: "Scale cohorts without ops overhead",
     features: [
       "20 mentors",
@@ -69,7 +76,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Enterprise",
     price: "Custom",
     period: "",
-    interns: "Unlimited",
+    interns: internLimitLabel("enterprise"),
     tagline: "Custom program & payout terms",
     features: [
       "Unlimited mentors",
@@ -87,6 +94,6 @@ export const DASHBOARD_PLANS = MARKETING_PLANS.map((plan) => ({
   key: plan.key,
   name: plan.name,
   price: plan.period ? `${plan.price}${plan.period}` : plan.price,
-  interns: PLANS[plan.key].maxInterns >= 999999 ? "Unlimited" : PLANS[plan.key].maxInterns,
+  interns: plan.interns,
   current: false,
 }));

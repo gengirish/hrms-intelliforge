@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PLANS, type PlanKey } from "@/lib/stripe";
+import { PLANS, type PlanKey } from "@/lib/plans";
 
 export interface PlanLimits {
   maxInterns: number;

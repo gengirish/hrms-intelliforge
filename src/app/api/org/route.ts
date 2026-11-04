@@ -6,6 +6,7 @@ import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 import { ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
 import { serverError } from "@/lib/api-utils";
 import { getOrgUsage } from "@/lib/plan-limits";
+import { PLANS } from "@/lib/plans";
 import { z } from "zod";
 
 const createOrgSchema = z.object({
@@ -54,7 +55,12 @@ export async function POST(req: NextRequest) {
 
     const result = await prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
-        data: { name: orgName, slug, maxInterns: 500, maxMentors: 20 },
+        data: {
+          name: orgName,
+          slug,
+          maxInterns: PLANS.free.maxInterns,
+          maxMentors: PLANS.free.maxMentors,
+        },
       });
 
       const admin = await tx.admin.create({

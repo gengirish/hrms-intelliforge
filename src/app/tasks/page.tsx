@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { cn, getCurrentISOWeek, getStatusColor } from "@/lib/utils";
 import { taskSchema } from "@/lib/validations";
@@ -146,7 +145,6 @@ export default function TasksPage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -172,7 +170,6 @@ export default function TasksPage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -358,7 +355,6 @@ export default function TasksPage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );

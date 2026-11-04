@@ -15,6 +15,7 @@ import {
   Info,
   CreditCard,
   Users,
+  LogIn,
 } from "lucide-react";
 
 export type AccountType = "admin" | "intern";
@@ -158,6 +159,16 @@ export const NOTIFICATIONS_ITEM: NavItem = {
   group: "admin",
 };
 
+// Tab-bar only: the desktop nav and drawer have their own sign-in control.
+export const SIGN_IN_ITEM: NavItem = {
+  href: "/sign-in",
+  label: "Sign in",
+  icon: LogIn,
+  description: "Sign in to your account",
+  audience: ["public"],
+  group: "primary",
+};
+
 export function getVisibleNav(
   accountType: AccountType | null | undefined,
   orgAdminRole?: "ADMIN" | "MENTOR" | null
@@ -196,6 +207,14 @@ export function getMobileTabs(
       );
     }
     return base;
+  }
+  if (accountType !== "intern") {
+    return [
+      NAV_ITEMS.find((i) => i.href === "/")!,
+      NAV_ITEMS.find((i) => i.href === "/internships")!,
+      NAV_ITEMS.find((i) => i.href === "/pricing")!,
+      SIGN_IN_ITEM,
+    ];
   }
   return [
     NAV_ITEMS.find((i) => i.href === "/")!,

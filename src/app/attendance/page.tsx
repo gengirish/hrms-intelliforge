@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { cn, formatDateIST, formatTimeIST } from "@/lib/utils";
 import { captureEvent } from "@/lib/posthog";
@@ -806,7 +805,6 @@ export default function AttendancePage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -832,7 +830,6 @@ export default function AttendancePage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -850,7 +847,6 @@ export default function AttendancePage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -884,7 +880,6 @@ export default function AttendancePage() {
       )}
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );

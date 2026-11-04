@@ -19,7 +19,6 @@ import {
 import { z } from "zod";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { MobileBottomNav } from "@/components/mobile-nav";
 import { InstallPrompt } from "@/components/install-prompt";
 import { cn, getStatusColor } from "@/lib/utils";
 import { dailyPlanItemSchema } from "@/lib/validations";
@@ -246,7 +245,6 @@ export default function DailyPlanPage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -275,7 +273,6 @@ export default function DailyPlanPage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -296,7 +293,6 @@ export default function DailyPlanPage() {
           </div>
         </main>
         <Footer />
-        <MobileBottomNav />
         <InstallPrompt />
       </div>
     );
@@ -510,7 +506,6 @@ export default function DailyPlanPage() {
       </main>
 
       <Footer />
-      <MobileBottomNav />
       <InstallPrompt />
     </div>
   );
