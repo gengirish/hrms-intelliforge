@@ -75,7 +75,7 @@ test.describe("Weekly Progress intern flow (optional credentials)", () => {
     await page.goto("/sign-in?redirect=/weekly-progress");
     await page.getByLabel("Email").fill(email!);
     await page.getByLabel("Password", { exact: true }).fill(password!);
-    await page.getByRole("button", { name: /Sign In/i }).click();
+    await page.getByRole("button", { name: "Sign In", exact: true }).click();
 
     await expect(page).toHaveURL(/\/weekly-progress/, { timeout: 45_000 });
     await expect(page.getByRole("heading", { name: /^Weekly progress$/i })).toBeVisible({
@@ -124,7 +124,7 @@ test.describe("Weekly Progress mentor loop (optional credentials)", () => {
       await page.goto("/sign-in?redirect=/weekly-progress");
       await page.getByLabel("Email").fill(internEmail!);
       await page.getByLabel("Password", { exact: true }).fill(internPassword!);
-      await page.getByRole("button", { name: /Sign In/i }).click();
+      await page.getByRole("button", { name: "Sign In", exact: true }).click();
       await expect(page).toHaveURL(/\/weekly-progress/, { timeout: 45_000 });
 
       await page.locator("#wp-accomplishments").fill(body);
@@ -153,7 +153,7 @@ test.describe("Weekly Progress mentor loop (optional credentials)", () => {
       await page.goto("/sign-in?redirect=/dashboard/weekly-progress");
       await page.getByLabel("Email").fill(mentorEmail!);
       await page.getByLabel("Password", { exact: true }).fill(mentorPassword!);
-      await page.getByRole("button", { name: /Sign In/i }).click();
+      await page.getByRole("button", { name: "Sign In", exact: true }).click();
       await expect(page).toHaveURL(/\/dashboard\/weekly-progress/, { timeout: 45_000 });
       await expect(
         page.getByRole("heading", { name: /Weekly progress review/i })

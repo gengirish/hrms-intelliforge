@@ -2,13 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
       JWT_SECRET: ci-jwt-secret-placeholder-min-32-chars
@@ -30,6 +44,15 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      # prisma/migrations cannot replay on an empty database (it never creates
+      # organizations, job_postings and others), so this throwaway database is
+      # built from the schema. Production still uses `prisma migrate deploy`.
+      - name: Create database schema
+        run: npx prisma db push --skip-generate
+
+      - name: Seed database
+        run: node prisma/seed.mjs
+
       - name: Lint
         run: npm run lint
 
@@ -39,8 +62,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Not `npm run build`, which runs `prisma migrate deploy` first.
       - name: Build
-        run: npm run build
+        run: npx next build
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

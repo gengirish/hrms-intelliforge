@@ -9,7 +9,7 @@ test.describe("About Page", () => {
 
   test("renders hero heading and Bharat AI Mission mention", async ({ page }) => {
     await page.goto("/about");
-    await expect(page.locator("#about-hero-heading")).toContainText(/Built for the AI age/i);
+    await expect(page.locator("#about-hero-heading")).toContainText(/internal program platform/i);
     await expect(page.getByText(/Bharat AI Mission/i).first()).toBeVisible();
   });
 
