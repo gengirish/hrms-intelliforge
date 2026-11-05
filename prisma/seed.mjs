@@ -224,6 +224,7 @@ async function main() {
     await prisma.jobPosting.create({
       data: {
         orgId: org.id,
+        slug: "ai-native-software-engineer-intern",
         title: "AI Native Software Engineer Intern",
         description:
           "Build real AI agents, ship production-grade SaaS products, and learn what it means to engineer at the intersection of LLMs and full-stack systems — from day one.",
