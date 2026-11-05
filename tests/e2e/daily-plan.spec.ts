@@ -30,7 +30,7 @@ test.describe("Daily Plan intern flow (optional credentials)", () => {
     await page.goto("/sign-in?redirect=/daily-plan");
     await page.getByLabel("Email").fill(email!);
     await page.getByLabel("Password", { exact: true }).fill(password!);
-    await page.getByRole("button", { name: /Sign In/i }).click();
+    await page.getByRole("button", { name: "Sign In", exact: true }).click();
 
     await expect(page).toHaveURL(/\/daily-plan/, { timeout: 45_000 });
 

@@ -13,7 +13,7 @@ test.describe("Mentors directory (public)", () => {
     await expect(page.locator("#main-content h1")).toContainText("program mentors", {
       timeout: 15_000,
     });
-    await expect(page.getByText("Program mentors")).toBeVisible();
+    await expect(page.getByText("Program mentors", { exact: true })).toBeVisible();
   });
 
   test("has mentor search input", async ({ page }) => {

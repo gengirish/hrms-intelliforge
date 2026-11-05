@@ -158,5 +158,6 @@ describe("performance-scores cron auth", () => {
     } finally {
       if (saved !== undefined) process.env.CRON_SECRET = saved;
     }
-  });
+    // The cold import of the route alone can exceed the default 5s on a fresh runner.
+  }, 30_000);
 });
