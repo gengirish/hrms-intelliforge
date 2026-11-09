@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FREE_PLAN_MAX_INTERNS, freePlanAllowance } from "@/lib/pricing";
+import { freeHeroHighlights } from "@/lib/plans";
 import {
   ArrowRight,
   Sparkles,
@@ -144,19 +145,16 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-400">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  No credit card
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Mentor ratings & reviews
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Stipend payouts built in
-                </li>
+              <ul
+                className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-400"
+                data-testid="hero-free-highlights"
+              >
+                {freeHeroHighlights().map((label) => (
+                  <li key={label} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
+                    {label}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

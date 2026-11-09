@@ -5,6 +5,7 @@ import {
   PlansSchema,
   UNLIMITED_DB_LIMIT,
   formatSeatLimit,
+  freeHeroHighlights,
   isPlanKey,
   limitsForPlan,
   parseSelfServePlan,
@@ -91,5 +92,18 @@ describe("parseSelfServePlan (/create-org ?plan=)", () => {
     for (const bad of [null, undefined, "", "STARTER", "pro", "enterprise", "__proto__", 42]) {
       expect(parseSelfServePlan(bad)).toBe("free");
     }
+  });
+});
+
+describe("freeHeroHighlights (D3)", () => {
+  it("only returns Free-plan features", () => {
+    const free = PLANS.free.features.map((f) => f.label);
+    const highlights = freeHeroHighlights();
+    expect(highlights.length).toBeGreaterThan(0);
+    for (const h of highlights) expect(free).toContain(h);
+  });
+
+  it("never mentions paid-only features", () => {
+    for (const h of freeHeroHighlights()) expect(h).not.toMatch(/payout|rating|review|whatsapp/i);
   });
 });

@@ -71,6 +71,11 @@ export const PlansSchema = z
 
 export type Plan = z.infer<typeof PlanSchema>;
 
+/** Bullets that sit next to a "Start free" CTA. Only Free-plan features qualify. */
+export function freeHeroHighlights(plans: Record<PlanKey, Plan> = PLANS): string[] {
+  return plans.free.features.filter((f) => f.hero).map((f) => f.label);
+}
+
 const PLAN_CONFIG = {
   free: {
     id: "free",
@@ -80,9 +85,10 @@ const PLAN_CONFIG = {
     interns: 500,
     mentors: 20,
     features: [
+      { label: "No credit card required", hero: true },
       { label: "Internship listings & careers page" },
-      { label: "Self-serve intern onboarding" },
-      { label: "Attendance & weekly task logs" },
+      { label: "Self-serve intern onboarding", hero: true },
+      { label: "Attendance & weekly task logs", hero: true },
       { label: "Email notifications" },
     ],
     cta: "Start free",
