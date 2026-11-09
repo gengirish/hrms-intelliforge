@@ -11,6 +11,7 @@ import {
   normalizeOrgAdminRole,
   ORG_ADMIN_ROLE,
 } from "@/lib/org-admin-roles";
+import { normaliseMentorProfileFields } from "@/lib/mentor-listing";
 
 const availabilitySlotSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
@@ -102,8 +103,10 @@ export async function POST(req: NextRequest) {
     });
 
     const profileData = {
-      headline: data.headline ?? null,
-      bio: data.bio ?? null,
+      ...normaliseMentorProfileFields({
+        headline: data.headline ?? null,
+        bio: data.bio ?? null,
+      }),
       expertise: data.expertise ?? [],
       yearsExperience: data.yearsExperience ?? null,
       linkedinUrl: data.linkedinUrl || null,

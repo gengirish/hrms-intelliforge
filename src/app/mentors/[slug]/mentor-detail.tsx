@@ -14,6 +14,7 @@ import {
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { formatHourlyRate } from "@/lib/mentor-listing";
 import { BookSessionForm } from "@/components/mentors/book-session-form";
 import { AvailabilityDisplay } from "@/components/mentors/availability-display";
 
@@ -50,11 +51,7 @@ export interface MentorDetail {
   ratings: MentorRating[];
 }
 
-function formatRate(paise: number | null): string | null {
-  if (paise == null || paise <= 0) return null;
-  const rupees = paise / 100;
-  return `₹${rupees.toLocaleString("en-IN")}/hr`;
-}
+const formatRate = formatHourlyRate;
 
 /** Rendered by the server page with the profile already loaded (D4). */
 export function MentorDetailView({ initialMentor }: { initialMentor: MentorDetail }) {

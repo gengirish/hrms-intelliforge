@@ -10,6 +10,7 @@ import {
   sendMentorApplicationReceived,
   sendNewMentorApplicationAlert,
 } from "@/lib/agentmail";
+import { normaliseMentorProfileFields } from "@/lib/mentor-listing";
 
 export const dynamic = "force-dynamic";
 
@@ -75,8 +76,10 @@ export async function POST(req: NextRequest) {
         name: data.name,
         email: data.email,
         phone: data.phone || null,
-        headline: data.headline || null,
-        bio: data.bio || null,
+        ...normaliseMentorProfileFields({
+          headline: data.headline || null,
+          bio: data.bio || null,
+        }),
         expertise: data.expertise ?? [],
         yearsExperience: data.yearsExperience ?? null,
         linkedinUrl: data.linkedinUrl || null,

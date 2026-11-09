@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { MentorDirectory } from "@/components/mentors/mentor-directory";
+import { publicMentorWhere } from "@/lib/mentor-listing";
 import type { MentorListing } from "@/components/mentors/mentor-card";
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,7 @@ async function getMentors(page: number, expertise?: string) {
   };
 
   try {
-    const where = {
-      isPublic: true,
-      ...(expertise ? { expertise: { has: expertise } } : {}),
-    };
+    const where = publicMentorWhere(expertise ? { expertise: { has: expertise } } : {});
 
     const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
@@ -68,7 +66,7 @@ async function getMentors(page: number, expertise?: string) {
       }),
       prisma.mentorProfile.count({ where }),
       prisma.mentorProfile.count(),
-      prisma.mentorProfile.count({ where: { isPublic: true } }),
+      prisma.mentorProfile.count({ where: publicMentorWhere() }),
     ]);
 
     const mentors: MentorListing[] = profiles.map((p) => ({
@@ -104,7 +102,7 @@ async function getMentors(page: number, expertise?: string) {
 async function getExpertiseOptions(): Promise<string[]> {
   try {
     const profiles = await prisma.mentorProfile.findMany({
-      where: { isPublic: true },
+      where: publicMentorWhere(),
       select: { expertise: true },
     });
     const set = new Set<string>();

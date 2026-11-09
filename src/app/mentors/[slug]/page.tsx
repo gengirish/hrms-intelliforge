@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicMentor, metaDescription } from "@/lib/public-listings";
+import { dedupeBioAgainstHeadline, isMentorProfileComplete } from "@/lib/mentor-listing";
 import { MentorDetailView, type MentorDetail } from "./mentor-detail";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: url },
+    // Incomplete profiles stay reachable by link but are kept out of search (D5).
+    ...(isMentorProfileComplete(mentor) ? {} : { robots: { index: false } }),
     openGraph: { title, description, url, type: "profile" },
     twitter: { card: "summary", title, description },
   };
@@ -31,6 +34,7 @@ export default async function MentorDetailPage({ params }: Props) {
 
   const initialMentor: MentorDetail = {
     ...mentor,
+    bio: dedupeBioAgainstHeadline(mentor.headline, mentor.bio),
     ratings: mentor.ratings.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
   };
 

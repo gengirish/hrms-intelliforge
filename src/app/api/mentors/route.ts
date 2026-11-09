@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { publicMentorWhere } from "@/lib/mentor-listing";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,16 +16,7 @@ export async function GET(req: NextRequest) {
     );
 
     const expertise = expertiseRaw?.trim();
-    const where = {
-      isPublic: true,
-      ...(expertise
-        ? {
-            expertise: {
-              has: expertise,
-            },
-          }
-        : {}),
-    };
+    const where = publicMentorWhere(expertise ? { expertise: { has: expertise } } : {});
 
     const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
@@ -58,7 +50,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.mentorProfile.count({ where }),
       prisma.mentorProfile.count(),
-      prisma.mentorProfile.count({ where: { isPublic: true } }),
+      prisma.mentorProfile.count({ where: publicMentorWhere() }),
     ]);
 
     const mentors = profiles.map((p) => ({
