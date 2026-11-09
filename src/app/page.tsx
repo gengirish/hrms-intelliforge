@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
+import { FREE_PLAN_MAX_INTERNS, freePlanAllowance } from "@/lib/pricing";
 import {
   ArrowRight,
   Sparkles,
@@ -367,7 +367,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-slate-300">
               Join teams running mentor-led internships on the Mentor Internship
-              Platform. Free forever for up to {FREE_PLAN_MAX_INTERNS} interns and 20 mentors.
+              Platform. Free forever for up to {freePlanAllowance()}.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-8 py-3 text-base">
               Start free today

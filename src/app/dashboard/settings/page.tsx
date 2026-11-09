@@ -956,7 +956,9 @@ export default function SettingsPage() {
                   >
                     <h4 className="text-sm font-semibold text-white">{plan.name}</h4>
                     <p className="text-xl font-bold text-white mt-1">{plan.price}</p>
-                    <p className="text-xs text-slate-400 mt-2">Up to {plan.interns} interns</p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      {plan.interns} interns · {plan.mentors} mentors
+                    </p>
                     <div className="mt-auto pt-4">
                       {isCurrent ? (
                         <span className="block text-center text-xs font-medium text-indigo-400">

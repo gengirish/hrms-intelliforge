@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PLANS, type PlanKey } from "@/lib/plans";
+import { limitsForPlan } from "@/lib/plans";
 
 export interface PlanLimits {
   maxInterns: number;
@@ -7,21 +7,11 @@ export interface PlanLimits {
   platformFeeBps: number;
 }
 
-const PLAN_MENTOR_LIMITS: Record<PlanKey, number> = {
-  free: 20,
-  starter: 20,
-  growth: 20,
-  enterprise: 999999,
-};
-
 const DEFAULT_PLATFORM_FEE_BPS = 1000;
 
 export function getPlanLimits(plan: string): PlanLimits {
-  const key = plan as PlanKey;
-  const p = PLANS[key];
   return {
-    maxInterns: p?.maxInterns ?? 500,
-    maxMentors: PLAN_MENTOR_LIMITS[key] ?? 20,
+    ...limitsForPlan(plan),
     platformFeeBps: DEFAULT_PLATFORM_FEE_BPS,
   };
 }

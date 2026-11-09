@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MARKETING_PLANS } from "@/lib/pricing";
+import { MARKETING_PLANS, pricingCopy } from "@/lib/pricing";
 
 interface PricingSectionProps {
   id?: string;
@@ -14,6 +14,7 @@ export function PricingSection({
   showHeading = true,
   compact = false,
 }: PricingSectionProps) {
+  const copy = pricingCopy();
   return (
     <section
       id={id}
@@ -32,11 +33,10 @@ export function PricingSection({
             id="pricing-heading"
             className="text-3xl sm:text-4xl font-bold text-white text-balance"
           >
-            Start free. Scale mentors and interns together.
+            {copy.sectionHeading}
           </h2>
           <p className="mt-4 text-slate-400 leading-relaxed">
-            No sales call required. List internships, invite mentors, and upgrade
-            only when you need more seats.
+            {copy.sectionSubheading}
           </p>
         </div>
       )}
@@ -45,6 +45,7 @@ export function PricingSection({
         {MARKETING_PLANS.map((plan) => (
           <article
             key={plan.key}
+            data-plan={plan.key}
             className={cn(
               "trust-card flex flex-col p-6 relative",
               plan.highlighted &&
@@ -66,9 +67,16 @@ export function PricingSection({
                   <span className="text-sm text-slate-500">{plan.period}</span>
                 )}
               </div>
-              <p className="mt-2 text-sm text-slate-400">
-                Up to <strong className="text-slate-200">{plan.interns}</strong>{" "}
-                interns
+              <p className="mt-2 text-sm text-slate-400" data-testid="plan-limits">
+                {plan.interns === "Unlimited" ? (
+                  <strong className="text-slate-200">Unlimited</strong>
+                ) : (
+                  <>
+                    Up to <strong className="text-slate-200">{plan.interns}</strong>
+                  </>
+                )}{" "}
+                interns ·{" "}
+                <strong className="text-slate-200">{plan.mentors}</strong> mentors
               </p>
             </header>
 

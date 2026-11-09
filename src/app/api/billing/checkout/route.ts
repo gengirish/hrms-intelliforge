@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { hasFullOrgAdminAccess } from "@/lib/admin-intern-access";
 import { prisma } from "@/lib/prisma";
-import { getStripe, PLANS, PlanKey } from "@/lib/stripe";
+import { getStripe, getStripePriceId, PLANS } from "@/lib/stripe";
+import { isPlanKey } from "@/lib/plans";
 import { serverError } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
@@ -16,9 +17,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const plan = body.plan as PlanKey;
+    const plan: unknown = body?.plan;
 
-    if (!plan || !PLANS[plan] || plan === "free") {
+    if (!isPlanKey(plan) || plan === "free") {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const priceId = PLANS[plan].priceId;
+    const priceId = getStripePriceId(plan);
     if (!priceId) {
       const planName = PLANS[plan].name;
       const envKey = `STRIPE_${plan.toUpperCase()}_PRICE_ID`;

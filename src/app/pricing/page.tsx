@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
+import {
+  FREE_PLAN_MAX_INTERNS,
+  freePlanAllowance,
+  mentorSeatsFaqAnswer,
+  pricingCopy,
+} from "@/lib/pricing";
 import { ArrowRight, HelpCircle } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -9,7 +14,7 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    `Simple, transparent pricing for internal mentor-led internship programs. Start free with ${FREE_PLAN_MAX_INTERNS} interns and 20 mentors — scale as your cohort grows.`,
+    `Simple, transparent pricing for internal mentor-led internship programs. Start free with ${freePlanAllowance()} — scale as your cohort grows.`,
 };
 
 const faqs = [
@@ -27,7 +32,7 @@ const faqs = [
   },
   {
     q: "Are mentor seats included?",
-    a: "Yes. Every plan includes 20 mentor seats on Free, Starter, and Growth — unlimited on Enterprise. Mentors get their own dashboard for reviews and cohort management.",
+    a: mentorSeatsFaqAnswer(),
   },
   {
     q: "How do stipend payouts work?",
@@ -48,9 +53,7 @@ export default function PricingPage() {
               Pricing that scales with your program
             </h1>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              One platform for mentor roster, cohort accountability, and
-              stipend payouts. Pay per intern and mentor capacity — not per
-              feature gate.
+              {pricingCopy().pageSubheading}
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-6 py-3 text-base">
               Create free workspace
