@@ -7,6 +7,11 @@ import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { MentorDirectory } from "@/components/mentors/mentor-directory";
 import { publicMentorWhere } from "@/lib/mentor-listing";
+import {
+  buildTagFilterIndex,
+  storedTagsForFilter,
+  tagFilterOptions,
+} from "@/lib/tag-normalise";
 import type { MentorListing } from "@/components/mentors/mentor-card";
 export const dynamic = "force-dynamic";
 
@@ -20,7 +25,7 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 12;
 
-async function getMentors(page: number, expertise?: string) {
+async function getMentors(page: number, expertiseTags?: string[]) {
   const empty = {
     mentors: [] as MentorListing[],
     total: 0,
@@ -32,7 +37,9 @@ async function getMentors(page: number, expertise?: string) {
   };
 
   try {
-    const where = publicMentorWhere(expertise ? { expertise: { has: expertise } } : {});
+    const where = publicMentorWhere(
+      expertiseTags ? { expertise: { hasSome: expertiseTags } } : {},
+    );
 
     const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
@@ -99,19 +106,16 @@ async function getMentors(page: number, expertise?: string) {
   }
 }
 
-async function getExpertiseOptions(): Promise<string[]> {
+/** Canonical filter labels → stored tag strings, from every public profile (D6). */
+async function getExpertiseIndex() {
   try {
     const profiles = await prisma.mentorProfile.findMany({
       where: publicMentorWhere(),
       select: { expertise: true },
     });
-    const set = new Set<string>();
-    for (const p of profiles) {
-      for (const e of p.expertise) set.add(e);
-    }
-    return Array.from(set).sort();
+    return buildTagFilterIndex(profiles.flatMap((p) => p.expertise));
   } catch {
-    return [];
+    return new Map<string, Set<string>>();
   }
 }
 
@@ -124,10 +128,12 @@ export default async function MentorsPage({
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const expertise = params.expertise?.trim();
 
-  const [initialData, expertiseOptions] = await Promise.all([
-    getMentors(page, expertise),
-    getExpertiseOptions(),
-  ]);
+  const expertiseIndex = await getExpertiseIndex();
+  const expertiseOptions = tagFilterOptions(expertiseIndex);
+  const initialData = await getMentors(
+    page,
+    expertise ? storedTagsForFilter(expertiseIndex, expertise) : undefined,
+  );
 
   return (
     <div className="min-h-screen flex flex-col">

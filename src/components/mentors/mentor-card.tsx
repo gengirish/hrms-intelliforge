@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Star, Crown } from "lucide-react";
 import { dedupeBioAgainstHeadline, formatHourlyRate } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 
 export interface MentorListing {
   id: string;
@@ -21,6 +22,7 @@ export interface MentorListing {
 export function MentorCard({ mentor }: { mentor: MentorListing }) {
   const rate = formatHourlyRate(mentor.hourlyRatePaise);
   const bio = dedupeBioAgainstHeadline(mentor.headline, mentor.bio);
+  const expertise = normaliseTags(mentor.expertise);
 
   return (
     <Link
@@ -29,7 +31,7 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
       data-testid="mentor-card"
       data-name={mentor.name.toLowerCase()}
       data-headline={(mentor.headline ?? "").toLowerCase()}
-      data-expertise={mentor.expertise.map((e) => e.toLowerCase()).join(",")}
+      data-expertise={expertise.map((e) => e.toLowerCase()).join(",")}
     >
       <div className="flex items-start gap-4">
         {mentor.avatarUrl ? (
@@ -88,9 +90,9 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
             )}
           </div>
 
-          {mentor.expertise.length > 0 && (
+          {expertise.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {mentor.expertise.slice(0, 5).map((skill) => (
+              {expertise.slice(0, 5).map((skill) => (
                 <span
                   key={skill}
                   className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
@@ -98,9 +100,9 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
                   {skill}
                 </span>
               ))}
-              {mentor.expertise.length > 5 && (
+              {expertise.length > 5 && (
                 <span className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-[11px] font-medium text-slate-400">
-                  +{mentor.expertise.length - 5}
+                  +{expertise.length - 5}
                 </span>
               )}
             </div>

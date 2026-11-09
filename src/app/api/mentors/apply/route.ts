@@ -11,6 +11,7 @@ import {
   sendNewMentorApplicationAlert,
 } from "@/lib/agentmail";
 import { normaliseMentorProfileFields } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
           headline: data.headline || null,
           bio: data.bio || null,
         }),
-        expertise: data.expertise ?? [],
+        expertise: normaliseTags(data.expertise),
         yearsExperience: data.yearsExperience ?? null,
         linkedinUrl: data.linkedinUrl || null,
         githubUrl: data.githubUrl || null,

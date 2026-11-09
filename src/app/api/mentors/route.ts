@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicMentorWhere } from "@/lib/mentor-listing";
+import { buildTagFilterIndex, storedTagsForFilter } from "@/lib/tag-normalise";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +17,20 @@ export async function GET(req: NextRequest) {
     );
 
     const expertise = expertiseRaw?.trim();
-    const where = publicMentorWhere(expertise ? { expertise: { has: expertise } } : {});
+    let expertiseTags: string[] | undefined;
+    if (expertise) {
+      const tagged = await prisma.mentorProfile.findMany({
+        where: publicMentorWhere(),
+        select: { expertise: true },
+      });
+      expertiseTags = storedTagsForFilter(
+        buildTagFilterIndex(tagged.flatMap((p) => p.expertise)),
+        expertise,
+      );
+    }
+    const where = publicMentorWhere(
+      expertiseTags ? { expertise: { hasSome: expertiseTags } } : {},
+    );
 
     const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({

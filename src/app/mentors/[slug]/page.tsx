@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicMentor, metaDescription } from "@/lib/public-listings";
 import { dedupeBioAgainstHeadline, isMentorProfileComplete } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 import { MentorDetailView, type MentorDetail } from "./mentor-detail";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function MentorDetailPage({ params }: Props) {
   const initialMentor: MentorDetail = {
     ...mentor,
     bio: dedupeBioAgainstHeadline(mentor.headline, mentor.bio),
+    expertise: normaliseTags(mentor.expertise),
     ratings: mentor.ratings.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
   };
 

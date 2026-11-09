@@ -12,6 +12,7 @@ import { assertCanAddMentor, PlanLimitError } from "@/lib/plan-limits";
 import { sendMentorApprovalEmail } from "@/lib/auth-email";
 import { sendMentorApplicationDeclined } from "@/lib/agentmail";
 import { normaliseMentorProfileFields } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export async function PATCH(
           headline: application.headline,
           bio: application.bio,
         }),
-        expertise: application.expertise,
+        expertise: normaliseTags(application.expertise),
         yearsExperience: application.yearsExperience,
         linkedinUrl: application.linkedinUrl,
         githubUrl: application.githubUrl,
