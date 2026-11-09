@@ -16,6 +16,7 @@ import {
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
 import { WhatsAppOtpForm } from "@/components/auth/whatsapp-otp-form";
+import { SITE } from "@/lib/site";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -324,7 +325,7 @@ function SignInForm() {
               <span>
                 Built by{" "}
                 <a
-                  href="https://girishbhiremath.vercel.app"
+                  href={SITE.founder.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-300 transition-colors font-medium focus-visible:underline focus-visible:outline-none rounded"

@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { SITE } from "@/lib/site";
 
 const productLinks = [
   { href: "/pricing", label: "Pricing" },
@@ -44,9 +45,9 @@ const familyLinks: Array<{
     description: "Hands-on upskilling programs",
   },
   {
-    href: "https://girishbhiremath.vercel.app",
-    label: "Founder · Girish Hiremath",
-    description: "AI Practitioner · M.Tech DSAI, IIIT Dharwad",
+    href: SITE.founder.url,
+    label: `Founder · ${SITE.founder.name}`,
+    description: SITE.founder.title,
   },
 ];
 
@@ -182,7 +183,7 @@ export function Footer() {
           <p className="text-xs text-slate-500">
             Built by{" "}
             <a
-              href="https://girishbhiremath.vercel.app"
+              href={SITE.founder.url}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-brand-300 transition-colors font-medium"

@@ -23,6 +23,7 @@ import {
   isActiveLink,
   type AccountType,
 } from "@/lib/nav-config";
+import { mailto } from "@/lib/site";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -201,7 +202,7 @@ export function Navbar() {
                           </kbd>
                         </button>
                         <a
-                          href="mailto:hr@intelliforge.tech"
+                          href={mailto("Help & support")}
                           role="menuitem"
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
                         >

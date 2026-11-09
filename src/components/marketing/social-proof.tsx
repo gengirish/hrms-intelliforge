@@ -1,9 +1,8 @@
 import { Quote, Sparkles, ShieldCheck, MapPin, ArrowRight } from "lucide-react";
+import { mailto } from "@/lib/site";
 
-// DECISION: Q3 — design-partner contact address (moves to src/lib/site.ts in D9).
-const DESIGN_PARTNER_MAILTO = `mailto:founder@intelliforge.tech?subject=${encodeURIComponent(
-  "Design partner — Mentor Internship Platform",
-)}`;
+// Address comes from SITE.contactEmail (DECISION: Q3 in src/lib/site.ts).
+const DESIGN_PARTNER_MAILTO = mailto("Design partner — Mentor Internship Platform");
 
 const partnerBadges = [
   { icon: Sparkles, label: "IntelliForge AI" },

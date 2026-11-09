@@ -28,6 +28,7 @@ import {
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { SITE, mailto } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
@@ -42,8 +43,8 @@ export const metadata: Metadata = {
 };
 
 const PARENT_URL = "https://www.intelliforge.tech";
-const FOUNDER_URL = "https://girishbhiremath.vercel.app";
-const FOUNDER_EMAIL = "gen.girish@gmail.com";
+const FOUNDER_URL = SITE.founder.url;
+const CONTACT_EMAIL = SITE.contactEmail;
 
 const productPillars = [
   {
@@ -407,11 +408,7 @@ export default function AboutPage() {
                   Girish Hiremath
                 </h3>
                 <p className="mt-1 text-sm font-medium text-brand-300">
-                  AI Practitioner &amp; Founder
-                </p>
-                <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                  Principal Software Engineer at a Compliance &amp; RegTech
-                  company in Hyderabad.
+                  {SITE.founder.title}
                 </p>
 
                 <div className="mt-5 w-full rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-left">
@@ -658,12 +655,12 @@ export default function AboutPage() {
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
-                href={`mailto:${FOUNDER_EMAIL}`}
+                href={mailto()}
                 className="btn-cta px-6 py-3 text-base"
-                aria-label={`Email Girish at ${FOUNDER_EMAIL}`}
+                aria-label={`Email IntelliForge at ${CONTACT_EMAIL}`}
               >
                 <Mail className="h-4 w-4" aria-hidden="true" />
-                {FOUNDER_EMAIL}
+                {CONTACT_EMAIL}
               </a>
               <a
                 href={PARENT_URL}

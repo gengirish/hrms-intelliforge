@@ -9,6 +9,7 @@ import { SkipToContent } from "@/components/skip-to-content";
 import { CommandPalette } from "@/components/command-palette";
 import { MobileBottomNav } from "@/components/mobile-nav";
 import "./globals.css";
+import { SITE } from "@/lib/site";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -30,8 +31,8 @@ export const metadata: Metadata = {
   applicationName: "Mentor Internship Platform",
   authors: [
     {
-      name: "Girish Hiremath",
-      url: "https://girishbhiremath.vercel.app",
+      name: SITE.founder.name,
+      url: SITE.founder.url,
     },
   ],
   creator: "Girish Hiremath",
@@ -102,11 +103,11 @@ const organizationJsonLd = {
       },
       founder: {
         "@type": "Person",
-        "@id": "https://girishbhiremath.vercel.app/#person",
-        name: "Girish Hiremath",
-        url: "https://girishbhiremath.vercel.app",
-        jobTitle: "AI Practitioner & Founder",
-        sameAs: ["https://girishbhiremath.vercel.app"],
+        "@id": `${SITE.founder.url}/#person`,
+        name: SITE.founder.name,
+        url: SITE.founder.url,
+        jobTitle: SITE.founder.title,
+        sameAs: [SITE.founder.url],
       },
     },
     {
@@ -122,7 +123,7 @@ const organizationJsonLd = {
         "@id": "https://www.intelliforge.tech/#organization",
       },
       author: {
-        "@id": "https://girishbhiremath.vercel.app/#person",
+        "@id": `${SITE.founder.url}/#person`,
       },
     },
   ],

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MARKETING_PLANS, pricingCopy } from "@/lib/pricing";
+import { mailto } from "@/lib/site";
 
 interface PricingSectionProps {
   id?: string;
@@ -98,7 +99,7 @@ export function PricingSection({
             <div className="mt-6 pt-2">
               {plan.key === "enterprise" ? (
                 <a
-                  href="mailto:hr@intelliforge.tech?subject=Mentor%20Internship%20Platform%20Enterprise"
+                  href={mailto("Mentor Internship Platform Enterprise")}
                   className="btn-secondary w-full border-slate-600 text-slate-200 hover:border-brand-500/50"
                 >
                   {plan.cta}

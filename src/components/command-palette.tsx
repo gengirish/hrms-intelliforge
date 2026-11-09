@@ -23,6 +23,7 @@ import {
   type NavItem,
 } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/lib/site";
 
 interface CommandAction {
   id: string;
@@ -116,13 +117,13 @@ export function CommandPalette() {
     });
     navActions.push({
       id: "external:founder",
-      label: "Founder · Girish Hiremath",
-      hint: "girishbhiremath.vercel.app",
+      label: `Founder · ${SITE.founder.name}`,
+      hint: SITE.founder.urlLabel,
       icon: UserIcon,
       keywords: "founder girish hiremath about portfolio",
       run: () => {
         window.open(
-          "https://girishbhiremath.vercel.app",
+          SITE.founder.url,
           "_blank",
           "noopener,noreferrer"
         );
