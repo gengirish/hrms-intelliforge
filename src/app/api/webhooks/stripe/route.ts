@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
             where: { id: orgId },
             data: {
               plan,
+              requestedPlan: null,
               stripeSubId: subId,
               maxInterns: limits.maxInterns,
               maxMentors: limits.maxMentors,

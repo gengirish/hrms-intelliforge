@@ -33,6 +33,7 @@ interface OrgData {
   domain: string | null;
   logoUrl: string | null;
   plan: string;
+  requestedPlan: string | null;
   maxInterns: number;
   maxMentors: number;
   platformFeeBps: number;
@@ -914,6 +915,12 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-white">Current Plan</h3>
                   <p className="text-lg font-bold text-indigo-400 capitalize">{org.plan}</p>
+                  {org.requestedPlan && org.requestedPlan !== org.plan && (
+                    <p className="mt-1 text-xs text-amber-300" data-testid="requested-plan">
+                      You chose <span className="capitalize">{org.requestedPlan}</span> at signup. It
+                      activates once billing is set up — upgrade below to start checkout.
+                    </p>
+                  )}
                 </div>
                 {org.plan !== "free" && (
                   <button

@@ -105,7 +105,8 @@ export function PricingSection({
                 </a>
               ) : (
                 <Link
-                  href="/create-org"
+                  href={`/create-org?plan=${plan.key}`}
+                  data-testid={`plan-cta-${plan.key}`}
                   className={cn(
                     "w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors",
                     plan.highlighted ? "btn-cta" : "btn-primary",

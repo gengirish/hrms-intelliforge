@@ -6,7 +6,7 @@ import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 import { ORG_ADMIN_ROLE } from "@/lib/org-admin-roles";
 import { serverError } from "@/lib/api-utils";
 import { getOrgUsage } from "@/lib/plan-limits";
-import { planDbLimits } from "@/lib/plans";
+import { planDbLimits, SelfServePlanParam } from "@/lib/plans";
 import { z } from "zod";
 
 const createOrgSchema = z.object({
@@ -18,6 +18,8 @@ const createOrgSchema = z.object({
     (val) => (val === "" || val === null ? undefined : val),
     z.string().min(2).max(100).optional()
   ),
+  // Plan picked on /create-org?plan=…; anything invalid falls back to Free.
+  plan: SelfServePlanParam.optional(),
 });
 
 const updateOrgSchema = z.object({
@@ -40,6 +42,10 @@ export async function POST(req: NextRequest) {
     }
 
     const { orgName, slug, adminEmail, adminPassword, adminName } = parsed.data;
+    // Every workspace starts on Free; a paid choice is recorded and activates
+    // only when Stripe checkout completes (webhook sets plan, clears this).
+    const requestedPlan =
+      parsed.data.plan && parsed.data.plan !== "free" ? parsed.data.plan : null;
 
     const existingSlug = await prisma.organization.findUnique({ where: { slug } });
     if (existingSlug) {
@@ -59,6 +65,7 @@ export async function POST(req: NextRequest) {
           name: orgName,
           slug,
           ...planDbLimits("free"),
+          requestedPlan,
         },
       });
 
@@ -84,7 +91,13 @@ export async function POST(req: NextRequest) {
     });
 
     const response = NextResponse.json({
-      org: { id: result.org.id, name: result.org.name, slug: result.org.slug },
+      org: {
+        id: result.org.id,
+        name: result.org.name,
+        slug: result.org.slug,
+        plan: result.org.plan,
+        requestedPlan: result.org.requestedPlan,
+      },
       user: { id: result.admin.id, email: result.admin.email, role: "admin" },
     });
     setAuthCookie(response, token);
@@ -111,6 +124,7 @@ export async function GET() {
           domain: true,
           logoUrl: true,
           plan: true,
+          requestedPlan: true,
           maxInterns: true,
           maxMentors: true,
           platformFeeBps: true,

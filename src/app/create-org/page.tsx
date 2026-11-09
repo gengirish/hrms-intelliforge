@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
+import { Suspense, useState } from "react";
+import { FREE_PLAN_MAX_INTERNS, MARKETING_PLANS } from "@/lib/pricing";
+import {
+  PLANS,
+  SELF_SERVE_PLAN_KEYS,
+  parseSelfServePlan,
+  type SelfServePlanKey,
+} from "@/lib/plans";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
@@ -11,9 +17,42 @@ import { Footer } from "@/components/footer";
 import { useAuth } from "@/lib/auth-context";
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 
+const SELF_SERVE_CARDS = MARKETING_PLANS.filter((p) =>
+  (SELF_SERVE_PLAN_KEYS as readonly string[]).includes(p.key),
+);
+
 export default function CreateOrgPage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateOrgForm />
+    </Suspense>
+  );
+}
+
+/** Paid plan chosen: send to Stripe checkout, or explain why it is pending. */
+async function startPaidPlan(plan: SelfServePlanKey): Promise<string | null> {
+  try {
+    const res = await fetch("/api/billing/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ plan }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { url?: string };
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function CreateOrgForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refresh } = useAuth();
+  const [plan, setPlan] = useState<SelfServePlanKey>(() =>
+    parseSelfServePlan(searchParams.get("plan")),
+  );
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     orgName: "",
@@ -47,7 +86,7 @@ export default function CreateOrgPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, plan }),
       });
 
       const data = await res.json();
@@ -56,10 +95,27 @@ export default function CreateOrgPage() {
         return;
       }
 
-      toast.success("Organization created! Redirecting to dashboard...");
       grantAnalyticsConsent();
-      captureEvent("org_created", { slug: form.slug, org_name: form.orgName });
+      captureEvent("org_created", { slug: form.slug, org_name: form.orgName, plan });
       await refresh();
+
+      if (plan !== "free") {
+        const checkoutUrl = await startPaidPlan(plan);
+        if (checkoutUrl) {
+          toast.success("Workspace created. Taking you to checkout…");
+          window.location.assign(checkoutUrl);
+          return;
+        }
+        toast.success(
+          `Workspace created on Free. Your ${PLANS[plan].name} plan will activate once billing is set up — nothing is charged until then.`,
+          { duration: 8000 },
+        );
+        router.push("/dashboard/settings?billing=pending");
+        router.refresh();
+        return;
+      }
+
+      toast.success("Organization created! Redirecting to dashboard...");
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -85,6 +141,44 @@ export default function CreateOrgPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <fieldset>
+              <legend className="block text-sm font-medium text-slate-300 mb-2">Plan</legend>
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Plan">
+                {SELF_SERVE_CARDS.map((card) => {
+                  const selected = card.key === plan;
+                  return (
+                    <label
+                      key={card.key}
+                      className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
+                        selected
+                          ? "border-indigo-500 bg-indigo-500/10 text-white"
+                          : "border-slate-700 text-slate-400 hover:border-slate-500"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="plan"
+                        value={card.key}
+                        checked={selected}
+                        onChange={() => setPlan(card.key as SelfServePlanKey)}
+                        className="sr-only"
+                      />
+                      <span className="block font-semibold">{card.name}</span>
+                      <span className="block text-xs">
+                        {card.price}
+                        {card.period}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-slate-500" data-testid="selected-plan">
+                Selected: <span className="text-slate-300">{PLANS[plan].name}</span>
+                {plan !== "free" &&
+                  " — your workspace starts on Free and upgrades as soon as checkout completes."}
+              </p>
+            </fieldset>
+
             <div className="space-y-4">
               <div>
                 <label htmlFor="orgName" className="block text-sm font-medium text-slate-300 mb-1">

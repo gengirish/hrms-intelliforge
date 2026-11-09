@@ -7,6 +7,7 @@ import {
   formatSeatLimit,
   isPlanKey,
   limitsForPlan,
+  parseSelfServePlan,
   planDbLimits,
 } from "@/lib/plans";
 import { MARKETING_PLANS, freePlanAllowance, mentorSeatsFaqAnswer } from "@/lib/pricing";
@@ -75,6 +76,20 @@ describe("marketing view-model reads PLANS", () => {
   it("does not hardcode a mentor count in feature bullets", () => {
     for (const card of MARKETING_PLANS) {
       for (const f of card.features) expect(f).not.toMatch(/\d+\s+mentors/i);
+    }
+  });
+});
+
+describe("parseSelfServePlan (/create-org ?plan=)", () => {
+  it("accepts self-serve plans", () => {
+    expect(parseSelfServePlan("starter")).toBe("starter");
+    expect(parseSelfServePlan("growth")).toBe("growth");
+    expect(parseSelfServePlan("free")).toBe("free");
+  });
+
+  it("falls back to free for anything else, including sales-led Enterprise", () => {
+    for (const bad of [null, undefined, "", "STARTER", "pro", "enterprise", "__proto__", 42]) {
+      expect(parseSelfServePlan(bad)).toBe("free");
     }
   });
 });

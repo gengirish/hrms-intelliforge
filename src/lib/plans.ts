@@ -145,6 +145,17 @@ export const PLANS: Record<PlanKey, Plan> = PlansSchema.parse(PLAN_CONFIG);
 /** Organization.maxInterns / maxMentors are NOT NULL ints; unlimited is stored as this. */
 export const UNLIMITED_DB_LIMIT = 999_999;
 
+/** Plans a visitor can pick on /create-org. Enterprise is sales-led. */
+export const SELF_SERVE_PLAN_KEYS = ["free", "starter", "growth"] as const;
+export type SelfServePlanKey = (typeof SELF_SERVE_PLAN_KEYS)[number];
+
+/** `?plan=` on /create-org and the create-org body: anything invalid becomes Free. */
+export const SelfServePlanParam = z.enum(SELF_SERVE_PLAN_KEYS).catch("free");
+
+export function parseSelfServePlan(value: unknown): SelfServePlanKey {
+  return SelfServePlanParam.parse(value);
+}
+
 export function isPlanKey(value: unknown): value is PlanKey {
   return typeof value === "string" && (PLAN_KEYS as readonly string[]).includes(value);
 }

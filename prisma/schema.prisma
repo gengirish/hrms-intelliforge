@@ -80,6 +80,8 @@ model Organization {
   agentmailInboxId  String?
   agentmailEmail    String?
   plan              String   @default("free")
+  /// Paid plan chosen at signup (/create-org?plan=…) that is not active yet. Cleared when Stripe checkout completes.
+  requestedPlan     String?
   stripeCustomerId  String?
   stripeSubId       String?
   maxInterns        Int      @default(500)
