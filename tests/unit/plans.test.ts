@@ -8,10 +8,17 @@ import {
   freeHeroHighlights,
   isPlanKey,
   limitsForPlan,
+  makePlansSchema,
   parseSelfServePlan,
   planDbLimits,
 } from "@/lib/plans";
-import { MARKETING_PLANS, freePlanAllowance, mentorSeatsFaqAnswer } from "@/lib/pricing";
+import {
+  MARKETING_PLANS,
+  formatMinorUnits,
+  formatPlanPrice,
+  freePlanAllowance,
+  mentorSeatsFaqAnswer,
+} from "@/lib/pricing";
 
 describe("PLANS schema", () => {
   it("parses the shipped config", () => {
@@ -105,5 +112,27 @@ describe("freeHeroHighlights (D3)", () => {
 
   it("never mentions paid-only features", () => {
     for (const h of freeHeroHighlights()) expect(h).not.toMatch(/payout|rating|review|whatsapp/i);
+  });
+});
+
+describe("currency-aware prices (D13)", () => {
+  it("formats minor units per currency", () => {
+    expect(formatMinorUnits(2900, "USD")).toBe("$29");
+    expect(formatMinorUnits(249900, "INR")).toBe("₹2,499");
+    expect(formatMinorUnits(1050, "USD")).toBe("$10.50");
+  });
+
+  it("shows the configured currency and falls back to USD without an INR amount", () => {
+    const withInr = { ...PLANS.starter, priceMonthly: { USD: 2900, INR: 249900 } };
+    expect(formatPlanPrice(withInr, "USD").price).toBe("$29");
+    expect(formatPlanPrice(withInr, "INR").price).toBe("₹2,499");
+    expect(formatPlanPrice(withInr, "both").price).toBe("₹2,499 · $29");
+    expect(formatPlanPrice(PLANS.starter, "INR").price).toBe("$29");
+    expect(formatPlanPrice(PLANS.enterprise).price).toBe("Custom");
+  });
+
+  it("refuses to show INR when a paid plan has no INR price", () => {
+    expect(makePlansSchema("USD").safeParse(PLANS).success).toBe(true);
+    expect(makePlansSchema("INR").safeParse(PLANS).success).toBe(false);
   });
 });

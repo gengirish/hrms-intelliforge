@@ -1,6 +1,8 @@
 import {
+  DISPLAY_CURRENCY,
   PLANS,
   PLAN_KEYS,
+  type Currency,
   formatSeatLimit,
   selfServePlansDifferByCapacity,
   type Plan,
@@ -21,14 +23,30 @@ export interface MarketingPlan {
   highlighted: boolean;
 }
 
-function formatUsdMinor(cents: number): string {
-  const dollars = cents / 100;
-  return `$${Number.isInteger(dollars) ? dollars : dollars.toFixed(2)}`;
+/** Format integer minor units (cents / paise) for display. */
+export function formatMinorUnits(amount: number, currency: Currency): string {
+  const major = amount / 100;
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: Number.isInteger(major) ? 0 : 2,
+    maximumFractionDigits: Number.isInteger(major) ? 0 : 2,
+  }).format(major);
 }
 
-export function formatPlanPrice(plan: Plan): { price: string; period: string } {
-  if (!plan.priceMonthly) return { price: "Custom", period: "" };
-  return { price: formatUsdMinor(plan.priceMonthly.USD), period: "/mo" };
+export function formatPlanPrice(
+  plan: Plan,
+  display: Currency | "both" = DISPLAY_CURRENCY,
+): { price: string; period: string } {
+  const p = plan.priceMonthly;
+  if (!p) return { price: "Custom", period: "" };
+  const usd = formatMinorUnits(p.USD, "USD");
+  const inr = p.INR !== undefined ? formatMinorUnits(p.INR, "INR") : null;
+  if (display === "INR" && inr) return { price: inr, period: "/mo" };
+  if (display === "both" && inr) {
+    return { price: p.USD === 0 ? inr : `${inr} · ${usd}`, period: "/mo" };
+  }
+  return { price: usd, period: "/mo" };
 }
 
 export const FREE_PLAN_MAX_INTERNS = PLANS.free.interns as number;

@@ -16,6 +16,17 @@ export const PLAN_KEYS = ["free", "starter", "growth", "enterprise"] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
 const minorUnits = z.number().int().nonnegative();
+
+export const CURRENCIES = ["USD", "INR"] as const;
+export type Currency = (typeof CURRENCIES)[number];
+
+/**
+ * Which price the marketing pages show (D13).
+ * DECISION: Q2 — "USD", "INR" or "both". Kept on USD until decided. Switching to
+ * "INR"/"both" also needs an INR amount (paise) on every paid plan below; the
+ * schema refuses to load otherwise.
+ */
+export const DISPLAY_CURRENCY: Currency | "both" = "USD";
 const seatLimit = z.number().int().positive().nullable();
 
 const PlanFeatureSchema = z.object({
@@ -28,7 +39,8 @@ export const PlanSchema = z.object({
   id: z.enum(PLAN_KEYS),
   name: z.string().min(1),
   tagline: z.string().min(1),
-  priceMonthly: z.object({ USD: minorUnits }).nullable(),
+  /** Monthly price per currency in minor units (cents / paise); null = custom. */
+  priceMonthly: z.object({ USD: minorUnits, INR: minorUnits.optional() }).nullable(),
   interns: seatLimit,
   mentors: seatLimit,
   features: z.array(PlanFeatureSchema).min(1),
@@ -36,7 +48,8 @@ export const PlanSchema = z.object({
   highlighted: z.boolean(),
 });
 
-export const PlansSchema = z
+export function makePlansSchema(displayCurrency: Currency | "both" = DISPLAY_CURRENCY) {
+  return z
   .object({
     free: PlanSchema,
     starter: PlanSchema,
@@ -44,6 +57,18 @@ export const PlansSchema = z
     enterprise: PlanSchema,
   })
   .superRefine((plans, ctx) => {
+    if (displayCurrency !== "USD") {
+      for (const key of PLAN_KEYS) {
+        const price = plans[key].priceMonthly;
+        if (price && price.USD > 0 && price.INR === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key, "priceMonthly", "INR"],
+            message: `DISPLAY_CURRENCY is ${displayCurrency} but ${key} has no INR price`,
+          });
+        }
+      }
+    }
     for (const key of PLAN_KEYS) {
       if (plans[key].id !== key) {
         ctx.addIssue({
@@ -68,6 +93,9 @@ export const PlansSchema = z
       });
     }
   });
+}
+
+export const PlansSchema = makePlansSchema();
 
 export type Plan = z.infer<typeof PlanSchema>;
 
@@ -81,7 +109,7 @@ const PLAN_CONFIG = {
     id: "free",
     name: "Free",
     tagline: "Launch your first mentor-led cohort",
-    priceMonthly: { USD: 0 },
+    priceMonthly: { USD: 0, INR: 0 },
     interns: 500,
     mentors: 20,
     features: [
