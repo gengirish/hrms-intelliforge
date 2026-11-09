@@ -24,6 +24,7 @@ import {
   isExpertNetworkForm,
 } from "@/lib/hiring/expert-network";
 import { isCommissionForm } from "@/lib/hiring/commission";
+import { formatStipendLabel, listingTypeLabel } from "@/lib/hiring/listing-display";
 
 interface Requirement {
   title: string;
@@ -64,12 +65,6 @@ export interface JobDetail {
   org: { name: string; slug: string; logoUrl: string | null };
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  INTERNSHIP: "Internship",
-  FULL_TIME: "Full-Time",
-  PART_TIME: "Part-Time",
-  CONTRACT: "Contract",
-};
 
 /** Rendered by the server page with the listing already loaded (D4). */
 export function InternshipDetail({ initialJob }: { initialJob: JobDetail }) {
@@ -255,7 +250,7 @@ export function InternshipDetail({ initialJob }: { initialJob: JobDetail }) {
                 Open for Applications
               </span>
               <span className="inline-flex rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 text-xs font-medium text-indigo-400">
-                {TYPE_LABELS[job.employmentType] ?? job.employmentType}
+                {listingTypeLabel(job.employmentType)}
               </span>
             </div>
 
@@ -279,12 +274,10 @@ export function InternshipDetail({ initialJob }: { initialJob: JobDetail }) {
                   {job.duration}
                 </span>
               )}
-              {job.salaryInfo && (
-                <span className="flex items-center gap-1.5">
-                  <Star className="h-4 w-4 text-indigo-400" />
-                  {job.salaryInfo}
-                </span>
-              )}
+              <span className="flex items-center gap-1.5" data-testid="listing-stipend">
+                <Star className="h-4 w-4 text-indigo-400" />
+                {formatStipendLabel(job.salaryInfo, job.employmentType).text}
+              </span>
               <span className="flex items-center gap-1.5">
                 <Briefcase className="h-4 w-4 text-indigo-400" />
                 {job.org.name}

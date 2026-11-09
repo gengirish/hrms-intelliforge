@@ -337,6 +337,8 @@ model JobPosting {
   id                String   @id @default(cuid())
   orgId             String
   slug              String   @unique
+  /// Earlier slugs; /internships/<old> 308-redirects to the current slug (D11).
+  previousSlugs     String[] @default([])
   title             String
   description       String
   skills            String[]
@@ -363,6 +365,7 @@ model JobPosting {
   candidates Candidate[]
 
   @@index([orgId])
+  @@index([previousSlugs], type: Gin)
   @@map("job_postings")
 }
 

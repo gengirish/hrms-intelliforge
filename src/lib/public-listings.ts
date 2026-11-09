@@ -37,6 +37,15 @@ export const getPublicJob = cache(async (slug: string) => {
   });
 });
 
+/** Current slug for an active posting that used to live at `oldSlug` (D11). */
+export async function findRenamedJobSlug(oldSlug: string): Promise<string | null> {
+  const job = await prisma.jobPosting.findFirst({
+    where: { previousSlugs: { has: oldSlug }, isActive: true },
+    select: { slug: true },
+  });
+  return job?.slug ?? null;
+}
+
 export type PublicJob = NonNullable<Awaited<ReturnType<typeof getPublicJob>>>;
 
 export const publicMentorSelect = {

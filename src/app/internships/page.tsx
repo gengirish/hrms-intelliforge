@@ -5,6 +5,11 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { InternshipsSearch } from "./search";
+import {
+  LISTING_TYPE_LABELS,
+  formatStipendLabel,
+  listingTypeLabel,
+} from "@/lib/hiring/listing-display";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +33,6 @@ interface JobListing {
   salaryInfo: string | null;
   org: { name: string; slug: string; logoUrl: string | null };
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  INTERNSHIP: "Internship",
-  FULL_TIME: "Full-Time",
-  PART_TIME: "Part-Time",
-  CONTRACT: "Contract",
-};
 
 async function getJobs(): Promise<JobListing[]> {
   try {
@@ -60,8 +58,20 @@ async function getJobs(): Promise<JobListing[]> {
   }
 }
 
-export default async function InternshipsPage() {
-  const jobs = await getJobs();
+export default async function InternshipsPage({
+  searchParams,
+}: {
+  searchParams?: { type?: string };
+}) {
+  const allJobs = await getJobs();
+  const activeType =
+    searchParams?.type && searchParams.type in LISTING_TYPE_LABELS ? searchParams.type : null;
+  const jobs = activeType ? allJobs.filter((j) => j.employmentType === activeType) : allJobs;
+  const typeCounts = allJobs.reduce<Record<string, number>>((acc, j) => {
+    acc[j.employmentType] = (acc[j.employmentType] ?? 0) + 1;
+    return acc;
+  }, {});
+  const typesPresent = Object.keys(LISTING_TYPE_LABELS).filter((t) => typeCounts[t]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -94,6 +104,32 @@ export default async function InternshipsPage() {
         </section>
 
         <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pb-24">
+          {typesPresent.length > 1 && (
+            <nav aria-label="Filter by listing type" className="mb-6 flex flex-wrap gap-2">
+              {[{ key: null as string | null, label: "All", count: allJobs.length }]
+                .concat(
+                  typesPresent.map((t) => ({ key: t, label: listingTypeLabel(t), count: typeCounts[t] })),
+                )
+                .map((opt) => {
+                  const active = opt.key === activeType;
+                  return (
+                    <Link
+                      key={opt.key ?? "all"}
+                      href={opt.key ? `/internships?type=${opt.key}` : "/internships"}
+                      aria-current={active ? "page" : undefined}
+                      data-testid={`type-filter-${opt.key ?? "all"}`}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                        active
+                          ? "border-indigo-500 bg-indigo-500/15 text-indigo-200"
+                          : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                      }`}
+                    >
+                      {opt.label} ({opt.count})
+                    </Link>
+                  );
+                })}
+            </nav>
+          )}
           {jobs.length === 0 ? (
             <div className="glass-card p-16 text-center">
               <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />
@@ -105,13 +141,15 @@ export default async function InternshipsPage() {
             <div className="space-y-4">
               <p className="text-sm text-slate-500 mb-2">
                 {jobs.length} active{" "}
-                {jobs.length === 1 ? "listing" : "listings"} across organizations
+                {jobs.length === 1 ? "listing" : "listings"}
+                {activeType ? ` · ${listingTypeLabel(activeType)}` : " across organizations"}
               </p>
               {jobs.map((job) => (
                 <Link
                   key={job.id}
                   href={`/internships/${job.slug}`}
                   className="glass-card p-6 block hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group internships-job-card"
+                  data-type={job.employmentType}
                   data-title={job.title.toLowerCase()}
                   data-skills={job.skills.map((s) => s.toLowerCase()).join(",")}
                   data-org={job.org.name.toLowerCase()}
@@ -123,8 +161,7 @@ export default async function InternshipsPage() {
                           {job.title}
                         </h2>
                         <span className="inline-flex rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 text-xs font-medium text-indigo-400">
-                          {TYPE_LABELS[job.employmentType] ??
-                            job.employmentType}
+                          {listingTypeLabel(job.employmentType)}
                         </span>
                       </div>
                       <p className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
@@ -147,11 +184,17 @@ export default async function InternshipsPage() {
                             {job.duration}
                           </span>
                         )}
-                        {job.salaryInfo && (
-                          <span className="text-emerald-400/80">
-                            {job.salaryInfo}
-                          </span>
-                        )}
+                        {(() => {
+                          const stipend = formatStipendLabel(job.salaryInfo, job.employmentType);
+                          return (
+                            <span
+                              className={stipend.disclosed ? "text-emerald-400/80" : "text-slate-500"}
+                              data-testid="listing-stipend"
+                            >
+                              {stipend.text}
+                            </span>
+                          );
+                        })()}
                       </div>
                       {job.skills.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">

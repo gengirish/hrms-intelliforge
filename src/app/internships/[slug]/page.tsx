@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getPublicJob, metaDescription } from "@/lib/public-listings";
+import { notFound, permanentRedirect } from "next/navigation";
+import { findRenamedJobSlug, getPublicJob, metaDescription } from "@/lib/public-listings";
 import { InternshipDetail, type JobDetail } from "./internship-detail";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function InternshipDetailPage({ params }: Props) {
   const job = await getPublicJob(params.slug);
-  if (!job) notFound();
+  if (!job) {
+    // Slug regenerated after a title change: keep the old link working (D11).
+    const renamed = await findRenamedJobSlug(params.slug);
+    if (renamed) permanentRedirect(`/internships/${renamed}`);
+    notFound();
+  }
 
   const initialJob: JobDetail = {
     ...job,
