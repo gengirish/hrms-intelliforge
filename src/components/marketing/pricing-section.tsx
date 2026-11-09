@@ -61,11 +61,11 @@ export function PricingSection({
 
             <header>
               <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
-              <p className="mt-1 text-xs text-slate-500">{plan.tagline}</p>
+              <p className="mt-1 text-xs text-slate-400">{plan.tagline}</p>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-white">{plan.price}</span>
                 {plan.period && (
-                  <span className="text-sm text-slate-500">{plan.period}</span>
+                  <span className="text-sm text-slate-400">{plan.period}</span>
                 )}
               </div>
               <p className="mt-2 text-sm text-slate-400" data-testid="plan-limits">
@@ -122,7 +122,7 @@ export function PricingSection({
         ))}
       </div>
 
-      <p className="mt-8 text-center text-xs text-slate-500">
+      <p className="mt-8 text-center text-xs text-slate-400">
         All plans include mentor dashboards, audit logs, and IST timezone
         defaults. Stipend payouts subject to platform fee — cancel anytime from
         workspace settings.

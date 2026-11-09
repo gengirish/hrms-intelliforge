@@ -87,7 +87,7 @@ export function Footer() {
               {trustBadges.map(({ icon: Icon, label }) => (
                 <li
                   key={label}
-                  className="flex items-center gap-2 text-xs text-slate-500"
+                  className="flex items-center gap-2 text-xs text-slate-400"
                 >
                   <Icon
                     className="h-3.5 w-3.5 text-brand-400 shrink-0"
@@ -157,7 +157,7 @@ export function Footer() {
                         aria-hidden="true"
                       />
                     </span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">
+                    <span className="block text-[11px] text-slate-400 mt-0.5">
                       {link.description}
                     </span>
                   </a>
@@ -168,7 +168,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             &copy; 2026{" "}
             <a
               href="https://www.intelliforge.tech"
@@ -180,7 +180,7 @@ export function Footer() {
             </a>
             . All rights reserved.
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             Built by{" "}
             <a
               href={SITE.founder.url}

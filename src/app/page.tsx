@@ -168,7 +168,7 @@ export default function HomePage() {
           className="border-y border-slate-800 bg-slate-900/40"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            <p className="text-center text-xs uppercase tracking-wider text-slate-500 mb-4">
+            <p className="text-center text-xs uppercase tracking-wider text-slate-400 mb-4">
               Built for teams like yours
             </p>
             <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
@@ -275,7 +275,7 @@ export default function HomePage() {
             <ol className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {steps.map((item) => (
                 <li key={item.step} className="relative">
-                  <span className="text-4xl font-bold text-brand-500/20">
+                  <span className="text-4xl font-bold text-brand-400/70" aria-hidden="true">
                     {item.step}
                   </span>
                   <h3 className="mt-2 text-lg font-semibold text-white">
@@ -321,7 +321,7 @@ export default function HomePage() {
                 Onboard, log attendance, submit tasks, and view your offer.
                 Sign in with your intern account.
               </p>
-              <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+              <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
                 {[
                   { href: "/intern-onboarding", label: "Onboarding" },
                   { href: "/attendance", label: "Attendance" },

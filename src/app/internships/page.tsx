@@ -139,7 +139,7 @@ export default async function InternshipsPage({
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-slate-500 mb-2">
+              <p className="text-sm text-slate-400 mb-2">
                 {jobs.length} active{" "}
                 {jobs.length === 1 ? "listing" : "listings"}
                 {activeType ? ` · ${listingTypeLabel(activeType)}` : " across organizations"}
@@ -164,14 +164,14 @@ export default async function InternshipsPage({
                           {listingTypeLabel(job.employmentType)}
                         </span>
                       </div>
-                      <p className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+                      <p className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
                         <Building2 className="h-3 w-3 shrink-0" />
                         {job.org.name}
                       </p>
                       <p className="text-sm text-slate-400 line-clamp-2 mb-3">
                         {job.description}
                       </p>
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
                         {job.location && (
                           <span className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
@@ -188,7 +188,7 @@ export default async function InternshipsPage({
                           const stipend = formatStipendLabel(job.salaryInfo, job.employmentType);
                           return (
                             <span
-                              className={stipend.disclosed ? "text-emerald-400/80" : "text-slate-500"}
+                              className={stipend.disclosed ? "text-emerald-400/80" : "text-slate-400"}
                               data-testid="listing-stipend"
                             >
                               {stipend.text}

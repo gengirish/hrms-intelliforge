@@ -172,7 +172,7 @@ export default async function MentorsPage({
 
         <Suspense
           fallback={
-            <div className="text-center py-16 text-slate-500">Loading mentors…</div>
+            <div className="text-center py-16 text-slate-400">Loading mentors…</div>
           }
         >
           <MentorDirectory

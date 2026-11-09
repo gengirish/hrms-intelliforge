@@ -61,7 +61,7 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
           </div>
 
           {mentor.headline && (
-            <p className="text-sm text-indigo-300/90 mb-2 line-clamp-1">
+            <p className="text-sm text-indigo-300/90 mb-2 line-clamp-1" data-testid="mentor-headline">
               {mentor.headline}
             </p>
           )}
@@ -72,7 +72,7 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-3">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-3">
             <span>{mentor.orgName}</span>
             {mentor.yearsExperience != null && mentor.yearsExperience > 0 && (
               <span>{mentor.yearsExperience}+ yrs exp</span>

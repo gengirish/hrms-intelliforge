@@ -99,7 +99,7 @@ export function MentorDirectory({
           </div>
         ) : (
           <>
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="text-sm text-slate-400 mb-4">
               {data.total} mentor{data.total !== 1 ? "s" : ""} available
               {expertise ? ` · filtered by ${expertise}` : ""}
             </p>
@@ -119,7 +119,7 @@ export function MentorDirectory({
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-400">
                   Page {data.page} of {data.totalPages}
                 </span>
                 <button
