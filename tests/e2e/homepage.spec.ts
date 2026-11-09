@@ -33,20 +33,20 @@ test.describe("Homepage", () => {
     await expect(cta).toHaveAttribute("href", "/create-org");
   });
 
-  test("should have demo video section or product tour CTA", async ({ page }) => {
+  test("demo section embeds a video or links honestly to the features", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "See it in 60 seconds" })).toBeVisible();
-
     const demoSection = page.locator('[aria-labelledby="demo-heading"]');
-    const demoIframe = page.locator('iframe[title="IntelliForge HRMS product demo"]');
-    const productTourLink = page.getByRole("link", {
-      name: /watch product tour|book a walkthrough|product tour|schedule a demo/i,
-    });
-    const productTourText = page.getByText("Watch product tour");
+    await expect(demoSection).toBeVisible();
 
-    await expect(
-      demoSection.or(demoIframe).or(productTourLink).or(productTourText).first(),
-    ).toBeVisible();
+    const demoIframe = demoSection.locator('iframe[title="Mentor Internship Platform product demo"]');
+    if ((await demoIframe.count()) > 0) {
+      await expect(demoIframe).toBeVisible();
+      return;
+    }
+    // No video configured: no "Watch product tour" promise (D8).
+    await expect(page.getByText(/watch product tour/i)).toHaveCount(0);
+    const howItWorks = demoSection.getByRole("link", { name: /see how it works/i });
+    await expect(howItWorks).toHaveAttribute("href", "#features-heading");
   });
 
   test("should have pricing section on homepage", async ({ page }) => {

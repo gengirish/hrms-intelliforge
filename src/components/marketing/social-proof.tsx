@@ -1,5 +1,9 @@
-import Link from "next/link";
 import { Quote, Sparkles, ShieldCheck, MapPin, ArrowRight } from "lucide-react";
+
+// DECISION: Q3 — design-partner contact address (moves to src/lib/site.ts in D9).
+const DESIGN_PARTNER_MAILTO = `mailto:founder@intelliforge.tech?subject=${encodeURIComponent(
+  "Design partner — Mentor Internship Platform",
+)}`;
 
 const partnerBadges = [
   { icon: Sparkles, label: "IntelliForge AI" },
@@ -110,13 +114,13 @@ export function SocialProof() {
             cohorts — not fabricated case studies. Get early access, direct
             founder support, and help shape the roadmap.
           </p>
-          <Link
-            href="/create-org"
+          <a
+            href={DESIGN_PARTNER_MAILTO}
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand-300 hover:text-brand-200 transition-colors pt-5 border-t border-slate-800"
           >
             Apply as a design partner
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
+          </a>
         </div>
       </div>
     </section>

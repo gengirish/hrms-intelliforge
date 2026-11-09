@@ -18,7 +18,7 @@ import {
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { InstallPrompt } from "@/components/install-prompt";
-import { DemoVideo } from "@/components/marketing/demo-video";
+import { DemoVideo, hasDemoVideo } from "@/components/marketing/demo-video";
 import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
@@ -211,7 +211,7 @@ export default function HomePage() {
               id="demo-heading"
               className="text-2xl sm:text-3xl font-bold text-white"
             >
-              See it in 60 seconds
+              {hasDemoVideo() ? "See it in 60 seconds" : "See how it works"}
             </h2>
           </div>
           <DemoVideo />
