@@ -150,13 +150,13 @@ export default async function MentorsPage({
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
-              Meet your{" "}
-              <span className="gradient-text">program mentors</span>
+              Meet the{" "}
+              <span className="gradient-text">mentors</span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Browse mentors in your organization&apos;s internship program by
-              skill and expertise. Book 1:1 sessions with mentors assigned to
-              your cohort.
+              Browse the mentors who guide internship cohorts on the Mentor
+              Internship Platform, by skill and expertise. Interns book 1:1
+              sessions with the mentors assigned to their program.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link

@@ -117,7 +117,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">
-              Intern Portal
+              Intern sign-in
             </h3>
             <ul className="md:space-y-2">
               {internLinks.map((link) => (

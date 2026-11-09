@@ -318,8 +318,8 @@ export default function HomePage() {
                 Intern self-service portal
               </h2>
               <p className="mt-3 text-slate-400 leading-relaxed">
-                Onboard, log attendance, submit tasks, and view your offer —
-                no admin account needed.
+                Onboard, log attendance, submit tasks, and view your offer.
+                Sign in with your intern account.
               </p>
               <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
                 {[

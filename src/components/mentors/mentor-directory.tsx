@@ -73,19 +73,17 @@ export function MentorDirectory({
             {hasUnpublishedOnly ? (
               <>
                 <p className="text-slate-300 font-medium mb-2">
-                  Mentors exist but none are listed yet
+                  No mentors are listed yet
                 </p>
                 <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-                  {profileCount} mentor profile{profileCount !== 1 ? "s are" : " is"}{" "}
-                  hidden from this directory. Mentors can turn on{" "}
-                  <span className="text-slate-300">Program directory</span> in their
-                  profile, or an org admin can publish everyone from the dashboard.
+                  Mentor profiles appear here once they are complete and published.
+                  Want to mentor interns?
                 </p>
                 <Link
-                  href="/dashboard/mentors/import"
+                  href="/mentors/apply"
                   className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white"
                 >
-                  Publish mentors
+                  Apply to become a mentor
                 </Link>
               </>
             ) : expertise ? (
