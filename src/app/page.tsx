@@ -23,7 +23,7 @@ import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 const stats = [
-  { value: "500+", label: "Mentor-led internships run" },
+  { value: "500+", label: "Interns onboarded" },
   { value: "< 2 min", label: "List your first cohort" },
   { value: "60s", label: "Per-intern onboarding" },
 ];
