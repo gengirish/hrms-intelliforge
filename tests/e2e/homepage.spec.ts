@@ -52,9 +52,8 @@ test.describe("Homepage", () => {
   test("should have pricing section on homepage", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#pricing")).toBeVisible();
-    await expect(
-      page.getByText("Start free. Scale mentors and interns together."),
-    ).toBeVisible();
+    // Heading copy depends on whether plans differ by capacity (Q1); see pricingCopy().
+    await expect(page.locator("#pricing-heading")).toContainText(/^Start free\./);
   });
 
   test("should show Sign In and Start free when not authenticated", async ({ page }) => {
