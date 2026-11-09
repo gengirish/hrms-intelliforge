@@ -124,6 +124,9 @@ export default function HomePage() {
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance"
               >
                 <span className="text-white">The Mentor Internship Platform</span>
+                {/* The <br /> is visual only; the colon keeps the text readable for
+                    screen readers, crawlers and copy-paste (D7). */}
+                <span className="sr-only">: </span>
                 <br />
                 <span className="gradient-text">run cohorts, track accountability, get paid</span>
               </h1>
