@@ -123,12 +123,14 @@ export default function HomePage() {
                 id="hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance"
               >
-                <span className="text-white">The Mentor Internship Platform</span>
-                {/* The <br /> is visual only; the colon keeps the text readable for
-                    screen readers, crawlers and copy-paste (D7). */}
-                <span className="sr-only">: </span>
-                <br />
-                <span className="gradient-text">run cohorts, track accountability, get paid</span>
+                {/* Two block lines; the visually hidden colon keeps the text readable
+                    for screen readers, crawlers and copy-paste (D7). */}
+                <span className="block text-white">
+                  The Mentor Internship Platform<span className="sr-only">: </span>
+                </span>
+                <span className="block">
+                  <span className="gradient-text">run cohorts, track accountability, get paid</span>
+                </span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl leading-relaxed">
