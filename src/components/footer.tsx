@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { SITE } from "@/lib/site";
 
 const productLinks = [
   { href: "/pricing", label: "Pricing" },
@@ -44,9 +45,9 @@ const familyLinks: Array<{
     description: "Hands-on upskilling programs",
   },
   {
-    href: "https://girishbhiremath.vercel.app",
-    label: "Founder · Girish Hiremath",
-    description: "AI Practitioner · M.Tech DSAI, IIIT Dharwad",
+    href: SITE.founder.url,
+    label: `Founder · ${SITE.founder.name}`,
+    description: SITE.founder.title,
   },
 ];
 
@@ -86,7 +87,7 @@ export function Footer() {
               {trustBadges.map(({ icon: Icon, label }) => (
                 <li
                   key={label}
-                  className="flex items-center gap-2 text-xs text-slate-500"
+                  className="flex items-center gap-2 text-xs text-slate-400"
                 >
                   <Icon
                     className="h-3.5 w-3.5 text-brand-400 shrink-0"
@@ -116,7 +117,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">
-              Intern Portal
+              Intern sign-in
             </h3>
             <ul className="md:space-y-2">
               {internLinks.map((link) => (
@@ -156,7 +157,7 @@ export function Footer() {
                         aria-hidden="true"
                       />
                     </span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">
+                    <span className="block text-[11px] text-slate-400 mt-0.5">
                       {link.description}
                     </span>
                   </a>
@@ -167,7 +168,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             &copy; 2026{" "}
             <a
               href="https://www.intelliforge.tech"
@@ -179,10 +180,10 @@ export function Footer() {
             </a>
             . All rights reserved.
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             Built by{" "}
             <a
-              href="https://girishbhiremath.vercel.app"
+              href={SITE.founder.url}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-brand-300 transition-colors font-medium"

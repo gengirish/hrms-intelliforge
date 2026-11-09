@@ -24,6 +24,8 @@ import {
   ORG_ADMIN_ROLE,
 } from "@/lib/org-admin-roles";
 import { assertCanAddMentor, PlanLimitError } from "@/lib/plan-limits";
+import { normaliseMentorProfileFields } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 
 const actionSchema = z.object({
   action: z.enum(["preview", "apply-self", "create-mentor"]),
@@ -58,9 +60,11 @@ async function upsertMentorProfileForAdmin(
   });
 
   const profileData = {
-    headline: fields.headline ?? null,
-    bio: fields.bio ?? null,
-    expertise: fields.expertise ?? [],
+    ...normaliseMentorProfileFields({
+      headline: fields.headline ?? null,
+      bio: fields.bio ?? null,
+    }),
+    expertise: normaliseTags(fields.expertise),
     yearsExperience: fields.yearsExperience ?? null,
     linkedinUrl: fields.linkedinUrl,
     githubUrl: fields.githubUrl || null,

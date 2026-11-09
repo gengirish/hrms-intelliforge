@@ -18,7 +18,7 @@ test.describe("Navigation", () => {
     await page.goto("/about");
     await page
       .locator("nav")
-      .getByRole("link", { name: /Mentor Internship Platform — Home/i })
+      .getByRole("link", { name: "Mentor Internship Platform", exact: true })
       .click();
     await expect(page).toHaveURL("/");
   });

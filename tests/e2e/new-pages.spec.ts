@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Create Organization Page", () => {
   test("renders organization creation form", async ({ page }) => {
     await page.goto("/create-org");
-    await expect(page.getByText(/Create Your Organization/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Create your program workspace/i })).toBeVisible();
   });
 
   test("has organization name input", async ({ page }) => {

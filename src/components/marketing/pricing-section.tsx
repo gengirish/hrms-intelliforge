@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MARKETING_PLANS } from "@/lib/pricing";
+import { MARKETING_PLANS, pricingCopy } from "@/lib/pricing";
+import { mailto } from "@/lib/site";
 
 interface PricingSectionProps {
   id?: string;
@@ -14,6 +15,7 @@ export function PricingSection({
   showHeading = true,
   compact = false,
 }: PricingSectionProps) {
+  const copy = pricingCopy();
   return (
     <section
       id={id}
@@ -32,11 +34,10 @@ export function PricingSection({
             id="pricing-heading"
             className="text-3xl sm:text-4xl font-bold text-white text-balance"
           >
-            Start free. Scale mentors and interns together.
+            {copy.sectionHeading}
           </h2>
           <p className="mt-4 text-slate-400 leading-relaxed">
-            No sales call required. List internships, invite mentors, and upgrade
-            only when you need more seats.
+            {copy.sectionSubheading}
           </p>
         </div>
       )}
@@ -45,6 +46,7 @@ export function PricingSection({
         {MARKETING_PLANS.map((plan) => (
           <article
             key={plan.key}
+            data-plan={plan.key}
             className={cn(
               "trust-card flex flex-col p-6 relative",
               plan.highlighted &&
@@ -59,16 +61,23 @@ export function PricingSection({
 
             <header>
               <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
-              <p className="mt-1 text-xs text-slate-500">{plan.tagline}</p>
+              <p className="mt-1 text-xs text-slate-400">{plan.tagline}</p>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-white">{plan.price}</span>
                 {plan.period && (
-                  <span className="text-sm text-slate-500">{plan.period}</span>
+                  <span className="text-sm text-slate-400">{plan.period}</span>
                 )}
               </div>
-              <p className="mt-2 text-sm text-slate-400">
-                Up to <strong className="text-slate-200">{plan.interns}</strong>{" "}
-                interns
+              <p className="mt-2 text-sm text-slate-400" data-testid="plan-limits">
+                {plan.interns === "Unlimited" ? (
+                  <strong className="text-slate-200">Unlimited</strong>
+                ) : (
+                  <>
+                    Up to <strong className="text-slate-200">{plan.interns}</strong>
+                  </>
+                )}{" "}
+                interns ·{" "}
+                <strong className="text-slate-200">{plan.mentors}</strong> mentors
               </p>
             </header>
 
@@ -90,14 +99,15 @@ export function PricingSection({
             <div className="mt-6 pt-2">
               {plan.key === "enterprise" ? (
                 <a
-                  href="mailto:hr@intelliforge.tech?subject=Mentor%20Internship%20Platform%20Enterprise"
+                  href={mailto("Mentor Internship Platform Enterprise")}
                   className="btn-secondary w-full border-slate-600 text-slate-200 hover:border-brand-500/50"
                 >
                   {plan.cta}
                 </a>
               ) : (
                 <Link
-                  href="/create-org"
+                  href={`/create-org?plan=${plan.key}`}
+                  data-testid={`plan-cta-${plan.key}`}
                   className={cn(
                     "w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors",
                     plan.highlighted ? "btn-cta" : "btn-primary",
@@ -112,7 +122,7 @@ export function PricingSection({
         ))}
       </div>
 
-      <p className="mt-8 text-center text-xs text-slate-500">
+      <p className="mt-8 text-center text-xs text-slate-400">
         All plans include mentor dashboards, audit logs, and IST timezone
         defaults. Stipend payouts subject to platform fee — cancel anytime from
         workspace settings.

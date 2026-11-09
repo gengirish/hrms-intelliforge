@@ -1,6 +1,7 @@
 import { AgentMailClient } from "agentmail";
 import { escapeHtml } from "@/lib/html-escape";
 import { COMMISSION_PAY_LABEL, COMMISSION_SUMMARY } from "@/lib/hiring/commission";
+import { PRODUCT_NAME } from "@/lib/site";
 
 if (!process.env.AGENTMAIL_API_KEY) {
   console.warn("AGENTMAIL_API_KEY is not set — email features will fail");
@@ -53,7 +54,7 @@ export async function sendWelcomeEmail(
     subject: `Welcome to IntelliForge AI, ${internName}!`,
     html: `
       <h2>Hi ${escapeHtml(internName)},</h2>
-      <p>Thank you for registering on the IntelliForge HRMS portal!</p>
+      <p>Thank you for registering on the ${PRODUCT_NAME} portal!</p>
       <p>Your onboarding application for <strong>${escapeHtml(role)}</strong> has been received and is under review.</p>
       <p>Here's what happens next:</p>
       <ol>
@@ -293,7 +294,7 @@ export async function sendNewApplicationAlert({
       ${coverNote ? `<p><strong>Cover Note:</strong></p><blockquote>${escapeHtml(coverNote)}</blockquote>` : ""}
       <br/>
       <p><a href="${APP_URL}/dashboard/hiring">→ View in Hiring Dashboard</a></p>
-      <p>— IntelliForge HRMS</p>
+      <p>— ${PRODUCT_NAME}</p>
     `,
   });
 }
@@ -350,8 +351,8 @@ export async function sendWeeklyProgressSubmittedToMentor({
     html: `
       <p>Hi ${greet},</p>
       <p><strong>${escapeHtml(internName)}</strong> submitted their weekly progress report for <strong>${escapeHtml(weekKey)}</strong>.</p>
-      <p><a href="${APP_URL}/dashboard/weekly-progress?week=${encodeURIComponent(weekKey)}">→ Review in HRMS</a></p>
-      <p>— IntelliForge HRMS</p>
+      <p><a href="${APP_URL}/dashboard/weekly-progress?week=${encodeURIComponent(weekKey)}">→ Review in ${PRODUCT_NAME}</a></p>
+      <p>— ${PRODUCT_NAME}</p>
     `,
   });
 }
@@ -379,7 +380,7 @@ export async function sendWeeklyProgressFeedbackToIntern({
       <p>Hi ${escapeHtml(internName)},</p>
       <p>Your mentor left feedback for <strong>${escapeHtml(weekKey)}</strong>.</p>
       <blockquote style="border-left:4px solid #4f46e5;padding-left:12px;margin:12px 0;color:#334155;">${preview}</blockquote>
-      <p><a href="${APP_URL}/weekly-progress">→ View full report in HRMS</a></p>
+      <p><a href="${APP_URL}/weekly-progress">→ View full report in ${PRODUCT_NAME}</a></p>
       <p>— IntelliForge AI</p>
     `,
   });
@@ -455,7 +456,7 @@ export async function sendNewMentorApplicationAlert({
       ${links ? `<p><strong>Links:</strong> ${links}</p>` : ""}
       <br/>
       <p><a href="${APP_URL}/dashboard/mentor-applications">→ Review in Mentor Applications</a></p>
-      <p>— IntelliForge HRMS</p>
+      <p>— ${PRODUCT_NAME}</p>
     `,
   });
 }

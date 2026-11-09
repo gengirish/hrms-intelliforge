@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tasks | IntelliForge HRMS",
+  title: "Tasks",
   description: "Log weekly tasks with hours tracking for your IntelliForge internship.",
 };
 

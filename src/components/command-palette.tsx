@@ -23,6 +23,8 @@ import {
   type NavItem,
 } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/lib/site";
+import { useShortcutModifier } from "@/lib/use-shortcut-modifier";
 
 interface CommandAction {
   id: string;
@@ -34,6 +36,7 @@ interface CommandAction {
 }
 
 export function CommandPalette() {
+  const shortcutModifier = useShortcutModifier();
   const router = useRouter();
   const { user, isSignedIn, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -116,13 +119,13 @@ export function CommandPalette() {
     });
     navActions.push({
       id: "external:founder",
-      label: "Founder · Girish Hiremath",
-      hint: "girishbhiremath.vercel.app",
+      label: `Founder · ${SITE.founder.name}`,
+      hint: SITE.founder.urlLabel,
       icon: UserIcon,
       keywords: "founder girish hiremath about portfolio",
       run: () => {
         window.open(
-          "https://girishbhiremath.vercel.app",
+          SITE.founder.url,
           "_blank",
           "noopener,noreferrer"
         );
@@ -297,7 +300,7 @@ export function CommandPalette() {
           </div>
           <span className="hidden sm:flex items-center gap-1">
             <kbd className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 font-mono">
-              ⌘
+              {shortcutModifier}
             </kbd>
             <kbd className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 font-mono">
               K

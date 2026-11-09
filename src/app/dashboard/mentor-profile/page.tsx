@@ -15,6 +15,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { AvailabilityEditor } from "@/components/mentors/availability-editor";
 import { LinkedInMentorImportForm } from "@/components/mentors/linkedin-import-form";
 import type { AvailabilitySlot } from "@/components/mentors/availability-display";
+import { missingMentorProfileFields } from "@/lib/mentor-listing";
 
 interface MentorProfile {
   id: string;
@@ -185,6 +186,20 @@ export default function MentorProfilePage() {
             </Link>
           )}
         </div>
+
+        {profile && missingMentorProfileFields(profile).length > 0 && (
+          <div
+            role="status"
+            data-testid="mentor-profile-incomplete"
+            className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200"
+          >
+            <p className="font-semibold">Complete your profile to appear in the public mentor directory</p>
+            <p className="mt-1 text-amber-200/80">
+              Missing: {missingMentorProfileFields(profile).join(", ")}. Your profile stays visible to
+              you and your org admins until then.
+            </p>
+          </div>
+        )}
 
         <LinkedInMentorImportForm
           mode="self"

@@ -1,5 +1,8 @@
-import Link from "next/link";
 import { Quote, Sparkles, ShieldCheck, MapPin, ArrowRight } from "lucide-react";
+import { mailto } from "@/lib/site";
+
+// Address comes from SITE.contactEmail (DECISION: Q3 in src/lib/site.ts).
+const DESIGN_PARTNER_MAILTO = mailto("Design partner — Mentor Internship Platform");
 
 const partnerBadges = [
   { icon: Sparkles, label: "IntelliForge AI" },
@@ -19,7 +22,7 @@ const testimonials = [
   },
   {
     quote:
-      "We built HRMS because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — built for programs like ours.",
+      "We built this platform because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — built for programs like ours.",
     name: "Girish Hiremath",
     role: "Founder, IntelliForge AI",
     initials: "GH",
@@ -110,13 +113,13 @@ export function SocialProof() {
             cohorts — not fabricated case studies. Get early access, direct
             founder support, and help shape the roadmap.
           </p>
-          <Link
-            href="/create-org"
+          <a
+            href={DESIGN_PARTNER_MAILTO}
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand-300 hover:text-brand-200 transition-colors pt-5 border-t border-slate-800"
           >
             Apply as a design partner
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
+          </a>
         </div>
       </div>
     </section>

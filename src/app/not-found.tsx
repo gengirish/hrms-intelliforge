@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PRODUCT_NAME } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false },
+};
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-6 text-center">
       <p className="text-xs font-medium text-indigo-400 tracking-wide uppercase mb-4">
-        IntelliForge HRMS
+        {PRODUCT_NAME}
       </p>
       <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
         Page not found

@@ -3,12 +3,14 @@ import {
   calculatePlatformFee,
   getPlanLimits,
 } from "@/lib/plan-limits";
+import { PLANS } from "@/lib/plans";
 
 describe("getPlanLimits", () => {
   it("returns mentor limits per plan", () => {
-    expect(getPlanLimits("free").maxMentors).toBe(20);
-    expect(getPlanLimits("starter").maxMentors).toBe(20);
-    expect(getPlanLimits("growth").maxMentors).toBe(20);
+    expect(getPlanLimits("free").maxMentors).toBe(PLANS.free.mentors);
+    expect(getPlanLimits("starter").maxMentors).toBe(PLANS.starter.mentors);
+    expect(getPlanLimits("growth").maxMentors).toBe(PLANS.growth.mentors);
+    expect(getPlanLimits("growth").maxInterns).toBe(PLANS.growth.interns);
   });
 });
 

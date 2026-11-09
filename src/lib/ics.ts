@@ -1,3 +1,5 @@
+import { PRODUCT_NAME } from "@/lib/site";
+
 /**
  * Minimal ICS (iCalendar) generator for interview invites when Google
  * Calendar credentials are not configured.
@@ -53,7 +55,7 @@ export function buildIcsContent(input: IcsEventInput): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//IntelliForge HRMS//Interview Scheduling//EN",
+    "PRODID:-//IntelliForge//Mentor Internship Platform//Interview Scheduling//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:REQUEST",
     `X-WR-TIMEZONE:${tz}`,
@@ -72,7 +74,7 @@ export function buildIcsContent(input: IcsEventInput): string {
     lines.push(foldLine(`LOCATION:${escapeIcsText(input.location)}`));
   }
   if (input.organizerEmail) {
-    lines.push(`ORGANIZER;CN=IntelliForge HRMS:mailto:${input.organizerEmail}`);
+    lines.push(`ORGANIZER;CN=${PRODUCT_NAME}:mailto:${input.organizerEmail}`);
   }
   for (const email of input.attendeeEmails ?? []) {
     lines.push(`ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${email}`);

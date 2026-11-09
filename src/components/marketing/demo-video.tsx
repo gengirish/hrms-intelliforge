@@ -1,8 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Play, Sparkles } from "lucide-react";
+import { ArrowDown, Sparkles } from "lucide-react";
+
+/** True when a real product video is configured (NEXT_PUBLIC_DEMO_VIDEO_URL). */
+export function hasDemoVideo(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_DEMO_VIDEO_URL?.trim());
+}
 
 function getEmbedSrc(url: string): string {
   const trimmed = url.trim();
@@ -22,16 +24,14 @@ function getEmbedSrc(url: string): string {
   return trimmed;
 }
 
+// No video exists yet (D8): this card is an honest jump to the features
+// section, not a "Watch product tour" play button. Set
+// NEXT_PUBLIC_DEMO_VIDEO_URL to a YouTube/Loom link to embed a real video.
 function DemoVideoFallback() {
-  const pathname = usePathname();
-  const href =
-    pathname === "/" ? "#features-heading" : "/about#demo";
-
   return (
     <Link
-      href={href}
+      href="#features-heading"
       className="group trust-card mx-auto block max-w-4xl overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
-      aria-label="Watch product tour — explore HRMS features"
     >
       <div className="relative aspect-video w-full">
         <div
@@ -81,19 +81,15 @@ function DemoVideoFallback() {
         {/* Play overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500/20 ring-2 ring-brand-400/50 transition-transform duration-300 group-hover:scale-110 group-hover:bg-brand-500/30">
-            <Play
-              className="h-9 w-9 translate-x-0.5 text-white drop-shadow-lg"
-              aria-hidden="true"
-              fill="currentColor"
-            />
+            <ArrowDown className="h-9 w-9 text-white drop-shadow-lg" aria-hidden="true" />
           </div>
           <div className="relative space-y-2">
             <p className="flex items-center justify-center gap-2 text-lg font-semibold text-white sm:text-xl">
               <Sparkles className="h-5 w-5 text-brand-300" aria-hidden="true" />
-              Watch product tour
+              See how it works
             </p>
             <p className="text-sm text-slate-300 max-w-sm mx-auto">
-              Explore how IntelliForge HRMS runs internships end-to-end
+              Explore how the platform runs internships end-to-end
             </p>
           </div>
         </div>
@@ -113,7 +109,7 @@ export function DemoVideo() {
         <div className="relative aspect-video w-full">
           <iframe
             src={embedSrc}
-            title="IntelliForge HRMS product demo"
+            title="Mentor Internship Platform product demo"
             className="absolute inset-0 h-full w-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen

@@ -16,6 +16,8 @@ import {
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
 import { WhatsAppOtpForm } from "@/components/auth/whatsapp-otp-form";
+import { PRODUCT_NAME, SITE } from "@/lib/site";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -34,7 +36,8 @@ export default function SignInPage() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  // Only same-origin relative paths; "//evil.com", "https://…" and "javascript:" fall back to "/".
+  const redirect = safeRedirectPath(searchParams.get("redirect"));
   const verified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
   const { refresh } = useAuth();
@@ -126,7 +129,7 @@ function SignInForm() {
             </Link>
             <h1 className="text-3xl font-bold text-white">Welcome back</h1>
             <p className="text-slate-400 mt-2 text-sm">
-              Sign in to your IntelliForge HRMS account
+              Sign in to your {PRODUCT_NAME} account
             </p>
           </div>
 
@@ -324,7 +327,7 @@ function SignInForm() {
               <span>
                 Built by{" "}
                 <a
-                  href="https://girishbhiremath.vercel.app"
+                  href={SITE.founder.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-slate-400 hover:text-brand-300 transition-colors font-medium focus-visible:underline focus-visible:outline-none rounded"

@@ -5,11 +5,14 @@ import { Search } from "lucide-react";
 
 interface MentorSearchProps {
   expertiseOptions?: string[];
+  /** Current ?expertise= value, so the select reflects the active filter. */
+  selectedExpertise?: string;
   onExpertiseChange?: (value: string) => void;
 }
 
 export function MentorSearch({
   expertiseOptions = [],
+  selectedExpertise = "",
   onExpertiseChange,
 }: MentorSearchProps) {
   const handleSearch = useCallback((value: string) => {
@@ -41,8 +44,10 @@ export function MentorSearch({
       {expertiseOptions.length > 0 && (
         <select
           onChange={(e) => onExpertiseChange?.(e.target.value)}
+          aria-label="Filter by expertise"
+          data-testid="expertise-filter"
           className="rounded-lg bg-slate-900/80 border border-slate-700 px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all"
-          defaultValue=""
+          value={selectedExpertise}
         >
           <option value="">All expertise</option>
           {expertiseOptions.map((exp) => (

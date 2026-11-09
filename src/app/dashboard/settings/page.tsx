@@ -33,6 +33,7 @@ interface OrgData {
   domain: string | null;
   logoUrl: string | null;
   plan: string;
+  requestedPlan: string | null;
   maxInterns: number;
   maxMentors: number;
   platformFeeBps: number;
@@ -635,7 +636,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-slate-400">
                     Create the account immediately with a password you set. They can sign in right
                     away and appear in mentor assignment lists. Share the password securely outside
-                    HRMS.
+                    the platform.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -914,6 +915,12 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-white">Current Plan</h3>
                   <p className="text-lg font-bold text-indigo-400 capitalize">{org.plan}</p>
+                  {org.requestedPlan && org.requestedPlan !== org.plan && (
+                    <p className="mt-1 text-xs text-amber-300" data-testid="requested-plan">
+                      You chose <span className="capitalize">{org.requestedPlan}</span> at signup. It
+                      activates once billing is set up — upgrade below to start checkout.
+                    </p>
+                  )}
                 </div>
                 {org.plan !== "free" && (
                   <button
@@ -956,7 +963,9 @@ export default function SettingsPage() {
                   >
                     <h4 className="text-sm font-semibold text-white">{plan.name}</h4>
                     <p className="text-xl font-bold text-white mt-1">{plan.price}</p>
-                    <p className="text-xs text-slate-400 mt-2">Up to {plan.interns} interns</p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      {plan.interns} interns · {plan.mentors} mentors
+                    </p>
                     <div className="mt-auto pt-4">
                       {isCurrent ? (
                         <span className="block text-center text-xs font-medium text-indigo-400">

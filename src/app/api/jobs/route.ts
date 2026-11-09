@@ -121,7 +121,10 @@ export async function POST(req: NextRequest) {
     }
 
     let slug = generateSlug(parsed.data.title);
-    const existingSlug = await prisma.jobPosting.findUnique({ where: { slug } });
+    const existingSlug = await prisma.jobPosting.findFirst({
+      where: { OR: [{ slug }, { previousSlugs: { has: slug } }] },
+      select: { id: true },
+    });
     if (existingSlug) {
       slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
     }

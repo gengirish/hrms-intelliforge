@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 export const metadata: Metadata = {
-  title: "Dashboard | IntelliForge HRMS",
+  title: "Dashboard",
   description: "Admin dashboard for managing IntelliForge AI interns.",
 };
 

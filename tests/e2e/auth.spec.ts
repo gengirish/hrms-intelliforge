@@ -25,9 +25,9 @@ test.describe("Authentication", () => {
     await expect(page.getByText(/IntelliForge/i).first()).toBeVisible();
   });
 
-  test("sign-up page has IntelliForge branding", async ({ page }) => {
+  test("sign-up page shows product or org branding", async ({ page }) => {
     await page.goto("/sign-up");
-    await expect(page.getByText(/IntelliForge/i).first()).toBeVisible();
+    await expect(page.getByText(/IntelliForge|Mentor Internship Platform/i).first()).toBeVisible();
   });
 
   test("sign-in page has email and password fields", async ({ page }) => {

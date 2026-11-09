@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AlertCircle, ArrowLeft, Loader2, MessageCircle } from "lucide-react";
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 interface WhatsAppOtpFormProps {
   redirect: string;
@@ -120,7 +121,7 @@ export function WhatsAppOtpForm({ redirect, onBack }: WhatsAppOtpFormProps) {
       grantAnalyticsConsent();
       captureEvent("sign_in", { method: "whatsapp_otp" });
       await refresh();
-      router.push(redirect);
+      router.push(safeRedirectPath(redirect));
       router.refresh();
     } catch {
       const msg = "Network error. Check your connection and retry.";

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Star, Crown, IndianRupee } from "lucide-react";
+import { ArrowRight, Star, Crown } from "lucide-react";
+import { dedupeBioAgainstHeadline, formatHourlyRate } from "@/lib/mentor-listing";
+import { normaliseTags } from "@/lib/tag-normalise";
 
 export interface MentorListing {
   id: string;
@@ -17,22 +19,19 @@ export interface MentorListing {
   orgName: string;
 }
 
-function formatRate(paise: number | null): string | null {
-  if (paise == null || paise <= 0) return null;
-  const rupees = paise / 100;
-  return rupees >= 1000 ? `₹${(rupees / 1000).toFixed(1)}k/hr` : `₹${rupees}/hr`;
-}
-
 export function MentorCard({ mentor }: { mentor: MentorListing }) {
-  const rate = formatRate(mentor.hourlyRatePaise);
+  const rate = formatHourlyRate(mentor.hourlyRatePaise);
+  const bio = dedupeBioAgainstHeadline(mentor.headline, mentor.bio);
+  const expertise = normaliseTags(mentor.expertise);
 
   return (
     <Link
       href={`/mentors/${mentor.slug}`}
       className="glass-card p-6 block hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all group mentor-card"
+      data-testid="mentor-card"
       data-name={mentor.name.toLowerCase()}
       data-headline={(mentor.headline ?? "").toLowerCase()}
-      data-expertise={mentor.expertise.map((e) => e.toLowerCase()).join(",")}
+      data-expertise={expertise.map((e) => e.toLowerCase()).join(",")}
     >
       <div className="flex items-start gap-4">
         {mentor.avatarUrl ? (
@@ -62,18 +61,18 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
           </div>
 
           {mentor.headline && (
-            <p className="text-sm text-indigo-300/90 mb-2 line-clamp-1">
+            <p className="text-sm text-indigo-300/90 mb-2 line-clamp-1" data-testid="mentor-headline">
               {mentor.headline}
             </p>
           )}
 
-          {mentor.bio && (
+          {bio && (
             <p className="text-sm text-slate-400 line-clamp-2 mb-3">
-              {mentor.bio}
+              {bio}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-3">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-3">
             <span>{mentor.orgName}</span>
             {mentor.yearsExperience != null && mentor.yearsExperience > 0 && (
               <span>{mentor.yearsExperience}+ yrs exp</span>
@@ -85,16 +84,15 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
               </span>
             )}
             {rate && (
-              <span className="inline-flex items-center gap-0.5 text-emerald-400/80">
-                <IndianRupee className="h-3 w-3" />
-                {rate.replace("₹", "")}
+              <span className="text-emerald-400/80" data-testid="mentor-rate">
+                {rate}
               </span>
             )}
           </div>
 
-          {mentor.expertise.length > 0 && (
+          {expertise.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {mentor.expertise.slice(0, 5).map((skill) => (
+              {expertise.slice(0, 5).map((skill) => (
                 <span
                   key={skill}
                   className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
@@ -102,9 +100,9 @@ export function MentorCard({ mentor }: { mentor: MentorListing }) {
                   {skill}
                 </span>
               ))}
-              {mentor.expertise.length > 5 && (
+              {expertise.length > 5 && (
                 <span className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-[11px] font-medium text-slate-400">
-                  +{mentor.expertise.length - 5}
+                  +{expertise.length - 5}
                 </span>
               )}
             </div>

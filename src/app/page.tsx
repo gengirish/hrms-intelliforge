@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { FREE_PLAN_MAX_INTERNS } from "@/lib/pricing";
+import { FREE_PLAN_MAX_INTERNS, freePlanAllowance } from "@/lib/pricing";
+import { freeHeroHighlights } from "@/lib/plans";
 import {
   ArrowRight,
   Sparkles,
@@ -17,12 +18,12 @@ import {
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { InstallPrompt } from "@/components/install-prompt";
-import { DemoVideo } from "@/components/marketing/demo-video";
+import { DemoVideo, hasDemoVideo } from "@/components/marketing/demo-video";
 import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 const stats = [
-  { value: "500+", label: "Mentor-led internships run" },
+  { value: "500+", label: "Interns onboarded" },
   { value: "< 2 min", label: "List your first cohort" },
   { value: "60s", label: "Per-intern onboarding" },
 ];
@@ -122,9 +123,14 @@ export default function HomePage() {
                 id="hero-heading"
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance"
               >
-                <span className="text-white">The Mentor Internship Platform</span>
-                <br />
-                <span className="gradient-text">run cohorts, track accountability, get paid</span>
+                {/* Two block lines; the visually hidden colon keeps the text readable
+                    for screen readers, crawlers and copy-paste (D7). */}
+                <span className="block text-white">
+                  The Mentor Internship Platform<span className="sr-only">: </span>
+                </span>
+                <span className="block">
+                  <span className="gradient-text">run cohorts, track accountability, get paid</span>
+                </span>
               </h1>
 
               <p className="mt-6 text-lg text-slate-300 max-w-2xl leading-relaxed">
@@ -144,19 +150,16 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-400">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  No credit card
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Mentor ratings & reviews
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
-                  Stipend payouts built in
-                </li>
+              <ul
+                className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-400"
+                data-testid="hero-free-highlights"
+              >
+                {freeHeroHighlights().map((label) => (
+                  <li key={label} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" aria-hidden="true" />
+                    {label}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -167,7 +170,7 @@ export default function HomePage() {
           className="border-y border-slate-800 bg-slate-900/40"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            <p className="text-center text-xs uppercase tracking-wider text-slate-500 mb-4">
+            <p className="text-center text-xs uppercase tracking-wider text-slate-400 mb-4">
               Built for teams like yours
             </p>
             <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
@@ -210,7 +213,7 @@ export default function HomePage() {
               id="demo-heading"
               className="text-2xl sm:text-3xl font-bold text-white"
             >
-              See it in 60 seconds
+              {hasDemoVideo() ? "See it in 60 seconds" : "See how it works"}
             </h2>
           </div>
           <DemoVideo />
@@ -274,7 +277,7 @@ export default function HomePage() {
             <ol className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {steps.map((item) => (
                 <li key={item.step} className="relative">
-                  <span className="text-4xl font-bold text-brand-500/20">
+                  <span className="text-4xl font-bold text-brand-400/70" aria-hidden="true">
                     {item.step}
                   </span>
                   <h3 className="mt-2 text-lg font-semibold text-white">
@@ -317,10 +320,10 @@ export default function HomePage() {
                 Intern self-service portal
               </h2>
               <p className="mt-3 text-slate-400 leading-relaxed">
-                Onboard, log attendance, submit tasks, and view your offer —
-                no admin account needed.
+                Onboard, log attendance, submit tasks, and view your offer.
+                Sign in with your intern account.
               </p>
-              <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+              <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
                 {[
                   { href: "/intern-onboarding", label: "Onboarding" },
                   { href: "/attendance", label: "Attendance" },
@@ -367,7 +370,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-slate-300">
               Join teams running mentor-led internships on the Mentor Internship
-              Platform. Free forever for up to {FREE_PLAN_MAX_INTERNS} interns and 20 mentors.
+              Platform. Free forever for up to {freePlanAllowance()}.
             </p>
             <Link href="/create-org" className="btn-cta mt-8 px-8 py-3 text-base">
               Start free today

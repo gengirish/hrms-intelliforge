@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PLANS, type PlanKey } from "@/lib/plans";
+import { PLANS, limitsForPlan, type PlanKey } from "@/lib/plans";
 
 let _stripe: Stripe | null = null;
 
@@ -20,6 +20,11 @@ export function getStripe(): Stripe {
 export { PLANS, type PlanKey };
 
 export function getPlanLimits(plan: string): { maxInterns: number; maxMentors: number } {
-  const p = PLANS[plan as PlanKey];
-  return { maxInterns: p?.maxInterns ?? 500, maxMentors: p?.maxMentors ?? 20 };
+  return limitsForPlan(plan);
+}
+
+/** Stripe Price id for a paid plan, read from STRIPE_<PLAN>_PRICE_ID at call time. */
+export function getStripePriceId(plan: PlanKey): string {
+  if (plan === "free") return "";
+  return process.env[`STRIPE_${plan.toUpperCase()}_PRICE_ID`] ?? "";
 }

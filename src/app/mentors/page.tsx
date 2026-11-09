@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Users, GraduationCap } from "lucide-react";
@@ -5,12 +6,26 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { MentorDirectory } from "@/components/mentors/mentor-directory";
+import { publicMentorWhere } from "@/lib/mentor-listing";
+import {
+  buildTagFilterIndex,
+  storedTagsForFilter,
+  tagFilterOptions,
+} from "@/lib/tag-normalise";
 import type { MentorListing } from "@/components/mentors/mentor-card";
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "Mentor Directory",
+  description:
+    "Browse mentors who guide internship cohorts on the Mentor Internship Platform, by skill and expertise.",
+  alternates: { canonical: "/mentors" },
+  openGraph: { title: "Mentor Directory", url: "/mentors" },
+};
+
 const PAGE_SIZE = 12;
 
-async function getMentors(page: number, expertise?: string) {
+async function getMentors(page: number, expertiseTags?: string[]) {
   const empty = {
     mentors: [] as MentorListing[],
     total: 0,
@@ -22,10 +37,9 @@ async function getMentors(page: number, expertise?: string) {
   };
 
   try {
-    const where = {
-      isPublic: true,
-      ...(expertise ? { expertise: { has: expertise } } : {}),
-    };
+    const where = publicMentorWhere(
+      expertiseTags ? { expertise: { hasSome: expertiseTags } } : {},
+    );
 
     const [profiles, total, profileCount, publicCount] = await Promise.all([
       prisma.mentorProfile.findMany({
@@ -59,7 +73,7 @@ async function getMentors(page: number, expertise?: string) {
       }),
       prisma.mentorProfile.count({ where }),
       prisma.mentorProfile.count(),
-      prisma.mentorProfile.count({ where: { isPublic: true } }),
+      prisma.mentorProfile.count({ where: publicMentorWhere() }),
     ]);
 
     const mentors: MentorListing[] = profiles.map((p) => ({
@@ -92,19 +106,16 @@ async function getMentors(page: number, expertise?: string) {
   }
 }
 
-async function getExpertiseOptions(): Promise<string[]> {
+/** Canonical filter labels → stored tag strings, from every public profile (D6). */
+async function getExpertiseIndex() {
   try {
     const profiles = await prisma.mentorProfile.findMany({
-      where: { isPublic: true },
+      where: publicMentorWhere(),
       select: { expertise: true },
     });
-    const set = new Set<string>();
-    for (const p of profiles) {
-      for (const e of p.expertise) set.add(e);
-    }
-    return Array.from(set).sort();
+    return buildTagFilterIndex(profiles.flatMap((p) => p.expertise));
   } catch {
-    return [];
+    return new Map<string, Set<string>>();
   }
 }
 
@@ -117,10 +128,12 @@ export default async function MentorsPage({
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const expertise = params.expertise?.trim();
 
-  const [initialData, expertiseOptions] = await Promise.all([
-    getMentors(page, expertise),
-    getExpertiseOptions(),
-  ]);
+  const expertiseIndex = await getExpertiseIndex();
+  const expertiseOptions = tagFilterOptions(expertiseIndex);
+  const initialData = await getMentors(
+    page,
+    expertise ? storedTagsForFilter(expertiseIndex, expertise) : undefined,
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -137,13 +150,13 @@ export default async function MentorsPage({
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
-              Meet your{" "}
-              <span className="gradient-text">program mentors</span>
+              Meet the{" "}
+              <span className="gradient-text">mentors</span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Browse mentors in your organization&apos;s internship program by
-              skill and expertise. Book 1:1 sessions with mentors assigned to
-              your cohort.
+              Browse the mentors who guide internship cohorts on the Mentor
+              Internship Platform, by skill and expertise. Interns book 1:1
+              sessions with the mentors assigned to their program.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -159,7 +172,7 @@ export default async function MentorsPage({
 
         <Suspense
           fallback={
-            <div className="text-center py-16 text-slate-500">Loading mentors…</div>
+            <div className="text-center py-16 text-slate-400">Loading mentors…</div>
           }
         >
           <MentorDirectory

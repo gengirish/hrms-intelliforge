@@ -1,4 +1,4 @@
-export default function Loading() {
+export function RouteLoading() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4">
       <div
