@@ -17,6 +17,7 @@ import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
 import { WhatsAppOtpForm } from "@/components/auth/whatsapp-otp-form";
 import { PRODUCT_NAME, SITE } from "@/lib/site";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -35,7 +36,8 @@ export default function SignInPage() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  // Only same-origin relative paths; "//evil.com", "https://…" and "javascript:" fall back to "/".
+  const redirect = safeRedirectPath(searchParams.get("redirect"));
   const verified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
   const { refresh } = useAuth();
