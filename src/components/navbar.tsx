@@ -24,8 +24,10 @@ import {
   type AccountType,
 } from "@/lib/nav-config";
 import { mailto } from "@/lib/site";
+import { useShortcutModifier } from "@/lib/use-shortcut-modifier";
 
 export function Navbar() {
+  const shortcutModifier = useShortcutModifier();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -131,7 +133,7 @@ export function Navbar() {
                 <Search className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Search</span>
                 <kbd className="ml-2 inline-flex items-center gap-0.5 rounded border border-slate-600 bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] text-slate-400">
-                  ⌘K
+                  {shortcutModifier} K
                 </kbd>
               </button>
 
@@ -198,7 +200,7 @@ export function Navbar() {
                             Search
                           </span>
                           <kbd className="text-[10px] font-mono text-slate-500 border border-slate-700 rounded px-1.5">
-                            ⌘K
+                            {shortcutModifier} K
                           </kbd>
                         </button>
                         <a
