@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Users, GraduationCap } from "lucide-react";
@@ -7,6 +8,14 @@ import { prisma } from "@/lib/prisma";
 import { MentorDirectory } from "@/components/mentors/mentor-directory";
 import type { MentorListing } from "@/components/mentors/mentor-card";
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Mentor Directory",
+  description:
+    "Browse mentors who guide internship cohorts on the Mentor Internship Platform, by skill and expertise.",
+  alternates: { canonical: "/mentors" },
+  openGraph: { title: "Mentor Directory", url: "/mentors" },
+};
 
 const PAGE_SIZE = 12;
 

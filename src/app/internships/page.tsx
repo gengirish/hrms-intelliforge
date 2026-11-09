@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Briefcase, MapPin, Clock, ArrowRight, Building2 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
@@ -6,6 +7,14 @@ import { prisma } from "@/lib/prisma";
 import { InternshipsSearch } from "./search";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Open Internships",
+  description:
+    "Browse open mentor-led internship cohorts from organizations running their programs on the Mentor Internship Platform. Apply in minutes.",
+  alternates: { canonical: "/internships" },
+  openGraph: { title: "Open Internships", url: "/internships" },
+};
 
 interface JobListing {
   id: string;
