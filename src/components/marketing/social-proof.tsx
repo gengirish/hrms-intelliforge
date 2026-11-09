@@ -22,7 +22,7 @@ const testimonials = [
   },
   {
     quote:
-      "We built HRMS because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — built for programs like ours.",
+      "We built this platform because we were drowning in offer letters and WhatsApp follow-ups every cohort. One link now handles documents, e-signatures, and task logs — built for programs like ours.",
     name: "Girish Hiremath",
     role: "Founder, IntelliForge AI",
     initials: "GH",

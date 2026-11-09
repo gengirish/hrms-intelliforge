@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { PRODUCT_NAME } from "@/lib/site";
 
 const suspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -129,7 +130,7 @@ function AcceptAdminInviteForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            IntelliForge HRMS
+            {PRODUCT_NAME}
           </h1>
           <p className="text-slate-400 mt-2 text-sm">
             {preview.isPromotion ? "Complete your team access" : "Accept your invitation"}

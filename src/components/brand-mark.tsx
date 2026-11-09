@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PRODUCT_NAME } from "@/lib/site";
 
 interface BrandMarkProps {
   href?: string;
@@ -66,7 +67,7 @@ export function BrandMark({
       <Link
         href={href}
         className={wrapperClass}
-        aria-label="Mentor Internship Platform — Home"
+        aria-label={PRODUCT_NAME}
       >
         <MarkInner size={size} showText={showText} />
       </Link>

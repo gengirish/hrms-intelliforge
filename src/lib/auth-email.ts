@@ -2,6 +2,7 @@ import { randomBytes, createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { agentmail, getHRInboxId } from "@/lib/agentmail";
 import { escapeHtml } from "@/lib/html-escape";
+import { PRODUCT_NAME } from "@/lib/site";
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://hrms.intelliforge.tech")
   .trim()
@@ -46,12 +47,12 @@ export async function sendMagicLinkEmail(email: string, name?: string) {
   const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: email,
-    subject: "Sign in to IntelliForge HRMS",
+    subject: `Sign in to ${PRODUCT_NAME}`,
     html: `
       <h2>${greeting},</h2>
-      <p>Click the link below to sign in to the IntelliForge HRMS portal:</p>
+      <p>Click the link below to sign in to the ${PRODUCT_NAME} portal:</p>
       <p><a href="${link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-        Sign In to HRMS
+        Sign in to ${PRODUCT_NAME}
       </a></p>
       <p style="color:#94a3b8;font-size:13px;">This link expires in ${TOKEN_EXPIRY_MINUTES} minutes. If you didn't request this, ignore this email.</p>
       <br/><p>— IntelliForge AI</p>
@@ -68,7 +69,7 @@ export async function sendVerificationEmail(email: string, name: string) {
   const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: email,
-    subject: "Verify your IntelliForge HRMS email",
+    subject: `Verify your ${PRODUCT_NAME} email`,
     html: `
       <h2>Hi ${escapeHtml(name)},</h2>
       <p>Please verify your email address to complete registration:</p>
@@ -99,14 +100,14 @@ export async function sendAdminInviteEmail(args: {
     args.workspaceRole === "MENTOR" ? "mentor" : "full workspace admin";
   const lead = args.isPromotion
     ? `<p>You've been invited to continue with <strong>${escapeHtml(args.orgName)}</strong> as a <strong>${escapeHtml(roleLabel)}</strong> using your existing intern email.</p>`
-    : `<p>You've been invited to join <strong>${escapeHtml(args.orgName)}</strong> on IntelliForge HRMS as a <strong>${escapeHtml(roleLabel)}</strong>.</p>`;
+    : `<p>You've been invited to join <strong>${escapeHtml(args.orgName)}</strong> on ${PRODUCT_NAME} as a <strong>${escapeHtml(roleLabel)}</strong>.</p>`;
 
   const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: args.to,
     subject: args.isPromotion
       ? `Complete your move to team access — ${args.orgName}`
-      : `You're invited to IntelliForge HRMS — ${args.orgName}`,
+      : `You're invited to ${PRODUCT_NAME} — ${args.orgName}`,
     html: `
       <h2>${greeting},</h2>
       ${lead}
@@ -136,13 +137,13 @@ export async function sendAdminWelcomeEmail(args: {
   const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: args.to,
-    subject: `Your IntelliForge HRMS account — ${args.orgName}`,
+    subject: `Your ${PRODUCT_NAME} account — ${args.orgName}`,
     html: `
       <h2>${greeting},</h2>
       <p>Your workspace admin created a <strong>${escapeHtml(roleLabel)}</strong> account for you at <strong>${escapeHtml(args.orgName)}</strong>.</p>
       <p>Sign in with the email address this message was sent to and the password your admin shared with you.</p>
       <p><a href="${signInUrl}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-        Sign in to HRMS
+        Sign in to ${PRODUCT_NAME}
       </a></p>
       <p style="color:#94a3b8;font-size:13px;">For security, change your password after your first sign-in from the sign-in page.</p>
       <br/><p>— IntelliForge AI</p>
@@ -160,7 +161,7 @@ export async function sendPasswordResetEmail(email: string, name?: string) {
   const inboxId = await getHRInboxId();
   await agentmail.inboxes.messages.send(inboxId, {
     to: email,
-    subject: "Reset your IntelliForge HRMS password",
+    subject: `Reset your ${PRODUCT_NAME} password`,
     html: `
       <h2>${greeting},</h2>
       <p>Click the link below to reset your password:</p>

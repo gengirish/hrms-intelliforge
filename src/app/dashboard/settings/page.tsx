@@ -636,7 +636,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-slate-400">
                     Create the account immediately with a password you set. They can sign in right
                     away and appear in mentor assignment lists. Share the password securely outside
-                    HRMS.
+                    the platform.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

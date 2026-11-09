@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { PRODUCT_NAME } from "@/lib/site";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -46,7 +47,7 @@ export function InstallPrompt() {
           <Download className="h-5 w-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">Install HRMS App</p>
+          <p className="text-sm font-semibold text-white">Install the {PRODUCT_NAME} app</p>
           <p className="text-xs text-indigo-200">Quick access from home screen</p>
         </div>
         <button

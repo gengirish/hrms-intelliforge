@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Offer Letter | IntelliForge HRMS",
+  title: "Offer Letter",
   description: "View and accept your IntelliForge AI internship offer letter.",
 };
 

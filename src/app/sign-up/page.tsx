@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
+import { PRODUCT_NAME } from "@/lib/site";
 
 interface OrgBranding {
   name: string;
@@ -139,7 +140,7 @@ function SignUpBody() {
     }
   }
 
-  const title = org?.name ?? "IntelliForge HRMS";
+  const title = org?.name ?? PRODUCT_NAME;
   const subtitle = org
     ? `Create your account at ${org.name}`
     : "Create your account";

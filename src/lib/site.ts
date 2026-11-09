@@ -13,6 +13,9 @@ const FOUNDER_URL = "https://girish-hiremath-profile.vercel.app";
 // actually reads (or forwards) before it goes live.
 const CONTACT_EMAIL = "founder@intelliforge.tech";
 
+/** User-facing product name (D10). Not "HRMS" or "HR workspace". */
+export const PRODUCT_NAME = "Mentor Internship Platform";
+
 export const SITE = {
   founder: {
     name: "Girish Hiremath",

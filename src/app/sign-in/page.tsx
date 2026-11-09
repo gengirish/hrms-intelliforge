@@ -16,7 +16,7 @@ import {
 import { captureEvent, grantAnalyticsConsent } from "@/lib/posthog";
 import { useAuth } from "@/lib/auth-context";
 import { WhatsAppOtpForm } from "@/components/auth/whatsapp-otp-form";
-import { SITE } from "@/lib/site";
+import { PRODUCT_NAME, SITE } from "@/lib/site";
 
 const signInSuspenseFallback = (
   <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -127,7 +127,7 @@ function SignInForm() {
             </Link>
             <h1 className="text-3xl font-bold text-white">Welcome back</h1>
             <p className="text-slate-400 mt-2 text-sm">
-              Sign in to your IntelliForge HRMS account
+              Sign in to your {PRODUCT_NAME} account
             </p>
           </div>
 
