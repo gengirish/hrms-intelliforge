@@ -16,6 +16,8 @@ export function InstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.matchMedia("(display-mode: standalone)").matches) return;
+    // Already running as the native app (see src/components/native-shell.tsx).
+    if (document.documentElement.classList.contains("native-app")) return;
     if (sessionStorage.getItem("pwa-dismissed")) return;
 
     const handler = (e: Event) => {

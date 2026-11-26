@@ -8,6 +8,8 @@ import { PostHogProvider } from "@/components/posthog-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { CommandPalette } from "@/components/command-palette";
 import { MobileBottomNav } from "@/components/mobile-nav";
+import { NativeShell } from "@/components/native-shell";
+import { NATIVE_APP_DETECT_SCRIPT } from "@/lib/native-app";
 import "./globals.css";
 import { SITE } from "@/lib/site";
 
@@ -135,8 +137,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${jakarta.variable}`}>
+    // suppressHydrationWarning: the native-app detect script below adds a class
+    // to <html> before React hydrates.
+    <html lang="en" className={`dark ${jakarta.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-slate-950 text-slate-100 selection:bg-brand-500/30 selection:text-white">
+        {/* Tags <html> in the Capacitor app before paint; no-op in browsers. */}
+        <script dangerouslySetInnerHTML={{ __html: NATIVE_APP_DETECT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -164,6 +170,7 @@ export default function RootLayout({
           }}
         />
         <ServiceWorkerRegistrar />
+        <NativeShell />
       </body>
     </html>
   );
