@@ -155,6 +155,12 @@
   }
 }
 
+/* Capacitor app: edge-to-edge like an installed PWA, but the WebView does not
+   report display-mode: standalone. The class is set in the root layout. */
+html.native-app .navbar-standalone {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 @media (max-width: 767px) {
   main {
     padding-bottom: 5rem;

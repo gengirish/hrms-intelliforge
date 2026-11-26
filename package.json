@@ -13,6 +13,10 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "cap:sync": "cap sync",
+    "cap:android": "cap sync android && cap open android",
+    "cap:ios": "cap sync ios && cap open ios",
+    "cap:assets": "npx --yes @capacitor/assets@4.0.0 generate --assetPath capacitor/assets --android --ios",
     "stripe:check": "node scripts/stripe-setup-check.mjs",
     "learning:catalog": "node scripts/learning-catalog.mjs",
     "db:migrate": "node scripts/run-with-local-env.mjs npx prisma migrate deploy",
@@ -21,6 +25,12 @@
     "db:studio": "node scripts/run-with-local-env.mjs npx prisma studio"
   },
   "dependencies": {
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^5.22.0",
     "@react-pdf/renderer": "^4.3.2",
@@ -48,6 +58,9 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
+    "@capacitor/android": "8.6.2",
+    "@capacitor/cli": "8.6.2",
+    "@capacitor/ios": "8.6.2",
     "@playwright/test": "^1.58.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

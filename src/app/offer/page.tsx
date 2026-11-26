@@ -99,6 +99,33 @@ export default function OfferPage() {
     };
   }, []);
 
+  // Digio signing opens in another tab (or the system browser in the mobile
+  // app) and reports back by webhook, so recheck the status on return.
+  const internId = intern?.id;
+  const esignPending = esign?.status === "SENT" || esign?.status === "PENDING";
+  useEffect(() => {
+    if (!internId || !esignPending) return;
+    const refresh = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const res = await fetch(`/api/offer/esign/${internId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.esign) {
+          setEsign({
+            status: data.esign.status,
+            signingUrl: data.esign.signingUrl ?? null,
+            signedPdfUrl: data.esign.signedPdfUrl ?? null,
+          });
+        }
+      } catch {
+        // Keep showing the last known status.
+      }
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [internId, esignPending]);
+
   async function handleAccept() {
     if (!intern) return;
     setAccepting(true);
