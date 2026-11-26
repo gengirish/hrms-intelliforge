@@ -211,7 +211,7 @@ export function OfferLetterPDF({
           {commission ? (
             <Text style={o.para}>
               This is a remote, commission-only internship on our AI-native outreach system, bringing home
-              businesses on to AwaazOS as paying stores. There is no fixed stipend. Please read the commission terms on the following page before you accept.
+              businesses on to AwaazDo as paying stores. There is no fixed stipend. Please read the commission terms on the following page before you accept.
             </Text>
           ) : (
             <Text style={o.para}>

@@ -1,12 +1,15 @@
-// Create or update the commission-only AwaazOS sales posting. Candidates and
-// isActive are left alone on an update.
+// Create or update the commission-only AwaazDo sales posting. Candidates and
+// isActive are left alone on an update. The posting is found by its current
+// slug or any legacy slug; when the slug changes, the old one goes into
+// previousSlugs so /internships/<old-slug> redirects.
 //
 // Default: DRY RUN.
 // Run:    npx tsx --env-file=.env.local scripts/publish-sales-intern-job.mts <orgSlug>
 // Apply:  npx tsx --env-file=.env.local scripts/publish-sales-intern-job.mts <orgSlug> --execute
 
 import { PrismaClient } from "@prisma/client";
-import { SALES_INTERN_JOB } from "../src/lib/hiring/sales-intern-job";
+import { slugChangeForTitle } from "../src/lib/hiring/listing-display";
+import { SALES_INTERN_JOB, SALES_INTERN_JOB_LEGACY_SLUGS } from "../src/lib/hiring/sales-intern-job";
 
 const prisma = new PrismaClient();
 const args = process.argv.slice(2);
@@ -34,18 +37,40 @@ async function main() {
     interviewSteps: [...content.interviewSteps],
   };
 
-  const existing = await prisma.jobPosting.findUnique({
-    where: { slug },
-    select: { id: true, orgId: true },
+  const knownSlugs = [slug, ...SALES_INTERN_JOB_LEGACY_SLUGS];
+  const matches = await prisma.jobPosting.findMany({
+    where: { OR: [{ slug: { in: knownSlugs } }, { previousSlugs: { hasSome: knownSlugs } }] },
+    select: { id: true, orgId: true, slug: true, title: true, previousSlugs: true },
   });
+  if (matches.length > 1) {
+    console.error(`More than one posting uses these slugs: ${matches.map((m) => m.slug).join(", ")}. Nothing changed.`);
+    process.exitCode = 1;
+    return;
+  }
+  const existing = matches[0];
   if (existing && existing.orgId !== org.id) {
-    console.error(`Slug ${slug} already belongs to another organization. Nothing changed.`);
+    console.error(`Slug ${existing.slug} already belongs to another organization. Nothing changed.`);
     process.exitCode = 1;
     return;
   }
 
+  let slugData: { slug: string; previousSlugs: string[] } | null = null;
+  if (existing && existing.slug !== slug) {
+    const isTaken = async (s: string) =>
+      Boolean(
+        await prisma.jobPosting.findFirst({
+          where: { id: { not: existing.id }, OR: [{ slug: s }, { previousSlugs: { has: s } }] },
+          select: { id: true },
+        }),
+      );
+    slugData = await slugChangeForTitle(existing, data.title, isTaken);
+  }
+
   console.log(`${EXECUTE ? "EXECUTE" : "DRY RUN"}: ${existing ? "update" : "create"} "${data.title}" for ${org.name}`);
-  console.log(`Public page: /internships/${slug}`);
+  if (existing) console.log(`Was: "${existing.title}" at /internships/${existing.slug}`);
+  const publicSlug = slugData?.slug ?? existing?.slug ?? slug;
+  console.log(`Public page: /internships/${publicSlug}`);
+  if (slugData) console.log(`Redirects from: ${slugData.previousSlugs.map((s) => `/internships/${s}`).join(", ")}`);
   console.log(`Pay: ${data.salaryInfo}`);
   if (!EXECUTE) {
     console.log("Nothing written. Re-run with --execute to publish.");
@@ -53,7 +78,7 @@ async function main() {
   }
 
   if (existing) {
-    await prisma.jobPosting.update({ where: { id: existing.id }, data });
+    await prisma.jobPosting.update({ where: { id: existing.id }, data: { ...data, ...(slugData ?? {}) } });
   } else {
     await prisma.jobPosting.create({ data: { ...data, slug, orgId: org.id } });
   }

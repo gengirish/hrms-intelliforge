@@ -1,12 +1,14 @@
 /**
- * Commission-only outreach internships (AwaazOS). Pure and client-safe.
+ * Commission-only outreach internships (AwaazDo). Pure and client-safe.
  *
  * A posting with the SALES_COMMISSION form makes its converted candidates
  * COMMISSION interns: stipend 0 is valid for them, and their offer letter
  * carries COMMISSION_TERMS instead of a monthly stipend.
  *
- * The numbers must match SALES_SHARE_BPS and SALES_SHARE_MONTHS in AwaazOS
- * (lib/sales-earnings.ts), which computes what is actually owed.
+ * The numbers must match SALES_SHARE_BPS and SALES_SHARE_MONTHS in the AwaazDo
+ * app (awaazos repo, lib/sales-earnings.ts), which computes what is actually
+ * owed. The prices quoted in COMMISSION_TERMS must match PLAN_PRICES_PAISE and
+ * PLAN_PRICES_YEARLY_PAISE in its lib/constants.ts.
  */
 
 export const COMMISSION_FORM_TYPE = "SALES_COMMISSION";
@@ -27,11 +29,11 @@ export const COMMISSION_TERMS: { title: string; body: string }[] = [
   },
   {
     title: "Rate",
-    body: `You earn ${COMMISSION_SHARE_PERCENT}% of what an eligible store pays for its AwaazOS subscription, excluding GST and net of refunds. At current prices (Rs. 299 a month or Rs. 2,990 a year, excluding GST), that is Rs. 149.50 a month or Rs. 1,495 for a yearly payment, per store.`,
+    body: `You earn ${COMMISSION_SHARE_PERCENT}% of what an eligible store pays for its AwaazDo subscription, excluding GST and net of refunds. At current monthly prices, excluding GST, that is Rs. 299.50 a month per store on Lite (Rs. 599), Rs. 324.50 on Starter (Rs. 649) and Rs. 574.50 on Pro (Rs. 1,149). A yearly payment is ten times the monthly price, so it earns you Rs. 2,995, Rs. 3,245 or Rs. 5,745 once. If prices change, the rate applies to what the store actually pays.`,
   },
   {
     title: "Eligible stores",
-    body: "A store is eligible when you built its demo store from your own AwaazOS sales login, and the seller then claimed that store and paid for a subscription. Direct sign-ups and stores built by anyone else do not count.",
+    body: "A store is eligible when you built its demo store from your own AwaazDo sales login, and the seller then claimed that store and paid for a subscription. Direct sign-ups and stores built by anyone else do not count.",
   },
   {
     title: "When commission starts",
@@ -43,7 +45,7 @@ export const COMMISSION_TERMS: { title: string; body: string }[] = [
   },
   {
     title: "Payment",
-    body: "Commission is paid monthly, by the 15th of the following month, for payments we have received. It goes to the bank account you give us, after you provide your PAN, less any tax the law requires us to deduct. Your earnings are shown on your AwaazOS earnings page.",
+    body: "Commission is paid monthly, by the 15th of the following month, for payments we have received. It goes to the bank account you give us, after you provide your PAN, less any tax the law requires us to deduct. Your earnings are shown on your AwaazDo earnings page.",
   },
   {
     title: "Refunds",

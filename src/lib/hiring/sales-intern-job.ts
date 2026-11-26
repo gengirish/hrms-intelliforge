@@ -1,24 +1,33 @@
 import { COMMISSION_FORM_TYPE, COMMISSION_MONTHS, COMMISSION_SHARE_PERCENT } from "./commission";
 
-/** The commission-only AwaazOS sales posting. Published by scripts/publish-sales-intern-job.mts. */
+/**
+ * Slugs this posting has had. The publish script finds the posting by any of
+ * them and keeps them in previousSlugs, so old links redirect.
+ */
+export const SALES_INTERN_JOB_LEGACY_SLUGS = [
+  "sales-associate-intern-awaazos",
+  "ai-native-outreach-associate-intern-awaazos",
+] as const;
+
+/** The commission-only AwaazDo sales posting. Published by scripts/publish-sales-intern-job.mts. */
 export const SALES_INTERN_JOB = {
-  slug: "sales-associate-intern-awaazos",
-  title: "AI-Native Outreach Associate Intern (AwaazOS)",
+  slug: "ai-native-outreach-associate-intern-awaazdo",
+  title: "AI-Native Outreach Associate Intern (AwaazDo)",
   description:
-    "Work on our AI-native outreach system, not traditional sales. There are no cold-call scripts or bought lists: AI agents find home sellers on Instagram and WhatsApp, score how well each one fits and give you a ranked list. You bring the human part: you check each lead, build the seller a demo store, personalise and send the message yourself, and bring them on to AwaazOS. This role is commission only, with no fixed stipend. AwaazOS is at an early stage and you would be among our first outreach associates, so the pitch is still being proven and earnings are not guaranteed.",
+    "AwaazDo (awaazdo.store) gives home sellers on Instagram and WhatsApp a store link, pre-orders with a cut-off, UPI payments and one orders board, so they stop taking orders in their chats. Your job is to bring those sellers on to it, through our AI-native outreach system rather than traditional sales. There are no cold-call scripts or bought lists: AI agents find home sellers on Instagram and WhatsApp, score how well each one fits and give you a ranked list. You bring the human part: you check each lead, build the seller a demo store, personalise and send the message yourself, and help them start on AwaazDo. This role is commission only, with no fixed stipend. AwaazDo is at an early stage and you would be among our first outreach associates, so the pitch is still being proven and earnings are not guaranteed.",
   skills: ["AI-Native Outreach", "AI Tools", "WhatsApp", "Instagram", "Communication", "Product Demos"],
   location: "Remote (India)",
   employmentType: "INTERNSHIP",
   duration: "3 Months",
-  salaryInfo: `Commission only: ${COMMISSION_SHARE_PERCENT}% of revenue from stores you bring in · No fixed stipend`,
+  salaryInfo: `Commission only: ${COMMISSION_SHARE_PERCENT}% of AwaazDo revenue from stores you bring in · No fixed stipend`,
   applicationEmail: "hr@intelliforge.tech",
   formType: COMMISSION_FORM_TYPE,
   responsibilities: [
-    "Work from the ranked list our AI agents prepare for your localities: home bakers, cloud kitchens and other home sellers, each with a score and the reason they fit",
+    "Work from the ranked list our AI agents prepare for your localities: home bakers, home kitchens, sweets and meal-box sellers, and makers of candles, crafts and wellness products, each with a score and the reason they fit",
     "Check each lead yourself, and flag where the AI got it wrong so the system improves",
-    "Build a demo store for each seller from your AwaazOS sales login",
+    "Build a demo store for each seller from your AwaazDo sales login",
     "Start from the ready-made message, personalise it and send it yourself, one seller at a time, saying who you are and that the store is a demo with sample orders",
-    "Show sellers how the store works, answer their questions and send them the link to claim it",
+    "Show sellers how it works: the store link for their bio, pre-orders that close at a cut-off, UPI payments and the orders board. Answer their questions and send them the link to claim their store",
     "Report your messages, replies, demos and paying stores every week",
   ],
   requirements: [
@@ -60,12 +69,12 @@ export const SALES_INTERN_JOB = {
       icon: "🧮",
       title: "What that means in rupees",
       description:
-        "One store on the ₹299 monthly plan earns you ₹149.50 a month. One on the ₹2,990 yearly plan earns you ₹1,495 once. 20 monthly stores earn ₹2,990 a month. These are examples, not a promise.",
+        "One store on the Starter plan (₹649 a month) earns you ₹324.50 a month. One on Starter yearly (₹6,490) earns you ₹3,245 once. 20 monthly Starter stores earn ₹6,490 a month. A Lite store (₹599) earns ₹299.50 a month and a Pro store (₹1,149) ₹574.50. These are examples, not a promise.",
     },
     {
       icon: "📅",
       title: `Paid for ${COMMISSION_MONTHS} months`,
-      description: `Commission runs for ${COMMISSION_MONTHS} months from a store's first payment, even after your internship ends. Nothing is earned during a store's free trial.`,
+      description: `Commission runs for ${COMMISSION_MONTHS} months from a store's first payment, even after your internship ends. Nothing is earned during a store's 30-day free trial.`,
     },
     {
       icon: "🏦",

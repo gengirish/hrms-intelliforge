@@ -85,7 +85,7 @@ export function InternOverviewTab({
             <h3 className="text-sm font-semibold text-white">Pay</h3>
             <p className="text-sm text-white">{COMMISSION_PAY_LABEL}</p>
             <p className="text-xs text-slate-400">
-              {COMMISSION_SUMMARY} Stores and amounts are on AwaazOS at /admin/earnings. Commission is
+              {COMMISSION_SUMMARY} Stores and amounts are on AwaazDo at /admin/earnings. Commission is
               paid outside stipend payout batches.
             </p>
           </>
